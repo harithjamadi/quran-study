@@ -83,7 +83,6 @@ export function Flashcard({ card, distractorPool, onResult, onNext }: Props) {
     ? `${firstSurah.englishName} (${card.sampleSurah}:${card.sampleAyah})`
     : `${card.sampleSurah}:${card.sampleAyah}`;
 
-  const [feedbackKey, setFeedbackKey] = useState(0);
   const [feedbackTone, setFeedbackTone] = useState<"good" | "bad" | null>(null);
 
   const onPick = (idx: number) => {
@@ -91,7 +90,6 @@ export function Flashcard({ card, distractorPool, onResult, onNext }: Props) {
 
     setPickedIndex(idx);
     const isCorrect = idx === correctIndex;
-    setFeedbackKey((k) => k + 1);
     setFeedbackTone(isCorrect ? "good" : "bad");
 
     if (isCorrect) {
@@ -103,9 +101,8 @@ export function Flashcard({ card, distractorPool, onResult, onNext }: Props) {
       setPhase("revealed");
     } else {
       setAttempts((a) => a + 1);
-      // Allow user to keep trying — reset pickedIndex after the shake plays so
-      // the wrong choice is visibly marked but other options remain clickable.
-      setTimeout(() => setPickedIndex(null), 700);
+      // Keep the wrong choice marked — bottom feedback bar stays visible
+      // until the user clicks "Try again" to clear it. No auto-reset.
     }
   };
 
@@ -123,33 +120,24 @@ export function Flashcard({ card, distractorPool, onResult, onNext }: Props) {
         className="absolute top-0 left-1/2 -translate-x-1/2 h-px w-32 bg-gradient-to-r from-transparent via-[color:var(--gold)] to-transparent opacity-60"
       />
 
-      {/* Big, unmissable correct/wrong banner */}
+      {/* Bottom feedback bar — Duolingo style. Fixed at viewport bottom,
+          full-width, persistent. Slides up. The user MUST see this. */}
       {feedbackTone && (
-        <div
-          key={feedbackKey}
-          className={classNames(
-            "absolute top-4 left-1/2 -translate-x-1/2 z-10 inline-flex items-center gap-2 rounded-full px-4 py-1.5 text-sm font-bold shadow-lg animate-pop",
-            feedbackTone === "good"
-              ? "bg-[color:var(--accent)] text-white"
-              : "bg-[color:var(--danger)] text-white"
-          )}
-        >
-          {feedbackTone === "good" ? (
-            <>
-              <svg viewBox="0 0 20 20" width="16" height="16" fill="currentColor" aria-hidden>
-                <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.7-9.3a1 1 0 00-1.4-1.4L9 10.6 7.7 9.3a1 1 0 00-1.4 1.4l2 2a1 1 0 001.4 0l4-4z" clipRule="evenodd" />
-              </svg>
-              {t.flash_correct}
-            </>
-          ) : (
-            <>
-              <svg viewBox="0 0 20 20" width="16" height="16" fill="currentColor" aria-hidden>
-                <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm-1-13a1 1 0 112 0v5a1 1 0 11-2 0V5zm1 9.5a1.2 1.2 0 100-2.4 1.2 1.2 0 000 2.4z" clipRule="evenodd" />
-              </svg>
-              {t.flash_incorrect}
-            </>
-          )}
-        </div>
+        <FeedbackBar
+          tone={feedbackTone}
+          correctAnswer={
+            feedbackTone === "bad"
+              ? effectiveGloss(options[correctIndex], language)?.text ?? null
+              : null
+          }
+          language={language}
+          onDismiss={() => {
+            if (feedbackTone === "bad") {
+              setFeedbackTone(null);
+              setPickedIndex(null);
+            }
+          }}
+        />
       )}
       <div className="text-center pt-2 sm:pt-4">
         <p className="eyebrow mb-5 sm:mb-6">{t.flash_question}</p>
@@ -325,6 +313,84 @@ export function Flashcard({ card, distractorPool, onResult, onNext }: Props) {
           )}
         </div>
       )}
+    </div>
+  );
+}
+
+/* ─────────────────────────────────────────────────────────────────────
+   Bottom feedback bar — fixed to viewport bottom, full-width on
+   mobile / max-width on desktop, persistent. Big icon + headline so
+   the user instantly knows if they got the answer right or wrong.
+   ──────────────────────────────────────────────────────────────────── */
+function FeedbackBar({
+  tone,
+  correctAnswer,
+  language,
+  onDismiss,
+}: {
+  tone: "good" | "bad";
+  correctAnswer: string | null;
+  language: "en" | "ms";
+  onDismiss: () => void;
+}) {
+  const isGood = tone === "good";
+  return (
+    <div
+      role="status"
+      aria-live="polite"
+      className={classNames(
+        "fixed inset-x-0 bottom-0 z-[60] animate-fade-up",
+        "border-t-4 shadow-[0_-12px_32px_-8px_rgba(0,0,0,0.25)]",
+        isGood
+          ? "bg-[color:var(--accent)] border-[color:var(--accent-strong)] text-white"
+          : "bg-[color:var(--danger)] border-[color:var(--ink)] text-white"
+      )}
+    >
+      <div className="mx-auto w-full max-w-5xl px-4 sm:px-6 py-4 sm:py-5 flex items-center gap-4">
+        {/* Big circular icon */}
+        <div className="h-12 w-12 sm:h-14 sm:w-14 shrink-0 rounded-full bg-white/20 grid place-items-center animate-pop">
+          {isGood ? (
+            <svg viewBox="0 0 24 24" width="28" height="28" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
+              <path d="m5 12 5 5L20 7" />
+            </svg>
+          ) : (
+            <svg viewBox="0 0 24 24" width="28" height="28" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" aria-hidden>
+              <path d="M6 6l12 12M18 6 6 18" />
+            </svg>
+          )}
+        </div>
+
+        {/* Headline + correct-answer hint */}
+        <div className="flex-1 min-w-0">
+          <p className="display text-[length:var(--text-xl)] sm:text-[length:var(--text-2xl)] leading-none" style={{ fontWeight: 700 }}>
+            {isGood
+              ? language === "ms"
+                ? "Tepat!"
+                : "Correct!"
+              : language === "ms"
+              ? "Tidak tepat"
+              : "Not quite"}
+          </p>
+          {!isGood && correctAnswer && (
+            <p className="text-sm sm:text-base opacity-90 mt-1 truncate">
+              {language === "ms" ? "Jawapan: " : "Answer: "}
+              <span className="font-bold">{correctAnswer}</span>
+            </p>
+          )}
+        </div>
+
+        {/* Action button — only for wrong (correct shows Next Word in card) */}
+        {!isGood && (
+          <button
+            type="button"
+            onClick={onDismiss}
+            className="shrink-0 inline-flex items-center gap-1.5 rounded-full bg-white text-[color:var(--danger)] px-5 sm:px-6 py-2.5 sm:py-3 text-sm font-bold hover:bg-white/90 active:scale-95 transition-all"
+          >
+            {language === "ms" ? "Cuba lagi" : "Try again"}
+            <span aria-hidden>→</span>
+          </button>
+        )}
+      </div>
     </div>
   );
 }
