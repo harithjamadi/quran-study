@@ -83,12 +83,17 @@ export function Flashcard({ card, distractorPool, onResult, onNext }: Props) {
     ? `${firstSurah.englishName} (${card.sampleSurah}:${card.sampleAyah})`
     : `${card.sampleSurah}:${card.sampleAyah}`;
 
+  const [feedbackKey, setFeedbackKey] = useState(0);
+  const [feedbackTone, setFeedbackTone] = useState<"good" | "bad" | null>(null);
+
   const onPick = (idx: number) => {
     if (phase !== "guessing") return;
-    
+
     setPickedIndex(idx);
     const isCorrect = idx === correctIndex;
-    
+    setFeedbackKey((k) => k + 1);
+    setFeedbackTone(isCorrect ? "good" : "bad");
+
     if (isCorrect) {
       // eslint-disable-next-line react-hooks/purity
       const now = Date.now();
@@ -98,6 +103,9 @@ export function Flashcard({ card, distractorPool, onResult, onNext }: Props) {
       setPhase("revealed");
     } else {
       setAttempts((a) => a + 1);
+      // Allow user to keep trying — reset pickedIndex after the shake plays so
+      // the wrong choice is visibly marked but other options remain clickable.
+      setTimeout(() => setPickedIndex(null), 700);
     }
   };
 
@@ -108,19 +116,48 @@ export function Flashcard({ card, distractorPool, onResult, onNext }: Props) {
   };
 
   return (
-    <div className="card-raised relative overflow-hidden p-6 sm:p-10 space-y-8 animate-fade-up">
+    <div className="card-raised relative overflow-hidden p-6 sm:p-10 space-y-8 animate-fade-up transform-gpu">
       {/* Subtle gold accent — top edge */}
       <div
         aria-hidden
         className="absolute top-0 left-1/2 -translate-x-1/2 h-px w-32 bg-gradient-to-r from-transparent via-[color:var(--gold)] to-transparent opacity-60"
       />
+
+      {/* Big, unmissable correct/wrong banner */}
+      {feedbackTone && (
+        <div
+          key={feedbackKey}
+          className={classNames(
+            "absolute top-4 left-1/2 -translate-x-1/2 z-10 inline-flex items-center gap-2 rounded-full px-4 py-1.5 text-sm font-bold shadow-lg animate-pop",
+            feedbackTone === "good"
+              ? "bg-[color:var(--accent)] text-white"
+              : "bg-[color:var(--danger)] text-white"
+          )}
+        >
+          {feedbackTone === "good" ? (
+            <>
+              <svg viewBox="0 0 20 20" width="16" height="16" fill="currentColor" aria-hidden>
+                <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.7-9.3a1 1 0 00-1.4-1.4L9 10.6 7.7 9.3a1 1 0 00-1.4 1.4l2 2a1 1 0 001.4 0l4-4z" clipRule="evenodd" />
+              </svg>
+              {t.flash_correct}
+            </>
+          ) : (
+            <>
+              <svg viewBox="0 0 20 20" width="16" height="16" fill="currentColor" aria-hidden>
+                <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm-1-13a1 1 0 112 0v5a1 1 0 11-2 0V5zm1 9.5a1.2 1.2 0 100-2.4 1.2 1.2 0 000 2.4z" clipRule="evenodd" />
+              </svg>
+              {t.flash_incorrect}
+            </>
+          )}
+        </div>
+      )}
       <div className="text-center pt-2 sm:pt-4">
         <p className="eyebrow mb-5 sm:mb-6">{t.flash_question}</p>
         <p
-          className="arabic-display text-[color:var(--foreground)]"
+          className="arabic-display text-[color:var(--foreground)] transform-gpu"
           lang="ar"
           dir="rtl"
-          style={{ fontSize: "var(--arabic-xl)" }}
+          style={{ fontSize: "var(--arabic-xl)", textRendering: "geometricPrecision" }}
         >
           {card.sampleText}
         </p>
@@ -155,30 +192,35 @@ export function Flashcard({ card, distractorPool, onResult, onNext }: Props) {
               onClick={() => onPick(idx)}
               disabled={revealed}
               className={classNames(
-                // The CORRECT-answer reveal is soft (border + tint) — never
-                // competes with the "Next Word" CTA below for primacy.
-                "group relative rounded-2xl border-2 px-4 py-4 text-left transition-all duration-300 active:scale-[0.98] min-h-[64px]",
+                "group relative rounded-2xl border-2 px-4 py-4 text-left transition-all duration-300 active:scale-[0.98] min-h-[72px] transform-gpu",
                 !revealed && !wasWrong &&
                   "border-[color:var(--border)] bg-[color:var(--surface)] hover:border-[color:var(--accent)] hover:bg-[color:var(--accent-soft)]/30 hover:shadow-[var(--shadow)]",
+                // Wrong-answer feedback: full red border, red bg, shake. Obvious.
                 !revealed && wasWrong &&
-                  "border-[color:var(--danger)]/50 bg-[color:var(--danger)]/5 opacity-50",
+                  "border-[color:var(--danger)] bg-[color:var(--danger)]/15 text-[color:var(--danger)] animate-shake",
+                // Correct reveal — soft so it doesn't compete with Next CTA
                 revealed && isCorrect &&
-                  "border-[color:var(--accent)] bg-[color:var(--accent-soft)]/50 text-[color:var(--accent-strong)]",
+                  "border-[color:var(--accent)] bg-[color:var(--accent-soft)]/60 text-[color:var(--accent-strong)]",
                 revealed && !isCorrect &&
-                  "border-[color:var(--border)] bg-[color:var(--surface)] opacity-35"
+                  "border-[color:var(--border)] bg-[color:var(--surface)] opacity-30"
               )}
             >
               <div className="flex items-center justify-between gap-2">
-                <span className="text-[15px] font-semibold transition-colors flex items-baseline gap-1.5">
+                <span className="text-[15px] font-semibold transition-colors flex flex-col gap-0.5">
                   {(() => {
                     const g = effectiveGloss(o, language);
                     if (!g) return "—";
                     return (
                       <>
-                        <span>{g.text}</span>
+                        <span className="leading-tight">{g.text}</span>
+                        {g.secondary && (
+                          <span className="text-[11px] font-medium text-[color:var(--muted)] leading-tight">
+                            {g.secondary}
+                          </span>
+                        )}
                         {g.isFallback && (
                           <span
-                            className="text-[9px] font-semibold tracking-widest uppercase opacity-60"
+                            className="text-[9px] font-semibold tracking-widest uppercase opacity-60 mt-1"
                             title={
                               language === "ms"
                                 ? "Terjemahan Melayu belum tersedia — ditunjukkan dalam Bahasa Inggeris"

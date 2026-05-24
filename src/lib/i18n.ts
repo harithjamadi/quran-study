@@ -46,6 +46,22 @@ export const UI_STRINGS = {
     dash_picked_by: "Picked by frequency · most-common first",
     dash_in_quran_short: "in Quran",
     dash_milestone: "Next milestone",
+    dash_review_mistakes: "Review Mistakes",
+    dash_drill_weak: "Drill {count} weak words",
+    dash_view_quest: "Quest",
+    dash_view_list: "List",
+    dash_quest_mubarak: "Surah Quest",
+
+    // Quest
+    quest_memorize: "Memorize these",
+    quest_start: "Start Quiz",
+    quest_true: "True",
+    quest_false: "False",
+    quest_match_meaning: "Match the meaning",
+    quest_match_pairs: "Find matching pairs",
+    quest_continue: "Continue",
+    quest_streak_day: "Streak Day {count}!",
+    quest_welcome_back: "You're building a great habit.",
 
     // Session
     sess_exit: "Exit session",
@@ -223,6 +239,22 @@ export const UI_STRINGS = {
     dash_picked_by: "Ikut frekuensi · yang paling kerap dahulu",
     dash_in_quran_short: "dalam Al-Quran",
     dash_milestone: "Sasaran seterusnya",
+    dash_review_mistakes: "Semak Kesilapan",
+    dash_drill_weak: "Latih {count} perkataan lemah",
+    dash_view_quest: "Misi",
+    dash_view_list: "Senarai",
+    dash_quest_mubarak: "Misi Surah",
+
+    // Quest
+    quest_memorize: "Cuba ingat",
+    quest_start: "Mula Kuiz",
+    quest_true: "Betul",
+    quest_false: "Salah",
+    quest_match_meaning: "Cari maksud",
+    quest_match_pairs: "Padankan perkataan",
+    quest_continue: "Teruskan",
+    quest_streak_day: "Streak Hari-{count}!",
+    quest_welcome_back: "Anda bermula bersama Al-Quran.",
 
     // Session
     sess_exit: "Keluar",

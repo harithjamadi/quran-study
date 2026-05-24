@@ -6,7 +6,7 @@ import { useLearning } from "@/store/learning";
 import { useHydrated } from "@/lib/use-hydrated";
 import { UI_STRINGS } from "@/lib/i18n";
 import type { LemmaMeta } from "@/lib/learning";
-import { statusOf } from "@/lib/learning";
+import { effectiveGloss, statusOf } from "@/lib/learning";
 
 interface Props {
   freq: LemmaMeta[];
@@ -126,8 +126,21 @@ export function VocabularyClient({ freq }: Props) {
                   <div className="arabic text-2xl mb-1" lang="ar" dir="rtl">
                     {item.lemma}
                   </div>
-                  <div className="text-sm font-medium text-[color:var(--foreground)]">
-                    {item.en}
+                  <div className="text-sm font-medium text-[color:var(--foreground)] flex flex-col gap-0.5">
+                    {(() => {
+                      const g = effectiveGloss(item, language);
+                      if (!g) return "—";
+                      return (
+                        <>
+                          <span className="leading-tight">{g.text}</span>
+                          {g.secondary && (
+                            <span className="text-[11px] text-[color:var(--muted)] leading-tight">
+                              {g.secondary}
+                            </span>
+                          )}
+                        </>
+                      );
+                    })()}
                   </div>
                 </div>
                 <div className={`text-[10px] uppercase tracking-widest px-2 py-0.5 rounded-full font-bold ${

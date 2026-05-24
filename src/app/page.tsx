@@ -71,9 +71,9 @@ export default function HomePage() {
           className="absolute -top-24 right-0 h-[30rem] w-[30rem] rounded-full bg-[color:var(--gold)]/10 blur-3xl pointer-events-none"
         />
 
-        <div className="relative grid grid-cols-1 lg:grid-cols-[1.1fr_1fr] gap-10 lg:gap-16 items-center">
+        <div className="relative grid grid-cols-1 lg:grid-cols-[1.15fr_1fr] gap-10 lg:gap-16 items-center">
           {/* ── LEFT: typographic stack ── */}
-          <div className="stagger-children relative z-10">
+          <div className="stagger-children relative z-10 lg:pr-2">
             {/* Bismillah as eyebrow — close to headline, framed */}
             <div className="flex items-center gap-4 mb-5 sm:mb-7">
               <span
@@ -90,7 +90,7 @@ export default function HomePage() {
             </div>
 
             <h1
-              className="display text-[clamp(2.75rem,2rem+4.5vw,5.5rem)] leading-[0.98] tracking-tight text-[color:var(--foreground)]"
+              className="display text-[clamp(2.5rem,2rem+4vw,5.2rem)] leading-[0.98] tracking-tight text-[color:var(--foreground)]"
               style={{ fontWeight: 500 }}
             >
               {(() => {
@@ -163,7 +163,7 @@ export default function HomePage() {
             />
             {/* the brand mark, oversized */}
             <p
-              className="arabic select-none pointer-events-none text-[color:var(--accent-strong)]/15 dark:text-[color:var(--accent)]/30 text-[clamp(14rem,18vw,22rem)] leading-none"
+              className="arabic select-none pointer-events-none text-[color:var(--accent-strong)]/15 dark:text-[color:var(--accent)]/30 text-[clamp(12rem,16vw,19rem)] leading-none"
               lang="ar"
               dir="rtl"
               style={{ fontWeight: 400 }}
@@ -182,7 +182,7 @@ export default function HomePage() {
 
           {/* Mobile: smaller decorative mark inline */}
           <p
-            className="lg:hidden arabic absolute -right-8 top-0 select-none pointer-events-none text-[color:var(--accent-strong)]/8 dark:text-[color:var(--accent)]/15 text-[clamp(8rem,30vw,14rem)] leading-none -z-0"
+            className="lg:hidden arabic absolute -right-2 top-0 select-none pointer-events-none text-[color:var(--accent-strong)]/8 dark:text-[color:var(--accent)]/15 text-[clamp(6rem,22vw,10rem)] leading-none -z-0 overflow-hidden"
             lang="ar"
             dir="rtl"
             aria-hidden

@@ -62,8 +62,11 @@ const DAY_MS = 86_400_000;
 export function effectiveGloss(
   lemma: { en: string | null; ms: string | null },
   lang: Language
-): { text: string; isFallback: boolean } | null {
+): { text: string; secondary?: string; isFallback: boolean } | null {
   if (lang === "ms") {
+    if (lemma.ms && lemma.en) {
+      return { text: lemma.ms, secondary: lemma.en, isFallback: false };
+    }
     if (lemma.ms) return { text: lemma.ms, isFallback: false };
     if (lemma.en) return { text: lemma.en, isFallback: true };
     return null;
@@ -84,6 +87,16 @@ export function freshLemmaState(now: number = Date.now()): LemmaState {
     intervalDays: 0,
   };
 }
+
+/** 
+ * XP Rewards for different grades. 
+ * Correct on first try (Good/Easy) yields more than after a lapse.
+ */
+export const XP_REWARDS: Record<Grade, number> = {
+  easy: 15,
+  good: 10,
+  again: 0, // No XP for failure
+};
 
 /** SM-2-lite scheduler. Simpler than full SM-2 — fixed multipliers, no ease factor. */
 export function applyGrade(

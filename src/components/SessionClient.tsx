@@ -1,5 +1,6 @@
 "use client";
 
+import { useSearchParams } from "next/navigation";
 import dynamic from "next/dynamic";
 import type { LemmaMeta } from "@/lib/learning";
 
@@ -24,6 +25,9 @@ interface Props {
   freq: LemmaMeta[];
 }
 
-export function SessionClient(props: Props) {
-  return <SessionRunner {...props} />;
+export function SessionClient({ freq }: Props) {
+  const searchParams = useSearchParams();
+  const mode = (searchParams.get("mode") as "default" | "weak") || "default";
+  
+  return <SessionRunner freq={freq} mode={mode} />;
 }

@@ -30,7 +30,10 @@ export function WordPopover({
 }: Props) {
   const ref = useRef<HTMLDivElement>(null);
   const [count, setCount] = useState<number | null>(null);
+  
   const language = useLearning((s) => s.language);
+  const introduce = useLearning((s) => s.introduce);
+  const isIntroduced = useLearning((s) => !!s.lemmas[word.lemma || ""]);
   const t = UI_STRINGS[language];
 
   const layout = useMemo(() => {
@@ -159,6 +162,32 @@ export function WordPopover({
               : "Particle / pronoun."}
           </p>
         )}
+
+        {word.lemma && (
+          <div className="pt-3">
+            {isIntroduced ? (
+              <div className="flex items-center gap-2 text-green-600 dark:text-green-500 font-bold bg-green-500/5 rounded-xl py-2.5 px-3 border border-green-500/20">
+                <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M20 6L9 17l-5-5" />
+                </svg>
+                <span>{language === "ms" ? "Sedang Belajar" : "Learning"}</span>
+              </div>
+            ) : (
+              <button
+                onClick={() => {
+                  introduce(word.lemma!);
+                }}
+                className="w-full flex items-center justify-center gap-2 bg-[color:var(--accent)] hover:bg-[color:var(--accent-strong)] text-white font-bold py-2.5 px-4 rounded-xl shadow-lg shadow-[color:var(--accent)]/20 transition-all active:scale-95"
+              >
+                <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M12 5v14M5 12h14" />
+                </svg>
+                {language === "ms" ? "Mula Belajar" : "Start Learning"}
+              </button>
+            )}
+          </div>
+        )}
+
         <div className="pt-2 mt-3 border-t border-[color:var(--border)] text-[color:var(--muted)] font-medium">
           {surahName} · {ayahNumber} · {word.i}
         </div>

@@ -10,12 +10,14 @@ import { isDue, statusOf, type Grade, type LemmaMeta } from "@/lib/learning";
 interface Props {
   /** The full frequency list to draw new words from. */
   freq: LemmaMeta[];
+  /** Session mode. 'weak' only reviews words marked as weak. */
+  mode?: "default" | "weak";
 }
 
 const SESSION_SIZE = 10;
 const MAX_NEW_PER_SESSION = 5;
 
-export function SessionRunner({ freq }: Props) {
+export function SessionRunner({ freq, mode = "default" }: Props) {
   const grade = useLearning((s) => s.grade);
   const introduceMany = useLearning((s) => s.introduceMany);
   const advanceIntroducedTo = useLearning((s) => s.advanceIntroducedTo);
@@ -35,73 +37,87 @@ export function SessionRunner({ freq }: Props) {
     const snap = useLearning.getState();
     const lemmas = snap.lemmas;
     
-    // 1. Identify "Due" cards (already introduced and SRS says it's time)
-    const due: LemmaMeta[] = [];
-    for (const item of freq) {
-      const state = lemmas[item.lemma];
-      if (state && isDue(state)) {
-        due.push(item);
-      }
-      if (due.length >= SESSION_SIZE) break;
-    }
+    let finalQueue: LemmaMeta[] = [];
 
-    // 2. Identify "New" cards if we have room
-    const newCount = Math.min(
-      MAX_NEW_PER_SESSION,
-      SESSION_SIZE - due.length
-    );
-    
-    const newCards: LemmaMeta[] = [];
-    if (newCount > 0) {
-      // Find the first N items we haven't introduced yet, starting from the last rank
-      const candidates = freq.slice(snap.introducedThroughRank);
-      for (const item of candidates) {
-        if (!lemmas[item.lemma]) {
-          newCards.push(item);
+    if (mode === "weak") {
+      // W-MODE: Only target words marked as weak
+      const weak = freq.filter(item => {
+        const state = lemmas[item.lemma];
+        return state && statusOf(state) === "weak";
+      });
+      // Shuffle and take SESSION_SIZE
+      finalQueue = weak.sort(() => 0.5 - Math.random()).slice(0, SESSION_SIZE);
+    } else {
+      // 1. Identify "Due" cards (already introduced and SRS says it's time)
+      const due: LemmaMeta[] = [];
+      for (const item of freq) {
+        const state = lemmas[item.lemma];
+        if (state && isDue(state)) {
+          due.push(item);
         }
-        if (newCards.length >= newCount) break;
+        if (due.length >= SESSION_SIZE) break;
       }
-    }
 
-    // 3. Combine and Shuffle
-    const finalQueue = [...due, ...newCards];
-    
-    // Final check: if we're STILL short (maybe user caught up on all due and introduced),
-    // just pull more new ones until we hit SESSION_SIZE.
-    if (finalQueue.length < SESSION_SIZE) {
-      const needed = SESSION_SIZE - finalQueue.length;
-      const extraNew: LemmaMeta[] = [];
-      const currentRank = snap.introducedThroughRank + newCards.length;
-      const candidates = freq.slice(currentRank);
-      for (const item of candidates) {
-        if (!lemmas[item.lemma]) {
-          extraNew.push(item);
+      // 2. Identify "New" cards if we have room
+      const newCount = Math.min(
+        MAX_NEW_PER_SESSION,
+        SESSION_SIZE - due.length
+      );
+      
+      const newCards: LemmaMeta[] = [];
+      if (newCount > 0) {
+        // Find the first N items we haven't introduced yet, starting from the last rank
+        const candidates = freq.slice(snap.introducedThroughRank);
+        for (const item of candidates) {
+          if (!lemmas[item.lemma]) {
+            newCards.push(item);
+          }
+          if (newCards.length >= newCount) break;
         }
-        if (extraNew.length >= needed) break;
       }
-      finalQueue.push(...extraNew);
+
+      // 3. Combine and Shuffle
+      finalQueue = [...due, ...newCards];
+      
+      // Final check: if we're STILL short (maybe user caught up on all due and introduced),
+      // just pull more new ones until we hit SESSION_SIZE.
+      if (finalQueue.length < SESSION_SIZE) {
+        const needed = SESSION_SIZE - finalQueue.length;
+        const extraNew: LemmaMeta[] = [];
+        const currentRank = snap.introducedThroughRank + newCards.length;
+        const candidates = freq.slice(currentRank);
+        for (const item of candidates) {
+          if (!lemmas[item.lemma]) {
+            extraNew.push(item);
+          }
+          if (extraNew.length >= needed) break;
+        }
+        finalQueue.push(...extraNew);
+      }
+
+      // Shuffle the final session so it's not always in frequency order
+      for (let i = finalQueue.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [finalQueue[i], finalQueue[j]] = [finalQueue[j], finalQueue[i]];
+      }
     }
 
-    // Shuffle the final session so it's not always in frequency order
-    for (let i = finalQueue.length - 1; i > 0; i--) {
-      const j = Math.floor(Math.random() * (i + 1));
-      [finalQueue[i], finalQueue[j]] = [finalQueue[j], finalQueue[i]];
-    }
-
-    // Mark the new cards as introduced in the store
-    const introducedLemmas = finalQueue.filter(m => !lemmas[m.lemma]).map(m => m.lemma);
-    if (introducedLemmas.length > 0) {
-      introduceMany(introducedLemmas);
-      // Advance the global introduced rank to the highest index we just touched
-      const maxIdx = Math.max(...finalQueue.map(m => freq.indexOf(m)));
-      if (maxIdx + 1 > snap.introducedThroughRank) {
-        advanceIntroducedTo(maxIdx + 1);
+    // Mark the new cards as introduced in the store (only in default mode)
+    if (mode === "default") {
+      const introducedLemmas = finalQueue.filter(m => !lemmas[m.lemma]).map(m => m.lemma);
+      if (introducedLemmas.length > 0) {
+        introduceMany(introducedLemmas);
+        // Advance the global introduced rank to the highest index we just touched
+        const maxIdx = Math.max(...finalQueue.map(m => freq.indexOf(m)));
+        if (maxIdx + 1 > snap.introducedThroughRank) {
+          advanceIntroducedTo(maxIdx + 1);
+        }
       }
     }
 
     // eslint-disable-next-line react-hooks/set-state-in-effect
     setQueue(finalQueue);
-  }, [freq, introduceMany, advanceIntroducedTo]);
+  }, [freq, introduceMany, advanceIntroducedTo, mode]);
 
   if (!queue) {
     return (

@@ -22,6 +22,8 @@ interface LearningState {
   language: Language;
   /** Highest position in the frequency list the user has been introduced to. */
   introducedThroughRank: number;
+  /** Total experience points. */
+  xp: number;
   /** Local-date string of the user's most recent learning activity. */
   lastSessionDate: string | null;
   /** Consecutive-day streak. */
@@ -31,6 +33,7 @@ interface LearningState {
 
   // actions
   grade: (lemma: string, grade: Grade) => void;
+  addXp: (amount: number) => void;
   introduce: (lemma: string) => void;
   introduceMany: (lemmas: string[]) => void;
   advanceIntroducedTo: (rank: number) => void;
@@ -43,15 +46,21 @@ const DEFAULTS = {
   lemmas: {} as Record<string, LemmaState>,
   language: "en" as Language,
   introducedThroughRank: 0,
+  xp: 0,
   lastSessionDate: null as string | null,
   dayStreak: 0,
   reviewedToday: 0,
 };
 
-function bumpStreak(state: LearningState): Partial<LearningState> {
+function bumpStreak(state: LearningState, xpEarned = 0): Partial<LearningState> {
   const today = localDateKey();
+  const xp = state.xp + xpEarned;
+
   if (state.lastSessionDate === today) {
-    return { reviewedToday: state.reviewedToday + 1 };
+    return { 
+      reviewedToday: state.reviewedToday + 1,
+      xp 
+    };
   }
   const streak = isConsecutiveDay(state.lastSessionDate ?? "", today)
     ? state.dayStreak + 1
@@ -60,6 +69,7 @@ function bumpStreak(state: LearningState): Partial<LearningState> {
     lastSessionDate: today,
     dayStreak: streak,
     reviewedToday: 1,
+    xp
   };
 }
 
@@ -70,11 +80,17 @@ export const useLearning = create<LearningState>()(
       grade: (lemma, grade) => {
         const cur = get();
         const next = applyGrade(cur.lemmas[lemma], grade);
+        const xpEarned = (cur.lemmas[lemma]?.streak ?? 0) === 0 ? 10 : 5; // simplified XP logic for now
+        // But let's use the XP_REWARDS we just added to lib
+        const { XP_REWARDS } = require("@/lib/learning");
+        const reward = XP_REWARDS[grade] || 0;
+
         set({
           lemmas: { ...cur.lemmas, [lemma]: next },
-          ...bumpStreak(cur),
+          ...bumpStreak(cur, reward),
         });
       },
+      addXp: (amount) => set((s) => ({ xp: s.xp + amount })),
       introduce: (lemma) => {
         const cur = get();
         if (cur.lemmas[lemma]) return;

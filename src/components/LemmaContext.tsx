@@ -63,14 +63,14 @@ const CORE_MEANINGS: Record<string, { en: string; ms: string }> = {
   "رأي": { en: "To see, think, consider, hold an opinion.", ms: "Lihat, fikir, anggap, pendapat." },
   "أتي": { en: "To come, arrive, bring, give.", ms: "Datang, sampai, bawa, beri." },
   "عمل": { en: "To do, act, work, perform, deed.", ms: "Buat, amal, kerja, perbuatan." },
-  "جعل": { en: "To make, set, appoint, create.", ms: "Jadikan, letak, lantik, cipta." },
+  "جعل": { en: "To make, set, appoint, create, put.", ms: "Jadikan, letak, lantik, cipta, sumbat." },
   "عَلَى": { en: "On, upon, above, over.", ms: "Atas, ke atas, terhadap." },
   "مِن": { en: "From, of, among, some of.", ms: "Dari, daripada, sebahagian dari." },
   "بِ": { en: "With, in, by, through.", ms: "Dengan, dalam, melalui." },
   "لِ": { en: "For, to, belonging to.", ms: "Bagi, untuk, milik." },
   "فِي": { en: "In, inside, within, concerning.", ms: "Dalam, di dalam, tentang." },
   "إِلَى": { en: "To, toward, until.", ms: "Kepada, menuju, sehingga." },
-  "مَا": { en: "What, that which / Not (negation).", ms: "Apa, apa yang / Tidak (penafian)." },
+  "مَا": { en: "What, that which / Not (negation).", ms: "Apa, apa yang, yang / Tidak (penafian)." },
   "إِن": { en: "If / Indeed (emphasis).", ms: "Jika / Sesungguhnya (penegasan)." },
   "لَا": { en: "No, not.", ms: "Tidak, bukan." },
   "أَن": { en: "That (conjunction).", ms: "Bahawa." },
@@ -372,7 +372,10 @@ export function LemmaContext({ card }: { card: LemmaMeta }) {
                   <div className="text-sm text-[color:var(--foreground)] leading-relaxed mb-3 opacity-90">
                     <HighlightedTranslation
                       text={ex.translation}
-                      target={effectiveGloss(card, language)?.text ?? ""}
+                      targets={[
+                        coreMeaning || "",
+                        effectiveGloss(card, language)?.text ?? "",
+                      ].filter(Boolean)}
                     />
                   </div>
                   <div className="flex items-center justify-between">
@@ -403,27 +406,75 @@ export function LemmaContext({ card }: { card: LemmaMeta }) {
   );
 }
 
-function HighlightedTranslation({ text, target }: { text: string; target: string }) {
-  if (!target) return <>{text}</>;
-  
-  const clean = (s: string) => s.toLowerCase().replace(/^(and|the|a|an|of|on|at|in|to|dengan|bagi|dan|iaitu|ini|itu|yang)\s+/g, "").trim();
-  const query = clean(target);
-  
-  if (!query || query.length < 3) return <>{text}</>;
+function HighlightedTranslation({ text, targets }: { text: string; targets: string[] }) {
+  if (targets.length === 0) return <>{text}</>;
 
-  const parts = text.split(new RegExp(`(${query})`, "gi"));
-  
+  const language = useLearning.getState().language;
+  const stopWords = ["and", "the", "a", "an", "of", "on", "at", "in", "to", "dengan", "bagi", "dan", "iaitu", "ini", "itu"];
+
+  // 1. Clean and prepare queries: remove parentheses, split by punctuation
+  const queries = targets
+    .flatMap((t) => t.toLowerCase().split(/[/,;]/))
+    .flatMap((q) => {
+      const cleanQ = q.replace(/\([^)]*\)/g, "").replace(/[^a-z0-9\s]/gi, "").trim();
+      if (!cleanQ) return [];
+      
+      const variants = [cleanQ];
+      
+      // If Malay, generate common morphological variants (imbuhan)
+      if (language === "ms") {
+        const words = cleanQ.split(/\s+/);
+        for (const w of words) {
+          if (w.length < 3 || stopWords.includes(w)) continue;
+          
+          // Basic prefix additions
+          variants.push("me" + w, "mem" + w, "men" + w, "meng" + w, "ber" + w, "ter" + w, "di" + w, "se" + w);
+          // Complex replacements (Nasalization)
+          if (w.startsWith("s")) variants.push("meny" + w.slice(1));
+          if (w.startsWith("p")) variants.push("mem" + w.slice(1));
+          if (w.startsWith("t")) variants.push("men" + w.slice(1));
+          if (w.startsWith("k")) variants.push("meng" + w.slice(1));
+          
+          // Suffixes
+          variants.push(w + "kan", w + "i", w + "an", w + "nya");
+        }
+      } else {
+        // English/Generic individual word support
+        const words = cleanQ.split(/\s+/);
+        if (words.length > 1) {
+          for (const w of words) {
+            if (w.length >= 3 && !stopWords.includes(w)) variants.push(w);
+          }
+        }
+      }
+      return variants;
+    })
+    .filter((q) => q.length >= 3)
+    .sort((a, b) => b.length - a.length); // Try longest matches first
+
+  if (queries.length === 0) return <>{text}</>;
+
+  // 2. Escape for regex and join into a single pattern
+  const escape = (s: string) => s.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+  const pattern = new RegExp(`(\\b${queries.map(escape).join("\\b|\\b")}\\b)`, "gi");
+
+  const parts = text.split(pattern);
+
   return (
     <>
-      {parts.map((part, i) =>
-        part.toLowerCase() === query.toLowerCase() ? (
-          <span key={i} className="font-bold underline decoration-2 underline-offset-2 text-[color:var(--foreground)]">
+      {parts.map((part, i) => {
+        const isMatch = queries.some((q) => part.toLowerCase() === q.toLowerCase());
+        return isMatch ? (
+          <span
+            key={i}
+            className="font-bold underline decoration-[color:var(--accent)]/60 decoration-2 underline-offset-4 text-[color:var(--foreground)]"
+          >
             {part}
           </span>
         ) : (
           part
-        )
-      )}
+        );
+      })}
     </>
   );
 }

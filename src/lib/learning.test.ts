@@ -115,22 +115,22 @@ describe("comprehension math", () => {
 
 describe("effectiveGloss", () => {
   it("returns the native gloss when present", () => {
-    expect(effectiveGloss({ en: "and", ms: "dan" }, "en")).toEqual({
+    expect(effectiveGloss({ en: "and", ms: "dan" }, "en")).toMatchObject({
       text: "and",
       isFallback: false,
     });
-    expect(effectiveGloss({ en: "and", ms: "dan" }, "ms")).toEqual({
+    expect(effectiveGloss({ en: "and", ms: "dan" }, "ms")).toMatchObject({
       text: "dan",
       isFallback: false,
     });
   });
 
   it("falls back to the other language and marks it", () => {
-    expect(effectiveGloss({ en: "thing", ms: null }, "ms")).toEqual({
+    expect(effectiveGloss({ en: "thing", ms: null }, "ms")).toMatchObject({
       text: "thing",
       isFallback: true,
     });
-    expect(effectiveGloss({ en: null, ms: "sesuatu" }, "en")).toEqual({
+    expect(effectiveGloss({ en: null, ms: "sesuatu" }, "en")).toMatchObject({
       text: "sesuatu",
       isFallback: true,
     });

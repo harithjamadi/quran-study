@@ -43,7 +43,7 @@ export function Nav() {
           </span>
         </Link>
 
-        <ul className="ml-auto flex items-center gap-0.5 sm:gap-1 text-[13px] sm:text-sm overflow-x-auto scrollbar-thin -mx-1 px-1">
+        <ul className="ml-auto flex items-center gap-0.5 sm:gap-1 text-[13px] sm:text-sm overflow-x-auto overflow-y-hidden scrollbar-hide -mx-1 px-1">
           {items.map((it) => {
             const active =
               it.href === "/"
@@ -54,7 +54,7 @@ export function Nav() {
                 <Link
                   href={it.href}
                   className={classNames(
-                    "relative inline-flex items-center px-2.5 sm:px-3 py-2 rounded-md transition-colors duration-200 whitespace-nowrap",
+                    "relative inline-flex items-center px-2 sm:px-3 py-2 rounded-md transition-colors duration-200 whitespace-nowrap",
                     active
                       ? "text-[color:var(--foreground)]"
                       : "text-[color:var(--muted)] hover:text-[color:var(--foreground)]"
@@ -64,7 +64,7 @@ export function Nav() {
                   {active && (
                     <span
                       aria-hidden
-                      className="absolute left-2.5 right-2.5 sm:left-3 sm:right-3 -bottom-[1px] h-[2px] bg-[color:var(--gold)] rounded-full animate-fade-in"
+                      className="absolute left-2 sm:left-3 right-2 sm:right-3 -bottom-[1px] h-[2px] bg-[color:var(--gold)] rounded-full animate-fade-in"
                     />
                   )}
                 </Link>
