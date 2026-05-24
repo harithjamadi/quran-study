@@ -1,0 +1,67 @@
+"use client";
+
+import { create } from "zustand";
+import { persist, createJSONStorage } from "zustand/middleware";
+import type { ArabicScript, ThemeMode } from "@/lib/types";
+
+interface SettingsState {
+  translationId: string;
+  reciterId: string;
+  showTransliteration: boolean;
+  arabicFontSize: number;
+  translationFontSize: number;
+  arabicScript: ArabicScript;
+  theme: ThemeMode;
+  autoplayNext: boolean;
+  highlightCurrentVerse: boolean;
+  wordStudyMode: boolean;
+  setTranslation: (id: string) => void;
+  setReciter: (id: string) => void;
+  setShowTransliteration: (v: boolean) => void;
+  setArabicFontSize: (n: number) => void;
+  setTranslationFontSize: (n: number) => void;
+  setArabicScript: (s: ArabicScript) => void;
+  setTheme: (m: ThemeMode) => void;
+  setAutoplayNext: (v: boolean) => void;
+  setHighlightCurrentVerse: (v: boolean) => void;
+  setWordStudyMode: (v: boolean) => void;
+  reset: () => void;
+}
+
+const DEFAULTS = {
+  translationId: "en.sahih",
+  reciterId: "ar.alafasy",
+  showTransliteration: false,
+  arabicFontSize: 32,
+  translationFontSize: 16,
+  arabicScript: "uthmani" as ArabicScript,
+  theme: "system" as ThemeMode,
+  autoplayNext: true,
+  highlightCurrentVerse: true,
+  wordStudyMode: true,
+};
+
+export const useSettings = create<SettingsState>()(
+  persist(
+    (set) => ({
+      ...DEFAULTS,
+      setTranslation: (translationId) => set({ translationId }),
+      setReciter: (reciterId) => set({ reciterId }),
+      setShowTransliteration: (showTransliteration) => set({ showTransliteration }),
+      setArabicFontSize: (arabicFontSize) =>
+        set({ arabicFontSize: Math.min(64, Math.max(18, arabicFontSize)) }),
+      setTranslationFontSize: (translationFontSize) =>
+        set({ translationFontSize: Math.min(28, Math.max(12, translationFontSize)) }),
+      setArabicScript: (arabicScript) => set({ arabicScript }),
+      setTheme: (theme) => set({ theme }),
+      setAutoplayNext: (autoplayNext) => set({ autoplayNext }),
+      setHighlightCurrentVerse: (highlightCurrentVerse) => set({ highlightCurrentVerse }),
+      setWordStudyMode: (wordStudyMode) => set({ wordStudyMode }),
+      reset: () => set(DEFAULTS),
+    }),
+    {
+      name: "noor.settings.v1",
+      storage: createJSONStorage(() => localStorage),
+    }
+  )
+);

@@ -1,36 +1,76 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Mubin — Making the Quran Clear
 
-## Getting Started
+> _Mubin_ (**مُبِين**) — "clear, evident". From _kitābun mubīn_, a clear Book.
 
-First, run the development server:
+A free, open Quran study tool that teaches you the Arabic of the Quran word by
+word. Built on the empirical observation that **just 500 Arabic lemmas cover
+80% of all Quran tokens** — memorise them in the right order and you can
+understand most of what you read.
+
+## What you can do
+
+- **Word Quest** — daily 15-minute flashcard sessions ordered by frequency.
+  Spaced-repetition scheduler tracks every word as `new → weak → good → strong`.
+  Hear the word, pick the meaning, grade your recall.
+- **Read with annotations** — tap any Arabic word in any of the 114 surahs to
+  reveal its meaning, transliteration, three-letter root, and every other verse
+  in the Quran where that root appears.
+- **Root explorer** — `/root/[root]` lists every occurrence of a triliteral
+  root across the whole Quran, grouped by surah.
+- **Bilingual** — English and Bahasa Melayu UI. Word glosses fall back through
+  curated MS → Indonesian (per-word, ~95% intelligible) → English with badge.
+- **Yours forever** — bookmarks, mastered words, day streak, settings — all
+  in `localStorage`. No account, no cloud, no tracking, no ads.
+
+## Tech
+
+- [Next.js 16](https://nextjs.org/) (App Router, Turbopack), React 19,
+  TypeScript, Tailwind v4
+- [Zustand](https://github.com/pmndrs/zustand) with `persist` for client state
+- [Vitest](https://vitest.dev/) + Testing Library for unit tests
+
+## Data sources
+
+- **Quran text + verse translations**: [api.alquran.cloud](https://alquran.cloud/api)
+- **Audio**: [islamic.network](https://islamic.network/) CDN
+- **Per-word transliteration + English gloss**: [Quran.com API v4](https://api.quran.com)
+- **Morphology + roots + lemmas**: [Quranic Arabic Corpus](http://corpus.quran.com)
+  via [mustafa0x/quran-morphology](https://github.com/mustafa0x/quran-morphology) (GPL)
+- **Per-word Indonesian gloss (Malay fallback)**:
+  [ekoheri/Al_Quran_Terjemahan_per_kata_per_ayat](https://github.com/ekoheri/Al_Quran_Terjemahan_per_kata_per_ayat)
+- **Curated Malay dictionary**: top ~308 lemmas hand-translated, see
+  `scripts/build-frequency.mjs`
+
+## Running locally
 
 ```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+npm install
+npm run dev          # http://localhost:3000
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+### Regenerating the static datasets
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+The repository ships with pre-built data under `public/data/`. To rebuild:
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+```bash
+node scripts/build-word-data.mjs       # ~5 min, hits Quran.com 114×
+node scripts/build-frequency.mjs       # ~30s, includes Indonesian WBW fetch
+```
 
-## Learn More
+### Scripts
 
-To learn more about Next.js, take a look at the following resources:
+```bash
+npm run dev          # dev server
+npm run build        # production build
+npm run start        # serve production build
+npm run lint         # ESLint
+npm run typecheck    # tsc --noEmit
+npm test             # vitest run
+npm run test:watch   # vitest --watch
+```
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+## License
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
-
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+Source code: MIT. Quran morphology data: GPL (Quranic Arabic Corpus).
+Audio + translations served via the respective upstream APIs under their own
+terms.

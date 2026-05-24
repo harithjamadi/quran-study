@@ -1,65 +1,126 @@
-import Image from "next/image";
+"use client";
 
-export default function Home() {
+import Link from "next/link";
+import { useLearning } from "@/store/learning";
+import { UI_STRINGS } from "@/lib/i18n";
+import { LastReadCard } from "@/components/LastReadCard";
+import { SurahCard } from "@/components/SurahCard";
+import { SURAHS } from "@/data/surahs";
+import { useHydrated } from "@/lib/use-hydrated";
+
+const POPULAR_IDS = [1, 2, 18, 36, 55, 67];
+const SHORT_IDS = [112, 113, 114, 110, 108, 103];
+
+export default function HomePage() {
+  const language = useLearning((s) => s.language);
+  const t = UI_STRINGS[language];
+  const hydrated = useHydrated();
+
+  const popular = SURAHS.filter((s) => POPULAR_IDS.includes(s.number));
+  const short = SURAHS.filter((s) => SHORT_IDS.includes(s.number));
+
+  if (!hydrated) return null;
+
   return (
-    <div className="flex flex-col flex-1 items-center justify-center bg-zinc-50 font-sans dark:bg-black">
-      <main className="flex flex-1 w-full max-w-3xl flex-col items-center justify-between py-32 px-16 bg-white dark:bg-black sm:items-start">
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={100}
-          height={20}
-          priority
-        />
-        <div className="flex flex-col items-center gap-6 text-center sm:items-start sm:text-left">
-          <h1 className="max-w-xs text-3xl font-semibold leading-10 tracking-tight text-black dark:text-zinc-50">
-            To get started, edit the page.tsx file.
-          </h1>
-          <p className="max-w-md text-lg leading-8 text-zinc-600 dark:text-zinc-400">
-            Looking for a starting point or more instructions? Head over to{" "}
-            <a
-              href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Templates
-            </a>{" "}
-            or the{" "}
-            <a
-              href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Learning
-            </a>{" "}
-            center.
-          </p>
-        </div>
-        <div className="flex flex-col gap-4 text-base font-medium sm:flex-row">
-          <a
-            className="flex h-12 w-full items-center justify-center gap-2 rounded-full bg-foreground px-5 text-background transition-colors hover:bg-[#383838] dark:hover:bg-[#ccc] md:w-[158px]"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
+    <div className="space-y-12">
+      <section className="text-center space-y-5 py-8">
+        <p className="arabic text-3xl text-[color:var(--gold)] mb-2" lang="ar">
+          بِسْمِ ٱللَّهِ ٱلرَّحْمَـٰنِ ٱلرَّحِيمِ
+        </p>
+        <h1 className="text-4xl sm:text-5xl font-bold tracking-tight text-[color:var(--foreground)]">
+          {t.home_hero_title}
+        </h1>
+        <p className="max-w-2xl mx-auto text-lg text-[color:var(--muted)] leading-relaxed">
+          {t.home_hero_desc}
+        </p>
+        <div className="flex flex-wrap items-center justify-center gap-4 pt-4">
+          <Link
+            href="/learn/session"
+            className="rounded-full bg-[color:var(--accent)] text-white px-8 py-3 font-semibold hover:bg-[color:var(--accent-strong)] shadow-lg shadow-[color:var(--accent)]/20 transition-all active:scale-95"
           >
-            <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={16}
-              height={16}
-            />
-            Deploy Now
-          </a>
-          <a
-            className="flex h-12 w-full items-center justify-center rounded-full border border-solid border-black/[.08] px-5 transition-colors hover:border-transparent hover:bg-black/[.04] dark:border-white/[.145] dark:hover:bg-[#1a1a1a] md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
+            {t.dash_start_quest} →
+          </Link>
+          <Link
+            href="/surahs"
+            className="rounded-full border border-[color:var(--border)] bg-[color:var(--surface)] px-8 py-3 font-semibold hover:bg-[color:var(--accent-soft)]/20 transition-all active:scale-95"
           >
-            Documentation
-          </a>
+            {t.home_read_title}
+          </Link>
         </div>
-      </main>
+      </section>
+
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+        <div className="lg:col-span-2 space-y-10">
+          <LastReadCard />
+
+          <section>
+            <header className="flex items-center justify-between mb-6">
+              <h2 className="text-xl font-bold">{t.home_popular}</h2>
+              <Link
+                href="/surahs"
+                className="text-sm font-medium text-[color:var(--accent-strong)] hover:underline"
+              >
+                {t.home_view_all}
+              </Link>
+            </header>
+            <div className="grid sm:grid-cols-2 gap-4">
+              {popular.map((s) => (
+                <SurahCard key={s.number} surah={s} />
+              ))}
+            </div>
+          </section>
+
+          <section>
+            <header className="mb-6">
+              <h2 className="text-xl font-bold">{t.home_short_surahs}</h2>
+              <p className="text-sm text-[color:var(--muted)]">{t.home_short_desc}</p>
+            </header>
+            <div className="grid sm:grid-cols-2 gap-4">
+              {short.map((s) => (
+                <SurahCard key={s.number} surah={s} />
+              ))}
+            </div>
+          </section>
+        </div>
+
+        <aside className="space-y-6">
+          <div className="card p-6 border-[color:var(--gold)]/20 bg-[color:var(--gold)]/5">
+            <h3 className="font-bold flex items-center gap-2 mb-3">
+              <span className="text-xl">🏆</span>
+              {t.home_quest_title}
+            </h3>
+            <p className="text-sm text-[color:var(--muted)] leading-relaxed">
+              {t.home_quest_desc}
+            </p>
+            <Link
+              href="/learn"
+              className="mt-4 block text-center rounded-xl bg-[color:var(--gold)] text-white py-2.5 text-sm font-bold hover:opacity-90 shadow-sm"
+            >
+              {t.nav_learn}
+            </Link>
+          </div>
+
+          <div className="card p-6">
+            <h3 className="font-bold flex items-center gap-2 mb-3">
+              <span className="text-xl">📖</span>
+              {t.home_tap_title}
+            </h3>
+            <p className="text-sm text-[color:var(--muted)] leading-relaxed">
+              {t.home_tap_desc}
+            </p>
+          </div>
+
+          <div className="card p-6">
+            <h3 className="font-bold flex items-center gap-2 mb-3">
+              <span className="text-xl">✨</span>
+              {t.home_forever_title}
+            </h3>
+            <p className="text-sm text-[color:var(--muted)] leading-relaxed">
+              {t.home_forever_desc}
+            </p>
+          </div>
+        </aside>
+      </div>
     </div>
   );
 }

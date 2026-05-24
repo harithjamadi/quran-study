@@ -1,0 +1,108 @@
+"use client";
+
+import { create } from "zustand";
+import { persist, createJSONStorage } from "zustand/middleware";
+import {
+  applyGrade,
+  freshLemmaState,
+  isConsecutiveDay,
+  localDateKey,
+  statusOf,
+  type Grade,
+  type LemmaState,
+  type WordStatus,
+} from "@/lib/learning";
+
+export type Language = "en" | "ms";
+
+interface LearningState {
+  /** Per-lemma SRS state. Keyed by the Arabic lemma string. */
+  lemmas: Record<string, LemmaState>;
+  /** UI language preference for the learning flow + verse context. */
+  language: Language;
+  /** Highest position in the frequency list the user has been introduced to. */
+  introducedThroughRank: number;
+  /** Local-date string of the user's most recent learning activity. */
+  lastSessionDate: string | null;
+  /** Consecutive-day streak. */
+  dayStreak: number;
+  /** Cards reviewed today (resets at midnight local). */
+  reviewedToday: number;
+
+  // actions
+  grade: (lemma: string, grade: Grade) => void;
+  introduce: (lemma: string) => void;
+  introduceMany: (lemmas: string[]) => void;
+  advanceIntroducedTo: (rank: number) => void;
+  setLanguage: (l: Language) => void;
+  resetProgress: () => void;
+  statusOf: (lemma: string) => WordStatus;
+}
+
+const DEFAULTS = {
+  lemmas: {} as Record<string, LemmaState>,
+  language: "en" as Language,
+  introducedThroughRank: 0,
+  lastSessionDate: null as string | null,
+  dayStreak: 0,
+  reviewedToday: 0,
+};
+
+function bumpStreak(state: LearningState): Partial<LearningState> {
+  const today = localDateKey();
+  if (state.lastSessionDate === today) {
+    return { reviewedToday: state.reviewedToday + 1 };
+  }
+  const streak = isConsecutiveDay(state.lastSessionDate ?? "", today)
+    ? state.dayStreak + 1
+    : 1;
+  return {
+    lastSessionDate: today,
+    dayStreak: streak,
+    reviewedToday: 1,
+  };
+}
+
+export const useLearning = create<LearningState>()(
+  persist(
+    (set, get) => ({
+      ...DEFAULTS,
+      grade: (lemma, grade) => {
+        const cur = get();
+        const next = applyGrade(cur.lemmas[lemma], grade);
+        set({
+          lemmas: { ...cur.lemmas, [lemma]: next },
+          ...bumpStreak(cur),
+        });
+      },
+      introduce: (lemma) => {
+        const cur = get();
+        if (cur.lemmas[lemma]) return;
+        set({ lemmas: { ...cur.lemmas, [lemma]: freshLemmaState() } });
+      },
+      introduceMany: (lemmas) => {
+        const cur = get();
+        const nextLemmas = { ...cur.lemmas };
+        let changed = false;
+        for (const l of lemmas) {
+          if (!nextLemmas[l]) {
+            nextLemmas[l] = freshLemmaState();
+            changed = true;
+          }
+        }
+        if (changed) set({ lemmas: nextLemmas });
+      },
+      advanceIntroducedTo: (rank) => {
+        const cur = get();
+        if (rank > cur.introducedThroughRank) set({ introducedThroughRank: rank });
+      },
+      setLanguage: (language) => set({ language }),
+      resetProgress: () => set(DEFAULTS),
+      statusOf: (lemma) => statusOf(get().lemmas[lemma]),
+    }),
+    {
+      name: "noor.learning.v1",
+      storage: createJSONStorage(() => localStorage),
+    }
+  )
+);

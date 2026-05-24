@@ -1,0 +1,18 @@
+{
+  "name": "Noor — Free Quran study",
+  "short_name": "Noor",
+  "description": "A free, distraction-free Quran study tool with translations, recitation, and bookmarks.",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#fbfaf5",
+  "theme_color": "#5a7a4c",
+  "orientation": "portrait-primary",
+  "icons": [
+    {
+      "src": "/icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ]
+}

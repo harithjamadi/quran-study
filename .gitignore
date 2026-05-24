@@ -36,6 +36,9 @@ yarn-error.log*
 # vercel
 .vercel
 
+# build-script cache (re-downloadable, do not commit)
+/.cache/
+
 # typescript
 *.tsbuildinfo
 next-env.d.ts
