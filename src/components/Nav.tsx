@@ -22,33 +22,51 @@ export function Nav() {
   ];
 
   return (
-    <header className="sticky top-0 z-40 backdrop-blur bg-[color:var(--background)]/85 border-b border-[color:var(--border)]">
-      <nav className="max-w-5xl mx-auto px-4 sm:px-6 h-14 flex items-center gap-4">
-        <Link href="/" className="flex items-center gap-2 font-semibold tracking-tight">
-          <span aria-hidden className="text-[color:var(--gold)] text-xl">✦</span>
-          <span>Mubin</span>
-          <span className="hidden sm:inline text-xs text-[color:var(--muted)] font-normal">
-            · Quran study
+    <header className="sticky top-0 z-40 backdrop-blur-md bg-[color:var(--background)]/80 border-b border-[color:var(--border)]">
+      <nav className="mx-auto w-full max-w-5xl px-4 sm:px-6 lg:px-8 h-14 sm:h-16 flex items-center gap-3 sm:gap-6">
+        <Link
+          href="/"
+          className="group flex items-center gap-2 shrink-0"
+          aria-label="Mubin home"
+        >
+          <span
+            aria-hidden
+            className="text-[color:var(--gold)] text-lg sm:text-xl transition-transform duration-500 group-hover:rotate-180"
+          >
+            ✦
+          </span>
+          <span
+            className="display text-[1.05rem] sm:text-[1.15rem] tracking-tight"
+            style={{ fontWeight: 600 }}
+          >
+            Mubin
           </span>
         </Link>
-        <ul className="ml-auto flex items-center gap-1 text-sm">
+
+        <ul className="ml-auto flex items-center gap-0.5 sm:gap-1 text-[13px] sm:text-sm overflow-x-auto scrollbar-thin -mx-1 px-1">
           {items.map((it) => {
             const active =
               it.href === "/"
                 ? pathname === "/"
                 : pathname.startsWith(it.href);
             return (
-              <li key={it.href}>
+              <li key={it.href} className="relative shrink-0">
                 <Link
                   href={it.href}
                   className={classNames(
-                    "px-3 py-1.5 rounded-md transition-colors",
+                    "relative inline-flex items-center px-2.5 sm:px-3 py-2 rounded-md transition-colors duration-200 whitespace-nowrap",
                     active
-                      ? "bg-[color:var(--accent-soft)] text-[color:var(--accent-strong)]"
-                      : "text-[color:var(--muted)] hover:text-[color:var(--foreground)] hover:bg-[color:var(--border)]/40"
+                      ? "text-[color:var(--foreground)]"
+                      : "text-[color:var(--muted)] hover:text-[color:var(--foreground)]"
                   )}
                 >
                   {it.label}
+                  {active && (
+                    <span
+                      aria-hidden
+                      className="absolute left-2.5 right-2.5 sm:left-3 sm:right-3 -bottom-[1px] h-[2px] bg-[color:var(--gold)] rounded-full animate-fade-in"
+                    />
+                  )}
                 </Link>
               </li>
             );

@@ -8,9 +8,15 @@ export function LearnPageHeader() {
   const t = UI_STRINGS[language];
 
   return (
-    <header>
-      <h1 className="text-2xl font-bold tracking-tight">{t.dash_learn_title}</h1>
-      <p className="text-sm text-[color:var(--muted)] mt-1">
+    <header className="space-y-3 pt-2 sm:pt-4">
+      <p className="eyebrow text-[color:var(--gold)]">تعلم · Word Quest</p>
+      <h1
+        className="display text-[length:var(--text-4xl)] leading-[1.05]"
+        style={{ fontWeight: 600 }}
+      >
+        {t.dash_learn_title}
+      </h1>
+      <p className="max-w-[55ch] text-[length:var(--text-base)] text-[color:var(--foreground-soft)] leading-relaxed">
         {t.dash_quest_long_desc}
       </p>
     </header>

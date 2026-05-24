@@ -1,10 +1,30 @@
 import type { Metadata, Viewport } from "next";
+import { Fraunces, Hanken_Grotesk } from "next/font/google";
 import "./globals.css";
 import { Nav } from "@/components/Nav";
 import { ThemeProvider } from "@/components/ThemeProvider";
 import { AudioProvider } from "@/components/AudioProvider";
 import { AudioBar } from "@/components/AudioBar";
 import { Footer } from "@/components/Footer";
+
+// Display: Fraunces — variable serif with optical sizing, soft characterful
+// italics. Used for headings, big stats, editorial moments.
+const display = Fraunces({
+  subsets: ["latin"],
+  weight: ["400", "500", "600", "700"],
+  style: ["normal", "italic"],
+  variable: "--font-display-family",
+  display: "swap",
+});
+
+// Body: Hanken Grotesk — humanist sans with quiet personality. Not Inter,
+// not Roboto. Reads beautifully at small sizes alongside an editorial serif.
+const body = Hanken_Grotesk({
+  subsets: ["latin"],
+  weight: ["300", "400", "500", "600", "700"],
+  variable: "--font-body-family",
+  display: "swap",
+});
 
 export const metadata: Metadata = {
   title: {
@@ -27,8 +47,8 @@ export const viewport: Viewport = {
   width: "device-width",
   initialScale: 1,
   themeColor: [
-    { media: "(prefers-color-scheme: light)", color: "#fbfaf5" },
-    { media: "(prefers-color-scheme: dark)", color: "#14140f" },
+    { media: "(prefers-color-scheme: light)", color: "#f7f4ec" },
+    { media: "(prefers-color-scheme: dark)", color: "#131210" },
   ],
 };
 
@@ -38,7 +58,11 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    <html lang="en" suppressHydrationWarning>
+    <html
+      lang="en"
+      suppressHydrationWarning
+      className={`${display.variable} ${body.variable}`}
+    >
       <head>
         <link
           rel="preconnect"
@@ -50,12 +74,19 @@ export default function RootLayout({
           href="https://cdn.islamic.network"
           crossOrigin="anonymous"
         />
+        <link
+          rel="preconnect"
+          href="https://audio.qurancdn.com"
+          crossOrigin="anonymous"
+        />
       </head>
-      <body className="min-h-screen">
+      <body className="min-h-screen antialiased">
         <ThemeProvider>
           <AudioProvider>
             <Nav />
-            <main className="max-w-5xl mx-auto px-4 sm:px-6 py-6 pb-32">{children}</main>
+            <main className="mx-auto w-full max-w-5xl px-4 sm:px-6 lg:px-8 py-8 sm:py-10 pb-32">
+              {children}
+            </main>
             <AudioBar />
             <Footer />
           </AudioProvider>

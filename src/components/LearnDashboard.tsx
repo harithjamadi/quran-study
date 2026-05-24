@@ -35,10 +35,6 @@ export function LearnDashboard({ previewLemmas, coverage }: Props) {
     counts[statusOf(lemmasState[lemma])]++;
   }
 
-  // The preview-list-only comprehension calculation: matches the user's
-  // mastered lemmas against the top N. This is an UNDERESTIMATE if they've
-  // mastered something beyond the top N, but the dashboard is meant to nudge
-  // toward the highest-impact words first, so this framing is intentional.
   const pct = comprehensionPct(previewLemmas, lemmasState, coverage.totalTokens);
   const dueCount = Object.entries(lemmasState).filter(([, s]) => isDue(s)).length;
   const introduced = Object.keys(lemmasState).length;
@@ -50,45 +46,69 @@ export function LearnDashboard({ previewLemmas, coverage }: Props) {
     coverage.milestones.find((m) => m.topN > Math.max(introduced, introducedRank)) ??
     coverage.milestones[coverage.milestones.length - 1];
 
+  const mastered = counts.good + counts.strong;
+  const learning = counts.weak + counts.new;
+
   return (
-    <div className="space-y-6">
-      <section className="card p-6 sm:p-8 relative overflow-hidden">
+    <div className="space-y-8 sm:space-y-10 stagger-children">
+      {/* ── HERO: comprehension as the headline number ──
+          A single editorial display number. The progress bar is a hairline
+          gold rule under it. Milestone callout sits as a marginal note. */}
+      <section className="relative overflow-hidden rounded-[var(--radius-xl)] border border-[color:var(--border)] bg-gradient-to-br from-[color:var(--surface)] via-[color:var(--accent-soft)]/30 to-[color:var(--surface)] p-7 sm:p-10">
         <div
           aria-hidden
-          className="absolute inset-0 bg-[radial-gradient(ellipse_at_top,var(--accent-soft)_0%,transparent_60%)] pointer-events-none"
+          className="absolute -top-24 -right-24 h-64 w-64 rounded-full bg-[color:var(--accent)]/8 blur-3xl"
         />
-        <div className="relative">
-          <p className="text-xs uppercase tracking-widest text-[color:var(--muted)]">
-            {t.dash_comprehension}
-          </p>
-          <div className="flex items-baseline gap-3 mt-1">
-            <p className="text-5xl font-semibold text-[color:var(--accent-strong)]">
-              {pct.toFixed(1)}%
+        <div className="relative grid grid-cols-1 md:grid-cols-[1fr_auto] gap-8 items-end">
+          <div>
+            <p className="eyebrow text-[color:var(--accent-strong)] mb-4">
+              {t.dash_comprehension}
             </p>
-            <p className="text-sm text-[color:var(--muted)]">
-              {t.dash_of_quran.replace("{total}", coverage.totalTokens.toLocaleString())}
-            </p>
-          </div>
-          <ProgressBar pct={pct} />
-          {nextMilestone && (
-            <p className="text-xs text-[color:var(--muted)] mt-2">
-              {t.dash_milestone}: top {nextMilestone.topN} lemmas →{" "}
-              <span className="text-[color:var(--accent-strong)]">
-                {nextMilestone.pct}% {t.dash_comprehension.toLowerCase()}
+            <div className="flex items-baseline gap-3">
+              <span
+                className="stat-display text-[clamp(4rem,3rem+5vw,7rem)] text-[color:var(--accent-strong)]"
+              >
+                {pct.toFixed(1)}
+                <span className="text-[0.45em] align-baseline ml-1 text-[color:var(--accent)]">%</span>
               </span>
-            </p>
+            </div>
+            <div className="mt-4 max-w-md">
+              <div className="relative h-[3px] bg-[color:var(--border)] rounded-full overflow-hidden">
+                <div
+                  className="absolute inset-y-0 left-0 bg-gradient-to-r from-[color:var(--gold)] to-[color:var(--accent)] rounded-full transition-[width] duration-700 ease-out"
+                  style={{ width: `${Math.min(100, Math.max(1, pct))}%` }}
+                />
+              </div>
+              <p className="mt-3 text-sm text-[color:var(--muted-strong)] leading-relaxed">
+                {t.dash_of_quran.replace("{total}", coverage.totalTokens.toLocaleString())}
+              </p>
+            </div>
+          </div>
+
+          {nextMilestone && (
+            <div className="md:text-right md:max-w-[16rem]">
+              <p className="eyebrow mb-2">{t.dash_milestone}</p>
+              <p className="display text-[length:var(--text-2xl)] text-[color:var(--foreground)]" style={{ fontWeight: 600 }}>
+                {nextMilestone.pct}%
+              </p>
+              <p className="text-xs text-[color:var(--muted)] mt-1">
+                top {nextMilestone.topN.toLocaleString()} lemmas
+              </p>
+            </div>
           )}
         </div>
       </section>
 
-      <section className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-        <Stat label={t.dash_mastered} value={counts.good + counts.strong} tone="accent" />
-        <Stat label={t.dash_learning} value={counts.weak + counts.new} />
-        <Stat label={t.dash_due} value={dueCount} tone={dueCount > 0 ? "accent" : "muted"} />
+      {/* ── Stat strip ── */}
+      <section className="grid grid-cols-2 md:grid-cols-4 gap-3 sm:gap-4">
+        <Stat label={t.dash_mastered} value={mastered} tone="accent" />
+        <Stat label={t.dash_learning} value={learning} />
+        <Stat label={t.dash_due} value={dueCount} tone={dueCount > 0 ? "gold" : "muted"} pulse={dueCount > 0} />
         <Stat label={t.dash_streak} value={dayStreak} hint={`${reviewedToday} ${t.dash_reviewed_today}`} />
       </section>
 
-      <section className="grid sm:grid-cols-2 gap-3">
+      {/* ── Primary actions ── */}
+      <section className="grid sm:grid-cols-2 gap-3 sm:gap-4">
         <ActionCard
           title={dueCount > 0 ? t.dash_continue_quest : t.dash_start_quest}
           subtitle={
@@ -108,42 +128,51 @@ export function LearnDashboard({ previewLemmas, coverage }: Props) {
         />
       </section>
 
+      {/* ── Next words preview ── */}
       {nextNewSlice.length > 0 && (
         <section>
-          <header className="flex items-baseline justify-between mb-3">
-            <h2 className="text-sm font-semibold">{t.dash_next_words}</h2>
-            <p className="text-xs text-[color:var(--muted)]">
+          <header className="flex items-end justify-between mb-5 sm:mb-6">
+            <div>
+              <p className="eyebrow mb-1">القادم</p>
+              <h2 className="display text-[length:var(--text-xl)]" style={{ fontWeight: 600 }}>
+                {t.dash_next_words}
+              </h2>
+            </div>
+            <p className="text-xs text-[color:var(--muted)] hidden sm:block">
               {t.dash_picked_by}
             </p>
           </header>
-          <ul className="card divide-y divide-[color:var(--border)]">
+          <ul className="card divide-y divide-[color:var(--border)] overflow-hidden">
             {nextNewSlice.map((l, idx) => (
-              <li key={l.lemma} className="p-4 flex items-center gap-4">
-                <span className="w-8 text-xs text-[color:var(--muted)] tabular-nums">
-                  #{introducedRank + idx + 1}
+              <li
+                key={l.lemma}
+                className="group p-4 sm:p-5 flex items-center gap-4 transition-colors hover:bg-[color:var(--accent-soft)]/30"
+              >
+                <span className="w-10 shrink-0 stat-display text-base text-[color:var(--muted)] tabular-nums">
+                  {String(introducedRank + idx + 1).padStart(2, "0")}
                 </span>
                 <div className="flex-1 min-w-0">
                   <p
-                    className="arabic text-2xl text-[color:var(--accent-strong)]"
+                    className="arabic text-[length:var(--arabic-sm)] text-[color:var(--accent-strong)] leading-none"
                     lang="ar"
                     dir="rtl"
                   >
                     {l.lemma}
                   </p>
                   {l.translit && (
-                    <p className="text-xs text-[color:var(--muted)] italic">{l.translit}</p>
+                    <p className="text-xs text-[color:var(--muted)] italic mt-1.5">{l.translit}</p>
                   )}
                 </div>
-                <div className="text-right min-w-0">
+                <div className="text-right min-w-0 shrink-0">
                   <p className="text-sm flex items-baseline justify-end gap-1.5">
                     {(() => {
                       const g = effectiveGloss(l, language);
                       if (!g) return <span>—</span>;
                       return (
                         <>
-                          <span>{g.text}</span>
+                          <span className="font-medium">{g.text}</span>
                           {g.isFallback && (
-                            <span className="text-[9px] font-semibold uppercase tracking-widest opacity-60">
+                            <span className="text-[9px] font-semibold uppercase tracking-widest opacity-50">
                               {language === "ms" ? "EN" : "MS"}
                             </span>
                           )}
@@ -151,7 +180,7 @@ export function LearnDashboard({ previewLemmas, coverage }: Props) {
                       );
                     })()}
                   </p>
-                  <p className="text-xs text-[color:var(--muted)]">
+                  <p className="text-[11px] text-[color:var(--muted)] tabular-nums mt-0.5">
                     {l.count.toLocaleString()}× {t.dash_in_quran_short}
                   </p>
                 </div>
@@ -164,39 +193,36 @@ export function LearnDashboard({ previewLemmas, coverage }: Props) {
   );
 }
 
-function ProgressBar({ pct }: { pct: number }) {
-  return (
-    <div className="mt-3 relative h-2 bg-[color:var(--border)] rounded-full overflow-hidden">
-      <div
-        className="absolute inset-y-0 left-0 bg-[color:var(--accent)] transition-all duration-500"
-        style={{ width: `${Math.min(100, pct)}%` }}
-      />
-    </div>
-  );
-}
-
 function Stat({
   label,
   value,
   tone = "muted",
   hint,
+  pulse = false,
 }: {
   label: string;
   value: number;
-  tone?: "accent" | "muted";
+  tone?: "accent" | "muted" | "gold";
   hint?: string;
+  pulse?: boolean;
 }) {
+  const color =
+    tone === "accent"
+      ? "text-[color:var(--accent-strong)]"
+      : tone === "gold"
+      ? "text-[color:var(--gold-strong)]"
+      : "text-[color:var(--foreground)]";
   return (
-    <div className="card p-4">
-      <p className="text-xs text-[color:var(--muted)] uppercase tracking-wider">{label}</p>
+    <div className="rounded-[var(--radius)] border border-[color:var(--border)] bg-[color:var(--surface)] p-4 sm:p-5">
+      <p className="eyebrow text-[10px]">{label}</p>
       <p
-        className={`text-2xl font-semibold mt-1 ${
-          tone === "accent" ? "text-[color:var(--accent-strong)]" : ""
-        }`}
+        className={`stat-display text-[length:var(--text-3xl)] mt-2 ${color} ${pulse ? "animate-pulse-soft" : ""}`}
       >
-        {value}
+        {value.toLocaleString()}
       </p>
-      {hint && <p className="text-[10px] text-[color:var(--muted)] mt-1">{hint}</p>}
+      {hint && (
+        <p className="text-[11px] text-[color:var(--muted)] mt-1 leading-tight">{hint}</p>
+      )}
     </div>
   );
 }
@@ -215,20 +241,31 @@ function ActionCard({
   return (
     <Link
       href={href}
-      className={`card p-5 transition-colors ${
+      className={`group relative overflow-hidden rounded-[var(--radius-lg)] p-5 sm:p-6 transition-all duration-300 ${
         primary
-          ? "border-[color:var(--accent)] bg-[color:var(--accent-soft)]/30 hover:bg-[color:var(--accent-soft)]/50"
-          : "hover:bg-[color:var(--border)]/30"
+          ? "border-2 border-[color:var(--accent)] bg-[color:var(--accent)] text-white shadow-[var(--shadow-glow)] hover:shadow-[0_12px_36px_-8px_var(--accent-glow)] hover:-translate-y-0.5"
+          : "border border-[color:var(--border-strong)] bg-[color:var(--surface)] hover:border-[color:var(--accent)] hover:bg-[color:var(--accent-soft)]/30"
       }`}
     >
-      <p
-        className={`text-base font-semibold ${
-          primary ? "text-[color:var(--accent-strong)]" : ""
-        }`}
-      >
-        {title}
-      </p>
-      <p className="text-xs text-[color:var(--muted)] mt-1">{subtitle}</p>
+      <div className="flex items-start justify-between gap-3">
+        <div>
+          <p
+            className={`display text-[length:var(--text-lg)] ${primary ? "text-white" : "text-[color:var(--foreground)]"}`}
+            style={{ fontWeight: 600 }}
+          >
+            {title}
+          </p>
+          <p className={`text-xs mt-1.5 ${primary ? "text-white/80" : "text-[color:var(--muted)]"}`}>
+            {subtitle}
+          </p>
+        </div>
+        <span
+          aria-hidden
+          className={`text-xl transition-transform duration-300 group-hover:translate-x-1 ${primary ? "text-white" : "text-[color:var(--muted)] group-hover:text-[color:var(--accent-strong)]"}`}
+        >
+          →
+        </span>
+      </div>
     </Link>
   );
 }

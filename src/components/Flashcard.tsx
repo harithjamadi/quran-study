@@ -108,28 +108,34 @@ export function Flashcard({ card, distractorPool, onResult, onNext }: Props) {
   };
 
   return (
-    <div className="card p-6 sm:p-8 space-y-6">
-      <div className="text-center">
-        <p className="text-xs uppercase tracking-widest text-[color:var(--muted)] mb-3">
-          {t.flash_question}
-        </p>
+    <div className="card-raised relative overflow-hidden p-6 sm:p-10 space-y-8 animate-fade-up">
+      {/* Subtle gold accent — top edge */}
+      <div
+        aria-hidden
+        className="absolute top-0 left-1/2 -translate-x-1/2 h-px w-32 bg-gradient-to-r from-transparent via-[color:var(--gold)] to-transparent opacity-60"
+      />
+      <div className="text-center pt-2 sm:pt-4">
+        <p className="eyebrow mb-5 sm:mb-6">{t.flash_question}</p>
         <p
-          className="arabic text-5xl sm:text-6xl text-[color:var(--accent-strong)]"
+          className="arabic-display text-[color:var(--foreground)]"
           lang="ar"
           dir="rtl"
+          style={{ fontSize: "var(--arabic-xl)" }}
         >
           {card.sampleText}
         </p>
         {card.translit && (
-          <p className="mt-2 italic text-[color:var(--muted)]">{card.translit}</p>
+          <p className="mt-3 sm:mt-4 display-italic text-[color:var(--muted-strong)] text-[length:var(--text-base)] tracking-wide">
+            {card.translit}
+          </p>
         )}
         <button
           type="button"
           onClick={replay}
-          className="mt-4 inline-flex items-center gap-1.5 rounded-full border border-[color:var(--border)] px-4 py-1.5 text-sm font-medium text-[color:var(--accent-strong)] hover:bg-[color:var(--accent-soft)]/40 transition-colors"
+          className="mt-5 sm:mt-6 inline-flex items-center gap-2 rounded-full border border-[color:var(--border-strong)] bg-[color:var(--surface)] px-4 py-2 text-sm font-medium text-[color:var(--accent-strong)] hover:border-[color:var(--accent)] hover:bg-[color:var(--accent-soft)]/40 transition-all active:scale-95"
           aria-label="Play audio"
         >
-          <svg viewBox="0 0 24 24" width="16" height="16" fill="currentColor" aria-hidden>
+          <svg viewBox="0 0 24 24" width="14" height="14" fill="currentColor" aria-hidden>
             <path d="M8 5l12 7-12 7z" />
           </svg>
           {t.flash_replay}

@@ -1,102 +1,288 @@
 @import "tailwindcss";
 
+/* ============================================================
+   MUBIN — Modern Mushaf
+   A digital interface for a luxury hardcover Quran.
+   The Arabic word is the hero. Latin serves it.
+   ============================================================ */
+
 :root {
-  --background: #fbfaf5;
-  --surface: #ffffff;
-  --foreground: #1b1a17;
-  --muted: #6b675e;
-  --border: #ece8da;
-  --accent: #5a7a4c;
-  --accent-soft: #e7efd9;
-  --accent-strong: #3f5734;
-  --gold: #b08a3e;
-  --danger: #b54339;
+  /* Surface palette — warm paper-and-ink, calibrated for long reading */
+  --background: #f7f4ec;
+  --surface: #fdfbf4;
+  --surface-raised: #ffffff;
+  --foreground: #1a1812;
+  --foreground-soft: #3a3528;
+  --muted: #6a6354;
+  --muted-strong: #4a4538;
+  --border: #e6dfcc;
+  --border-strong: #d4cbb1;
+
+  /* Sage — primary action, scholarly */
+  --accent: #4f6b3f;
+  --accent-soft: #e6ede0;
+  --accent-strong: #324628;
+  --accent-glow: rgba(79, 107, 63, 0.18);
+
+  /* Gold — ornament, never primary */
+  --gold: #a8842f;
+  --gold-soft: #f4ead0;
+  --gold-strong: #7d6020;
+
+  /* Editorial accent — ink red for emphasis, used sparingly */
+  --ink: #6b2c20;
+  --danger: #a13a30;
+
+  /* Type scale — fluid via clamp() */
+  --text-xs: clamp(0.72rem, 0.71rem + 0.05vw, 0.75rem);
+  --text-sm: clamp(0.84rem, 0.82rem + 0.1vw, 0.9rem);
+  --text-base: clamp(0.95rem, 0.92rem + 0.15vw, 1.05rem);
+  --text-lg: clamp(1.1rem, 1.05rem + 0.25vw, 1.25rem);
+  --text-xl: clamp(1.3rem, 1.2rem + 0.5vw, 1.55rem);
+  --text-2xl: clamp(1.55rem, 1.4rem + 0.75vw, 1.95rem);
+  --text-3xl: clamp(1.95rem, 1.7rem + 1.25vw, 2.6rem);
+  --text-4xl: clamp(2.4rem, 2rem + 2vw, 3.4rem);
+  --text-display: clamp(2.6rem, 2.1rem + 2.5vw, 4.2rem);
+
+  /* Arabic-specific scale — pushed larger because Arabic is the hero */
+  --arabic-sm: clamp(1.5rem, 1.3rem + 1vw, 2rem);
+  --arabic-md: clamp(2rem, 1.7rem + 1.5vw, 2.75rem);
+  --arabic-lg: clamp(2.5rem, 2rem + 2.5vw, 3.75rem);
+  --arabic-xl: clamp(3.25rem, 2.5rem + 3.75vw, 5rem);
+  --arabic-display: clamp(3.5rem, 2.8rem + 4vw, 6rem);
+
+  /* Spatial rhythm */
+  --radius-sm: 0.5rem;
+  --radius: 0.875rem;
+  --radius-lg: 1.25rem;
+  --radius-xl: 1.75rem;
+
+  /* Layered shadows tuned for warm paper, not flat shadow */
+  --shadow-sm: 0 1px 2px rgba(60, 50, 30, 0.04);
+  --shadow: 0 2px 8px rgba(60, 50, 30, 0.06), 0 1px 2px rgba(60, 50, 30, 0.04);
+  --shadow-lg: 0 12px 32px -8px rgba(60, 50, 30, 0.12), 0 4px 12px -4px rgba(60, 50, 30, 0.06);
+  --shadow-glow: 0 8px 28px -6px var(--accent-glow);
 }
 
 .dark {
-  --background: #14140f;
-  --surface: #1d1d17;
-  --foreground: #f3efde;
-  --muted: #a09b8a;
-  --border: #2c2c22;
+  --background: #131210;
+  --surface: #1c1a16;
+  --surface-raised: #24211c;
+  --foreground: #f0ead7;
+  --foreground-soft: #d4ccb6;
+  --muted: #9a9282;
+  --muted-strong: #b8b0a0;
+  --border: #2b271f;
+  --border-strong: #3d3829;
+
   --accent: #8caa6f;
   --accent-soft: #28341c;
-  --accent-strong: #b3d49a;
-  --gold: #d7b56d;
-  --danger: #e07a72;
+  --accent-strong: #b8d49a;
+  --accent-glow: rgba(140, 170, 111, 0.22);
+
+  --gold: #d4b56a;
+  --gold-soft: #2a2418;
+  --gold-strong: #e8c98a;
+
+  --ink: #d4886e;
+  --danger: #d97863;
+
+  --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.3);
+  --shadow: 0 2px 8px rgba(0, 0, 0, 0.35), 0 1px 2px rgba(0, 0, 0, 0.2);
+  --shadow-lg: 0 12px 32px -8px rgba(0, 0, 0, 0.5), 0 4px 12px -4px rgba(0, 0, 0, 0.3);
+  --shadow-glow: 0 8px 28px -6px var(--accent-glow);
 }
 
 @theme inline {
   --color-background: var(--background);
   --color-surface: var(--surface);
+  --color-surface-raised: var(--surface-raised);
   --color-foreground: var(--foreground);
+  --color-foreground-soft: var(--foreground-soft);
   --color-muted: var(--muted);
+  --color-muted-strong: var(--muted-strong);
   --color-border: var(--border);
+  --color-border-strong: var(--border-strong);
   --color-accent: var(--accent);
   --color-accent-soft: var(--accent-soft);
   --color-accent-strong: var(--accent-strong);
   --color-gold: var(--gold);
+  --color-gold-soft: var(--gold-soft);
+  --color-ink: var(--ink);
   --color-danger: var(--danger);
+
+  --font-display: var(--font-display-family);
+  --font-sans: var(--font-body-family);
   --font-arabic: "Amiri Quran", "Scheherazade New", "Traditional Arabic", "Times New Roman", serif;
+}
+
+/* ============================================================
+   Base — body, typography, atmosphere
+   ============================================================ */
+
+html {
+  scroll-behavior: smooth;
+  -webkit-tap-highlight-color: transparent;
 }
 
 html,
 body {
   background: var(--background);
   color: var(--foreground);
-  font-family: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  font-family: var(--font-body-family, ui-sans-serif, system-ui, sans-serif);
+  font-feature-settings: "kern", "liga", "ss01";
   -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  text-rendering: optimizeLegibility;
 }
+
+/* Subtle paper texture via layered gradients — gives warm depth without an image */
+body::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: -1;
+  background:
+    radial-gradient(ellipse 80% 50% at 50% -10%, var(--gold-soft), transparent 60%),
+    radial-gradient(ellipse 60% 40% at 50% 110%, var(--accent-soft), transparent 60%);
+  opacity: 0.35;
+}
+.dark body::before {
+  opacity: 0.5;
+}
+
+/* Headings use the display serif by default */
+h1, h2, h3, .display {
+  font-family: var(--font-display-family, ui-serif, Georgia, serif);
+  font-feature-settings: "kern", "liga", "ss01", "cv11";
+  letter-spacing: -0.015em;
+}
+
+/* Editorial italic for display moments */
+.display-italic {
+  font-family: var(--font-display-family, ui-serif, Georgia, serif);
+  font-style: italic;
+  letter-spacing: -0.01em;
+}
+
+/* ============================================================
+   Arabic — the hero
+   ============================================================ */
 
 .arabic {
   font-family: var(--font-arabic);
   direction: rtl;
-  line-height: 2.15;
+  line-height: 2.1;
   letter-spacing: 0;
   font-feature-settings: "kern", "liga", "calt";
+  word-spacing: 0.1em;
+}
+
+.arabic-display {
+  font-family: var(--font-arabic);
+  direction: rtl;
+  font-size: var(--arabic-display);
+  line-height: 1.4;
+  color: var(--foreground);
+  letter-spacing: 0;
 }
 
 .bismillah {
   font-family: var(--font-arabic);
   direction: rtl;
-  font-size: 1.75rem;
+  font-size: var(--arabic-md);
   text-align: center;
-  color: var(--accent-strong);
+  color: var(--gold-strong);
+  line-height: 1.6;
 }
+
+.dark .bismillah {
+  color: var(--gold);
+}
+
+/* ============================================================
+   Cards & surfaces
+   ============================================================ */
 
 .card {
   background: var(--surface);
   border: 1px solid var(--border);
-  border-radius: 1rem;
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-sm);
+  transition: border-color 200ms ease, box-shadow 200ms ease, transform 200ms ease;
+}
+
+.card-raised {
+  background: var(--surface-raised);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow);
+}
+
+.card-interactive {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-sm);
+  transition: border-color 250ms ease, box-shadow 250ms ease, transform 250ms ease;
+  cursor: pointer;
+}
+.card-interactive:hover {
+  border-color: var(--border-strong);
+  box-shadow: var(--shadow);
+  transform: translateY(-2px);
 }
 
 .divider {
   height: 1px;
-  background: linear-gradient(90deg, transparent, var(--border), transparent);
+  background: linear-gradient(90deg, transparent, var(--border-strong), transparent);
+}
+
+/* Hairline ornament rule — used like manuscript margins */
+.rule-gold {
+  position: relative;
+}
+.rule-gold::before, .rule-gold::after {
+  content: "";
+  display: inline-block;
+  height: 1px;
+  width: clamp(1.5rem, 3vw, 3rem);
+  vertical-align: middle;
+  background: linear-gradient(90deg, transparent, var(--gold), transparent);
+  margin: 0 0.875rem;
+  opacity: 0.7;
 }
 
 .ornament::before,
 .ornament::after {
-  content: "";
+  content: "✦";
   display: inline-block;
-  height: 1px;
-  width: 2.5rem;
   vertical-align: middle;
-  background: var(--border);
-  margin: 0 0.75rem;
+  color: var(--gold);
+  opacity: 0.55;
+  margin: 0 0.875rem;
+  font-size: 0.65em;
 }
+
+/* ============================================================
+   Focus, selection, scrollbar
+   ============================================================ */
 
 button:focus-visible,
 a:focus-visible,
-[role="button"]:focus-visible {
+[role="button"]:focus-visible,
+input:focus-visible,
+select:focus-visible,
+textarea:focus-visible {
   outline: 2px solid var(--accent);
-  outline-offset: 2px;
-  border-radius: 0.5rem;
+  outline-offset: 3px;
+  border-radius: var(--radius-sm);
 }
 
 ::selection {
-  background: var(--accent-soft);
-  color: var(--accent-strong);
+  background: var(--gold-soft);
+  color: var(--gold-strong);
 }
 
 .scrollbar-thin::-webkit-scrollbar {
@@ -104,19 +290,133 @@ a:focus-visible,
   height: 6px;
 }
 .scrollbar-thin::-webkit-scrollbar-thumb {
-  background: var(--border);
+  background: var(--border-strong);
   border-radius: 3px;
 }
+
+/* ============================================================
+   Motion — staggered entrance, soft pulse, smooth transitions
+   ============================================================ */
+
+@keyframes pulse-soft {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.5; }
+}
+.animate-pulse-soft {
+  animation: pulse-soft 1.6s ease-in-out infinite;
+}
+
+@keyframes fade-up {
+  from {
+    opacity: 0;
+    transform: translateY(12px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+.animate-fade-up {
+  animation: fade-up 600ms cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+@keyframes fade-in {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+.animate-fade-in {
+  animation: fade-in 400ms ease both;
+}
+
+@keyframes scale-in {
+  from {
+    opacity: 0;
+    transform: scale(0.96);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+.animate-scale-in {
+  animation: scale-in 220ms cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+/* Staggered children — use with .stagger-children > * */
+.stagger-children > * {
+  animation: fade-up 600ms cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+.stagger-children > *:nth-child(1) { animation-delay: 0ms; }
+.stagger-children > *:nth-child(2) { animation-delay: 80ms; }
+.stagger-children > *:nth-child(3) { animation-delay: 160ms; }
+.stagger-children > *:nth-child(4) { animation-delay: 240ms; }
+.stagger-children > *:nth-child(5) { animation-delay: 320ms; }
+.stagger-children > *:nth-child(6) { animation-delay: 400ms; }
+.stagger-children > *:nth-child(7) { animation-delay: 480ms; }
+.stagger-children > *:nth-child(8) { animation-delay: 560ms; }
+
+@media (prefers-reduced-motion: reduce) {
+  .animate-pulse-soft,
+  .animate-fade-up,
+  .animate-fade-in,
+  .animate-scale-in,
+  .stagger-children > * {
+    animation: none !important;
+  }
+  html { scroll-behavior: auto; }
+}
+
+/* ============================================================
+   Verse + reader-specific
+   ============================================================ */
 
 .verse-highlight {
   background: var(--accent-soft);
   transition: background-color 200ms ease;
 }
 
-@keyframes pulse-soft {
-  0%, 100% { opacity: 1; }
-  50% { opacity: 0.55; }
+.verse-number {
+  font-family: var(--font-display-family, serif);
+  color: var(--gold);
+  font-feature-settings: "tnum";
 }
-.animate-pulse-soft {
-  animation: pulse-soft 1.6s ease-in-out infinite;
+
+/* Small uppercase eyebrow used for section labels */
+.eyebrow {
+  font-size: 0.7rem;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  font-weight: 600;
+  color: var(--muted);
+}
+
+/* Big editorial number — used for comprehension %, key stats */
+.stat-display {
+  font-family: var(--font-display-family, serif);
+  font-feature-settings: "tnum", "lnum";
+  font-weight: 600;
+  line-height: 1;
+  letter-spacing: -0.03em;
+}
+
+/* ============================================================
+   Touch targets — ensure ≥44px on mobile for all controls
+   ============================================================ */
+
+@media (pointer: coarse) {
+  button, [role="button"], a.btn, .touch-target {
+    min-height: 44px;
+  }
+}
+
+/* ============================================================
+   Mobile-first refinements
+   ============================================================ */
+
+@media (max-width: 640px) {
+  /* Pull body type up slightly on mobile for legibility */
+  body { font-size: 16px; }
+
+  /* Cards get a bit more breathing room edge-to-edge */
+  .card { border-radius: var(--radius); }
 }
