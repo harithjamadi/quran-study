@@ -253,10 +253,20 @@ function SessionHeader({
           }`} />
         </div>
       </div>
-      <div className="relative h-1.5 bg-[color:var(--border)] rounded-full overflow-hidden">
+      <div className="relative h-2.5 bg-[color:var(--border)] rounded-full overflow-hidden">
         <div
-          className="absolute inset-y-0 left-0 bg-[color:var(--accent)] transition-all duration-300 shadow-[0_0_8px_var(--accent)]"
-          style={{ width: `${pct}%` }}
+          className="absolute inset-y-0 left-0 rounded-full transition-[width] duration-500 ease-out"
+          style={{
+            width: `${pct}%`,
+            background: "linear-gradient(90deg, var(--gold) 0%, var(--accent) 100%)",
+            boxShadow: "0 0 12px var(--accent-glow)",
+          }}
+        />
+        {/* tiny shimmer at the leading edge */}
+        <div
+          aria-hidden
+          className="absolute inset-y-0 w-2 bg-white/40 rounded-full blur-[3px] transition-[left] duration-500 ease-out"
+          style={{ left: `calc(${pct}% - 8px)` }}
         />
       </div>
     </div>

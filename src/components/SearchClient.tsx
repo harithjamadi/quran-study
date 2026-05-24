@@ -9,6 +9,7 @@ import type { SearchMatch } from "@/lib/types";
 import { TRANSLATIONS } from "@/lib/editions";
 import { searchQuran } from "@/lib/api";
 import { getSurah } from "@/data/surahs";
+import { EmptyState } from "@/components/EmptyState";
 
 interface Props {
   initialQuery: string;
@@ -99,12 +100,30 @@ export function SearchClient({
 
       {error && <p className="text-sm text-[color:var(--danger)]">{error}</p>}
 
-      {!error && query.trim() && !isPending && (
+      {!error && query.trim() && !isPending && count > 0 && (
         <p className="text-sm text-[color:var(--muted)]">
-          {count === 0
-            ? t.search_empty
-            : t.search_results.replace("{count}", count.toString())}
+          {t.search_results.replace("{count}", count.toString())}
         </p>
+      )}
+
+      {!error && query.trim() && !isPending && count === 0 && (
+        <EmptyState
+          illustration="search"
+          title={t.search_empty}
+          body={
+            language === "ms"
+              ? "Cuba kata kunci lain, atau cari rujukan ayat seperti '2:255'."
+              : "Try a different keyword, or look up a verse reference like '2:255'."
+          }
+        />
+      )}
+
+      {!error && !query.trim() && !isPending && results.length === 0 && (
+        <EmptyState
+          illustration="search"
+          title={t.search_title}
+          body={t.search_desc}
+        />
       )}
 
       <ul className="space-y-3">

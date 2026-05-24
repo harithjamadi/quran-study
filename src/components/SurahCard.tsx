@@ -12,13 +12,24 @@ export function SurahCard({ surah }: { surah: SurahMeta }) {
 
   const typeLabel =
     surah.revelationType === "Meccan" ? t.surah_meccan : t.surah_medinan;
+  const isMeccan = surah.revelationType === "Meccan";
 
   return (
     <Link
       href={`/surah/${surah.number}`}
-      className="group relative overflow-hidden card p-4 sm:p-5 flex items-center gap-4 transition-all duration-300 hover:border-[color:var(--gold)]/40 hover:shadow-[var(--shadow)] hover:-translate-y-0.5"
+      className={`group relative overflow-hidden card p-4 sm:p-5 flex items-center gap-4 transition-all duration-300 hover:shadow-[var(--shadow)] hover:-translate-y-0.5 ${
+        isMeccan
+          ? "hover:border-[color:var(--gold)]/50"
+          : "hover:border-[color:var(--accent)]/50"
+      }`}
       prefetch={false}
     >
+      {/* Subtle left edge tint indicates revelation type */}
+      <span
+        aria-hidden
+        className="absolute left-0 top-0 bottom-0 w-[3px]"
+        style={{ background: isMeccan ? "var(--gold)" : "var(--accent)", opacity: 0.55 }}
+      />
       <div
         className="relative h-11 w-11 sm:h-12 sm:w-12 shrink-0 grid place-items-center text-[color:var(--accent-strong)]"
         aria-hidden

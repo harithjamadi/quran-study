@@ -147,7 +147,7 @@ export function Flashcard({ card, distractorPool, onResult, onNext }: Props) {
           const isCorrect = idx === correctIndex;
           const revealed = phase === "revealed";
           const wasWrong = pickedIndex !== null && idx === pickedIndex && !isCorrect;
-          
+
           return (
             <button
               key={o.lemma + idx}
@@ -155,19 +155,21 @@ export function Flashcard({ card, distractorPool, onResult, onNext }: Props) {
               onClick={() => onPick(idx)}
               disabled={revealed}
               className={classNames(
-                "group relative rounded-2xl border-2 px-4 py-4 text-left transition-all active:scale-[0.98]",
-                !revealed && !wasWrong && "border-[color:var(--border)] bg-[color:var(--surface)] hover:border-[color:var(--accent)] hover:shadow-md",
-                !revealed && wasWrong && "border-[color:var(--danger)] bg-[color:var(--danger)]/5 opacity-60 grayscale-[0.5]",
-                revealed && isCorrect && "border-[color:var(--accent)] bg-[color:var(--accent)] text-white shadow-lg shadow-[color:var(--accent)]/30 scale-[1.02] z-10",
-                revealed && !isCorrect && "border-[color:var(--border)] bg-[color:var(--surface)] opacity-40 grayscale"
+                // The CORRECT-answer reveal is soft (border + tint) — never
+                // competes with the "Next Word" CTA below for primacy.
+                "group relative rounded-2xl border-2 px-4 py-4 text-left transition-all duration-300 active:scale-[0.98] min-h-[64px]",
+                !revealed && !wasWrong &&
+                  "border-[color:var(--border)] bg-[color:var(--surface)] hover:border-[color:var(--accent)] hover:bg-[color:var(--accent-soft)]/30 hover:shadow-[var(--shadow)]",
+                !revealed && wasWrong &&
+                  "border-[color:var(--danger)]/50 bg-[color:var(--danger)]/5 opacity-50",
+                revealed && isCorrect &&
+                  "border-[color:var(--accent)] bg-[color:var(--accent-soft)]/50 text-[color:var(--accent-strong)]",
+                revealed && !isCorrect &&
+                  "border-[color:var(--border)] bg-[color:var(--surface)] opacity-35"
               )}
             >
               <div className="flex items-center justify-between gap-2">
-                <span
-                  className={classNames(
-                    "text-[15px] font-bold transition-colors flex items-baseline gap-1.5",
-                  )}
-                >
+                <span className="text-[15px] font-semibold transition-colors flex items-baseline gap-1.5">
                   {(() => {
                     const g = effectiveGloss(o, language);
                     if (!g) return "—";
@@ -191,8 +193,18 @@ export function Flashcard({ card, distractorPool, onResult, onNext }: Props) {
                   })()}
                 </span>
                 {revealed && isCorrect && (
-                  <svg className="text-white animate-in zoom-in duration-300" viewBox="0 0 20 20" fill="currentColor" width="22" height="22">
-                    <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+                  <svg
+                    className="text-[color:var(--accent)] animate-scale-in shrink-0"
+                    viewBox="0 0 20 20"
+                    fill="currentColor"
+                    width="20"
+                    height="20"
+                  >
+                    <path
+                      fillRule="evenodd"
+                      d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z"
+                      clipRule="evenodd"
+                    />
                   </svg>
                 )}
               </div>
@@ -202,13 +214,26 @@ export function Flashcard({ card, distractorPool, onResult, onNext }: Props) {
       </div>
 
       {phase === "revealed" && (
-        <div className="pt-4 space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
-          <div className="flex flex-col gap-4">
+        <div className="pt-4 space-y-5 animate-fade-up">
+          <div className="flex flex-col gap-3">
+            {/* The Next Word CTA — owns the hierarchy. Gradient, glow, larger. */}
             <button
               onClick={onNext}
-              className="w-full rounded-2xl bg-[color:var(--accent)] py-4 text-lg font-bold text-white shadow-xl shadow-[color:var(--accent)]/30 hover:bg-[color:var(--accent-strong)] transition-all active:scale-[0.97]"
+              className="group relative w-full overflow-hidden rounded-2xl py-5 text-lg font-bold text-white transition-all active:scale-[0.98] hover:-translate-y-0.5"
+              style={{
+                background: "linear-gradient(135deg, var(--accent) 0%, var(--accent-strong) 100%)",
+                boxShadow:
+                  "0 16px 40px -12px var(--accent-glow), inset 0 1px 0 rgba(255,255,255,0.12)",
+              }}
             >
-              {t.flash_next} →
+              <span
+                aria-hidden
+                className="absolute inset-y-0 -left-full w-full bg-gradient-to-r from-transparent via-white/15 to-transparent transition-all duration-700 group-hover:left-full"
+              />
+              <span className="relative inline-flex items-center gap-2">
+                {t.flash_next}
+                <span aria-hidden className="transition-transform duration-300 group-hover:translate-x-1.5">→</span>
+              </span>
             </button>
 
             <button

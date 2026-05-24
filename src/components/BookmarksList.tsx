@@ -6,6 +6,7 @@ import { useLearning } from "@/store/learning";
 import { UI_STRINGS } from "@/lib/i18n";
 import { formatDate } from "@/lib/format";
 import { useHydrated } from "@/lib/use-hydrated";
+import { EmptyState } from "@/components/EmptyState";
 
 export function BookmarksList() {
   const hydrated = useHydrated();
@@ -22,17 +23,15 @@ export function BookmarksList() {
 
   if (bookmarks.length === 0) {
     return (
-      <div className="card p-10 text-center">
-        <p className="text-[color:var(--muted)]">
-          {t.book_empty}
-        </p>
-        <Link
-          href="/surahs"
-          className="inline-block mt-4 rounded-full bg-[color:var(--accent)] text-white px-4 py-2 text-sm hover:bg-[color:var(--accent-strong)]"
-        >
-          {t.last_continue.split(" ")[0]} {t.nav_read.toLowerCase()}
-        </Link>
-      </div>
+      <EmptyState
+        illustration="bookmark"
+        title={t.book_empty}
+        body={t.book_empty_hint}
+        cta={{
+          label: language === "ms" ? "Mula membaca" : "Start reading",
+          href: "/surahs",
+        }}
+      />
     );
   }
 

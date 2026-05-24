@@ -117,7 +117,8 @@ export const UI_STRINGS = {
     // Bookmarks
     book_title: "Bookmarks",
     book_desc: "Saved verses live on your device only. No login, no cloud, no tracking.",
-    book_empty: "You haven’t bookmarked any verses yet.",
+    book_empty: "No bookmarks yet",
+    book_empty_hint: "Tap the bookmark icon next to any verse while reading to save it here.",
     book_remove: "Remove",
     book_clear: "Clear all",
     book_clear_conf: "Remove all bookmarks? This cannot be undone.",
@@ -293,7 +294,8 @@ export const UI_STRINGS = {
     // Bookmarks
     book_title: "Bookmark",
     book_desc: "Ayat yang disimpan hanya ada dalam device anda. Tanpa log masuk, tanpa cloud, tanpa tracking.",
-    book_empty: "Belum ada ayat yang disimpan.",
+    book_empty: "Belum ada bookmark",
+    book_empty_hint: "Tap ikon bookmark di sebelah ayat semasa membaca untuk simpan di sini.",
     book_remove: "Padam",
     book_clear: "Padam semua",
     book_clear_conf: "Padam semua bookmark? Tindakan ini tak boleh dibatalkan.",
