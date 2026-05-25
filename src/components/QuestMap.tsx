@@ -21,7 +21,6 @@ const PHASES: {
   subtitle: string;
   subtitleMs: string;
   surahs: SurahDef[];
-  /** Cumulative stars needed (across ALL previous phases) to unlock this phase. */
   gateStars: number;
 }[] = [
   {
@@ -67,15 +66,44 @@ const PHASES: {
 /* ── Helpers ──────────────────────────────────────────────────────────────── */
 
 function StarRow({ count, max = 3, size = "md" }: { count: number; max?: number; size?: "sm" | "md" }) {
-  const sz = size === "sm" ? "text-sm" : "text-lg";
+  const sz = size === "sm" ? "text-base" : "text-xl";
   return (
     <span className={`${sz} leading-none tracking-tight`} aria-label={`${count} of ${max} stars`}>
       {Array.from({ length: max }, (_, i) => (
-        <span key={i} className={i < count ? "text-[color:var(--gold)]" : "text-[color:var(--border-strong)] opacity-60"}>
+        <span
+          key={i}
+          className={i < count ? "text-[color:var(--gold)]" : "text-[color:var(--muted)] opacity-50"}
+        >
           ★
         </span>
       ))}
     </span>
+  );
+}
+
+/** SVG dashed connector drawn between consecutive surah nodes. */
+function NodeConnector({ completed }: { completed: boolean }) {
+  return (
+    <div className="flex justify-center pointer-events-none select-none" style={{ height: 28 }} aria-hidden>
+      <svg width="6" height="28" viewBox="0 0 6 28" className="overflow-visible">
+        {completed ? (
+          <line
+            x1="3" y1="0" x2="3" y2="28"
+            stroke="var(--gold)"
+            strokeWidth="2.5"
+            strokeLinecap="round"
+          />
+        ) : (
+          <line
+            x1="3" y1="0" x2="3" y2="28"
+            stroke="var(--border-strong)"
+            strokeWidth="2"
+            strokeDasharray="5 4"
+            strokeLinecap="round"
+          />
+        )}
+      </svg>
+    </div>
   );
 }
 
@@ -93,13 +121,24 @@ export function QuestMap() {
   const [picker, setPicker] = useState<PickerTarget | null>(null);
   const [lockedMsg, setLockedMsg] = useState<LockedTarget | null>(null);
 
-  // Total stars earned across all surahs.
   const totalStars = Object.values(surahStars).reduce((a, b) => a + b, 0);
 
-  return (
-    <div className="relative py-16 px-4 overflow-hidden bg-gradient-to-b from-[color:var(--surface)]/40 to-[color:var(--background)]">
+  // The first unlocked surah with 0 stars — this is the player's current objective.
+  const activeNum = (() => {
+    for (const phase of PHASES) {
+      if (totalStars < phase.gateStars) break;
+      for (let i = 0; i < phase.surahs.length; i++) {
+        const item = phase.surahs[i];
+        const prev = i > 0 ? phase.surahs[i - 1] : null;
+        const unlocked = i === 0 || (surahStars[prev!.num] ?? 0) >= 1;
+        if (unlocked && (surahStars[item.num] ?? 0) === 0) return item.num;
+      }
+    }
+    return null;
+  })();
 
-      {/* Difficulty picker modal */}
+  return (
+    <>
       {picker && (
         <DifficultyPicker
           item={picker}
@@ -108,8 +147,6 @@ export function QuestMap() {
           onClose={() => setPicker(null)}
         />
       )}
-
-      {/* Locked message modal */}
       {lockedMsg && (
         <LockedModal
           item={lockedMsg}
@@ -118,141 +155,183 @@ export function QuestMap() {
         />
       )}
 
-      <div className="max-w-sm mx-auto space-y-10">
-        {PHASES.map((phase, phaseIdx) => {
-          const isPhaseUnlocked = totalStars >= phase.gateStars;
-          const prevPhase = phaseIdx > 0 ? PHASES[phaseIdx - 1] : null;
-          const phaseStarsNeeded = phase.gateStars;
+      <div className="relative py-8 pl-4 pr-3 max-h-[70vh] overflow-y-auto overscroll-contain scrollbar-thin scroll-fade-y bg-gradient-to-b from-[color:var(--surface)]/40 to-[color:var(--background)] rounded-[inherit]">
+        <div className="max-w-sm mx-auto space-y-10">
+          {PHASES.map((phase, phaseIdx) => {
+            const isPhaseUnlocked = totalStars >= phase.gateStars;
+            const prevPhase = phaseIdx > 0 ? PHASES[phaseIdx - 1] : null;
 
-          return (
-            <div key={phase.id}>
-              {/* Phase gate (between phases) */}
-              {phaseIdx > 0 && (
-                <PhaseGate
-                  phase={phase}
-                  prevPhase={prevPhase!}
-                  totalStars={totalStars}
-                  needed={phaseStarsNeeded}
-                  unlocked={isPhaseUnlocked}
-                  language={language}
-                />
-              )}
+            return (
+              <div key={phase.id}>
+                {phaseIdx > 0 && (
+                  <PhaseGate
+                    phase={phase}
+                    prevPhase={prevPhase!}
+                    totalStars={totalStars}
+                    needed={phase.gateStars}
+                    unlocked={isPhaseUnlocked}
+                    language={language}
+                  />
+                )}
 
-              {/* Phase header */}
-              <div className="text-center mb-6 mt-2">
-                <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full border border-[color:var(--border)] bg-[color:var(--surface)] text-xs font-bold uppercase tracking-widest text-[color:var(--muted)]">
-                  {language === "ms" ? `Fasa ${phase.id}` : `Phase ${phase.id}`}
+                {/* Phase header */}
+                <div className="text-center mb-6 mt-2">
+                  <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full border border-[color:var(--border)] bg-[color:var(--surface)] text-xs font-bold uppercase tracking-widest text-[color:var(--muted)]">
+                    {language === "ms" ? `Fasa ${phase.id}` : `Phase ${phase.id}`}
+                  </div>
+                  <p className="mt-2 font-black text-lg uppercase tracking-tight text-[color:var(--foreground)]">
+                    {language === "ms" ? phase.nameMs : phase.name}
+                  </p>
+                  <p className="text-xs text-[color:var(--muted)] mt-0.5">
+                    {language === "ms" ? phase.subtitleMs : phase.subtitle}
+                  </p>
                 </div>
-                <p className="mt-2 font-black text-lg uppercase tracking-tight text-[color:var(--foreground)]">
-                  {language === "ms" ? phase.nameMs : phase.name}
-                </p>
-                <p className="text-xs text-[color:var(--muted)] mt-0.5">
-                  {language === "ms" ? phase.subtitleMs : phase.subtitle}
-                </p>
-              </div>
 
-              {/* Surah nodes */}
-              <div className="flex flex-col items-center gap-10">
-                {phase.surahs.map((item, idxInPhase) => {
-                  const surah = SURAHS.find((s) => s.number === item.num);
-                  if (!surah) return null;
+                {/* Surah nodes + connectors */}
+                <div className="flex flex-col items-center">
+                  {phase.surahs.map((item, idxInPhase) => {
+                    const surah = SURAHS.find((s) => s.number === item.num);
+                    if (!surah) return null;
 
-                  const stars = surahStars[item.num] ?? 0;
+                    const stars = surahStars[item.num] ?? 0;
+                    const prevInPhase = idxInPhase > 0 ? phase.surahs[idxInPhase - 1] : null;
+                    const isUnlocked =
+                      isPhaseUnlocked &&
+                      (idxInPhase === 0 || (surahStars[prevInPhase!.num] ?? 0) >= 1);
 
-                  // Unlock rule: phase must be unlocked, AND previous surah in phase
-                  // (or first in phase = first entry point) must have ≥ 1 star.
-                  const prevInPhase = idxInPhase > 0 ? phase.surahs[idxInPhase - 1] : null;
-                  const isUnlocked =
-                    isPhaseUnlocked &&
-                    (idxInPhase === 0 || (surahStars[prevInPhase!.num] ?? 0) >= 1);
+                    const isCompleted = stars > 0;
+                    const isCurrent = isUnlocked && item.num === activeNum;
 
-                  const offset =
-                    idxInPhase % 2 === 0
-                      ? "translate-x-8 sm:translate-x-16"
-                      : "-translate-x-8 sm:-translate-x-16";
+                    const offset =
+                      idxInPhase % 2 === 0
+                        ? "translate-x-8 sm:translate-x-16"
+                        : "-translate-x-8 sm:-translate-x-16";
 
-                  return (
-                    <div
-                      key={item.num}
-                      className={`flex flex-col items-center transition-all duration-700 ${offset}`}
-                    >
-                      <div className="relative">
-                        <button
-                          onClick={() => {
-                            if (!isUnlocked) {
-                              const reason = !isPhaseUnlocked
-                                ? language === "ms"
-                                  ? `Perlukan ${phaseStarsNeeded} bintang untuk buka fasa ini`
-                                  : `Need ${phaseStarsNeeded} stars to unlock this phase`
-                                : language === "ms"
-                                ? `Selesaikan ${prevInPhase!.name} terlebih dahulu`
-                                : `Complete ${prevInPhase!.name} first`;
-                              setLockedMsg({ ...item, reason });
-                            } else {
-                              setPicker(item);
-                            }
-                          }}
-                          className={[
-                            "relative w-28 h-28 rounded-[2rem] flex flex-col items-center justify-center border-4 transition-all duration-500 overflow-hidden",
-                            isUnlocked
-                              ? "border-[color:var(--gold)] bg-[color:var(--surface)] shadow-[0_15px_40px_-10px_rgba(0,0,0,0.3)] hover:scale-110 hover:-translate-y-2 cursor-pointer"
-                              : "border-[color:var(--border)] bg-transparent opacity-40 grayscale cursor-pointer",
-                          ].join(" ")}
-                        >
-                          <span className={`text-4xl mb-1 ${!isUnlocked ? "opacity-30 blur-sm" : ""}`}>
-                            {item.image}
-                          </span>
-
-                          {isUnlocked ? (
-                            <StarRow count={stars} size="sm" />
-                          ) : (
-                            <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" strokeWidth="2.5" className="text-[color:var(--muted)] mt-1">
-                              <rect x="3" y="11" width="18" height="11" rx="2" ry="2" />
-                              <path d="M7 11V7a5 5 0 0 1 10 0v4" />
-                            </svg>
-                          )}
-                        </button>
-
-                        {/* Badge */}
-                        {stars >= 3 && (
-                          <div className="absolute -bottom-2 left-1/2 -translate-x-1/2 bg-[color:var(--gold)] text-black text-[10px] font-black px-2 py-0.5 rounded-full shadow-sm whitespace-nowrap">
-                            {language === "ms" ? "MASTER" : "MASTER"}
-                          </div>
+                    return (
+                      <React.Fragment key={item.num}>
+                        {/* Connecting path from previous node */}
+                        {idxInPhase > 0 && (
+                          <NodeConnector completed={(surahStars[prevInPhase!.num] ?? 0) > 0} />
                         )}
-                        {isUnlocked && stars === 0 && (
-                          <div className="absolute -bottom-2 left-1/2 -translate-x-1/2 bg-[color:var(--accent)] text-white text-[10px] font-black px-2 py-0.5 rounded-full shadow-sm whitespace-nowrap">
-                            {language === "ms" ? "MAIN" : "PLAY"}
+
+                        <div className={`my-3 flex flex-col items-center transition-all duration-700 ${offset}`}>
+                          <div className="relative">
+                            {/* Spotlight glow behind active node */}
+                            {isCurrent && (
+                              <div
+                                className="absolute -inset-6 pointer-events-none -z-10 rounded-full blur-2xl"
+                                style={{ background: "radial-gradient(ellipse at center, color-mix(in srgb, var(--accent) 30%, transparent) 0%, transparent 70%)" }}
+                                aria-hidden
+                              />
+                            )}
+
+                            {/* Pulsing ring overlay for current node */}
+                            {isCurrent && (
+                              <span
+                                className="animate-node-ring absolute inset-0 rounded-[2rem] border-4 border-[color:var(--accent)] pointer-events-none"
+                                aria-hidden
+                              />
+                            )}
+
+                            <button
+                              onClick={() => {
+                                if (!isUnlocked) {
+                                  const reason = !isPhaseUnlocked
+                                    ? language === "ms"
+                                      ? `Perlukan ${phase.gateStars} bintang untuk buka fasa ini`
+                                      : `Need ${phase.gateStars} stars to unlock this phase`
+                                    : language === "ms"
+                                    ? `Selesaikan ${prevInPhase!.name} terlebih dahulu`
+                                    : `Complete ${prevInPhase!.name} first`;
+                                  setLockedMsg({ ...item, reason });
+                                } else {
+                                  setPicker(item);
+                                }
+                              }}
+                              className={[
+                                "relative w-28 h-28 rounded-[2rem] flex flex-col items-center justify-center border-4 transition-all duration-500 overflow-hidden",
+                                isCompleted
+                                  ? "border-[color:var(--gold)] bg-[color:var(--surface)] cursor-pointer hover:scale-110 hover:-translate-y-2"
+                                  : isCurrent
+                                  ? "border-[color:var(--accent)] bg-[color:var(--surface)] cursor-pointer hover:scale-110 hover:-translate-y-2"
+                                  : "border-[color:var(--border)] border-2 bg-transparent opacity-40 grayscale cursor-pointer",
+                              ].join(" ")}
+                              style={
+                                isCompleted
+                                  ? { boxShadow: "0 15px 40px -10px rgba(0,0,0,0.35), 0 0 0 2px color-mix(in srgb, var(--gold) 20%, transparent)" }
+                                  : isCurrent
+                                  ? { boxShadow: "0 15px 40px -10px rgba(0,0,0,0.35), 0 0 20px color-mix(in srgb, var(--accent) 30%, transparent)" }
+                                  : undefined
+                              }
+                            >
+                              <span className={`text-4xl mb-1 ${!isUnlocked ? "opacity-30 blur-sm" : ""}`}>
+                                {item.image}
+                              </span>
+
+                              {isUnlocked ? (
+                                <StarRow count={stars} size="sm" />
+                              ) : (
+                                <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" strokeWidth="2.5" className="text-[color:var(--muted)] mt-1">
+                                  <rect x="3" y="11" width="18" height="11" rx="2" ry="2" />
+                                  <path d="M7 11V7a5 5 0 0 1 10 0v4" />
+                                </svg>
+                              )}
+                            </button>
+
+                            {/* Master badge */}
+                            {stars >= 3 && (
+                              <div className="absolute -bottom-3 left-1/2 -translate-x-1/2 bg-[color:var(--gold)] text-black text-[10px] font-black px-3 py-1 rounded-full shadow-md whitespace-nowrap">
+                                {language === "ms" ? "MASTER" : "MASTER"}
+                              </div>
+                            )}
+
+                            {/* Play CTA — larger and more prominent for the active node */}
+                            {isCurrent && (
+                              <div
+                                className="absolute -bottom-3 left-1/2 -translate-x-1/2 text-white text-xs font-black px-4 py-1 rounded-full whitespace-nowrap shadow-lg"
+                                style={{ background: "var(--accent)", boxShadow: "0 4px 14px color-mix(in srgb, var(--accent) 50%, transparent)" }}
+                              >
+                                {language === "ms" ? "▶ MAIN" : "▶ PLAY"}
+                              </div>
+                            )}
+
+                            {/* Replay hint for completed-but-not-master nodes */}
+                            {isCompleted && stars < 3 && (
+                              <div className="absolute -bottom-3 left-1/2 -translate-x-1/2 bg-[color:var(--surface)] border border-[color:var(--gold)]/60 text-[color:var(--gold)] text-[10px] font-black px-3 py-1 rounded-full shadow-sm whitespace-nowrap">
+                                {language === "ms" ? "ULANG" : "REPLAY"}
+                              </div>
+                            )}
                           </div>
-                        )}
-                      </div>
 
-                      <div className={`mt-5 text-center ${!isUnlocked ? "opacity-40" : ""}`}>
-                        <p className="font-black text-sm uppercase tracking-widest text-[color:var(--foreground)]">
-                          {surah.englishName}
-                        </p>
-                        <p className="arabic text-xs mt-1 text-[color:var(--gold-strong)] dark:text-[color:var(--gold)]" lang="ar" dir="rtl">
-                          {surah.name}
-                        </p>
-                      </div>
-                    </div>
-                  );
-                })}
+                          <div className={`mt-6 text-center ${!isUnlocked ? "opacity-40" : ""}`}>
+                            <p className="font-black text-sm uppercase tracking-widest text-[color:var(--foreground)]">
+                              {surah.englishName}
+                            </p>
+                            <p className="arabic text-sm mt-1 text-[color:var(--gold-strong)] dark:text-[color:var(--gold)]" lang="ar" dir="rtl">
+                              {surah.name}
+                            </p>
+                          </div>
+                        </div>
+                      </React.Fragment>
+                    );
+                  })}
+                </div>
               </div>
-            </div>
-          );
-        })}
+            );
+          })}
 
-        {/* Bottom total stars */}
-        <div className="text-center pt-4 pb-8">
-          <p className="text-xs text-[color:var(--muted)] uppercase tracking-widest">
-            {language === "ms" ? "Jumlah bintang" : "Total stars"}
-          </p>
-          <p className="text-3xl font-black text-[color:var(--gold)] mt-1">
-            {totalStars} <span className="text-[color:var(--muted)] text-lg font-medium">/ 24</span>
-          </p>
+          {/* Bottom total stars */}
+          <div className="text-center pt-4 pb-8">
+            <p className="text-xs text-[color:var(--muted)] uppercase tracking-widest">
+              {language === "ms" ? "Jumlah bintang" : "Total stars"}
+            </p>
+            <p className="text-3xl font-black text-[color:var(--gold)] mt-1">
+              {totalStars} <span className="text-[color:var(--muted)] text-lg font-medium">/ 24</span>
+            </p>
+          </div>
         </div>
       </div>
-    </div>
+    </>
   );
 }
 
@@ -312,7 +391,6 @@ function PhaseGate({
         )}
       </div>
 
-      {/* Connector arrow */}
       <div className="flex justify-center py-2 text-[color:var(--border-strong)]">
         <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
           <path d="M12 5v14M5 12l7 7 7-7" />
@@ -369,12 +447,11 @@ function DifficultyPicker({
         className="bg-[color:var(--surface)] border border-[color:var(--border)] rounded-3xl p-6 max-w-sm w-full shadow-2xl animate-pop"
         onClick={(e) => e.stopPropagation()}
       >
-        {/* Header */}
         <div className="text-center mb-5">
           <div className="text-4xl mb-2">{item.image}</div>
           <h3 className="font-black text-xl uppercase tracking-tight">{item.name}</h3>
           {surah && (
-            <p className="arabic text-[color:var(--gold-strong)] dark:text-[color:var(--gold)] text-base mt-1" lang="ar" dir="rtl">
+            <p className="arabic text-[color:var(--gold-strong)] dark:text-[color:var(--gold)] text-lg mt-1" lang="ar" dir="rtl">
               {surah.name}
             </p>
           )}
@@ -385,7 +462,6 @@ function DifficultyPicker({
           )}
         </div>
 
-        {/* Difficulty rows */}
         <div className="space-y-2">
           {difficulties.map((d) => {
             const isEarned = earned >= d.level;
@@ -417,7 +493,7 @@ function DifficultyPicker({
                   >
                     <span className="text-lg leading-none text-[color:var(--gold)]">
                       {"★".repeat(d.level)}
-                      <span className="text-[color:var(--border-strong)] opacity-60">{"★".repeat(3 - d.level)}</span>
+                      <span className="text-[color:var(--muted)] opacity-50">{"★".repeat(3 - d.level)}</span>
                     </span>
                     <div className="flex-1 min-w-0">
                       <p className="text-sm font-bold">{d.label}</p>
@@ -463,25 +539,25 @@ function LockedModal({
       onClick={onClose}
     >
       <div
-        className="bg-[color:var(--surface)] border border-[color:var(--border)] rounded-3xl p-8 max-w-sm w-full shadow-2xl animate-pop"
+        className="bg-[color:var(--surface)] border border-[color:var(--border)] rounded-3xl p-6 max-w-sm w-full shadow-2xl animate-pop"
         onClick={(e) => e.stopPropagation()}
       >
         <div className="text-center space-y-4">
-          <div className="mx-auto h-20 w-20 rounded-2xl bg-[color:var(--border)] flex items-center justify-center text-4xl grayscale opacity-50">
+          <div className="mx-auto h-16 w-16 rounded-2xl bg-[color:var(--border)]/60 flex items-center justify-center text-3xl grayscale opacity-50">
             {item.image}
           </div>
           <div>
-            <h3 className="text-xl font-black uppercase tracking-tight">{item.name}</h3>
-            <p className="text-sm text-[color:var(--muted-strong)] mt-1">
+            <h3 className="text-lg font-black uppercase tracking-tight">{item.name}</h3>
+            <p className="text-xs text-[color:var(--muted-strong)] mt-1">
               {language === "ms" ? "Misi ini masih terkunci" : "This mission is locked"}
             </p>
           </div>
-          <div className="rounded-2xl border border-[color:var(--border)] bg-[color:var(--surface)] p-4 text-sm text-[color:var(--muted)] leading-relaxed">
+          <div className="rounded-2xl border border-[color:var(--border)] bg-[color:var(--surface)]/60 px-4 py-3 text-sm text-[color:var(--muted)] leading-relaxed">
             {item.reason}
           </div>
           <button
             onClick={onClose}
-            className="w-full bg-[color:var(--accent)] hover:bg-[color:var(--accent-strong)] text-white font-bold py-3 rounded-xl transition-all active:scale-95"
+            className="w-full bg-[color:var(--accent)] hover:bg-[color:var(--accent-strong)] text-white font-bold py-2.5 rounded-xl transition-all active:scale-95"
           >
             OK
           </button>

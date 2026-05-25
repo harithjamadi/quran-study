@@ -3,22 +3,37 @@
 // scheduled-review UI.
 
 import type { Language } from "@/lib/i18n";
+import { FSRS, Rating, State as FsrsState } from "ts-fsrs";
+import type { Card as FsrsCard } from "ts-fsrs";
+
+const _fsrs = new FSRS({});
 
 export type WordStatus = "new" | "weak" | "good" | "strong";
 
+/**
+ * Per-lemma SRS state using FSRS v5 fields.
+ * Replaces the old SM-2-based state (streak / successes / intervalDays / nextReview).
+ * Migration from v1→v2 is handled in store/learning.ts.
+ */
 export interface LemmaState {
-  /** Successful active-recall answers in a row. Resets on lapse. */
-  streak: number;
-  /** Lifetime correct answers. */
-  successes: number;
-  /** Lifetime incorrect answers. */
+  /** Unix ms — when this card is next due. */
+  due: number;
+  /** FSRS stability: expected half-life of retention in days. */
+  stability: number;
+  /** FSRS difficulty: word-specific difficulty factor (0–10). */
+  difficulty: number;
+  /** FSRS card state: 0=New, 1=Learning, 2=Review, 3=Relearning. */
+  state: 0 | 1 | 2 | 3;
+  /** Total successful reviews (replaces `successes`). */
+  reps: number;
+  /** Lifetime forgotten count. */
   lapses: number;
-  /** Unix ms when this card is next due. 0 = due now. */
-  nextReview: number;
   /** Unix ms of the most recent review. */
   lastReview: number;
-  /** Current interval in days that produced nextReview. */
-  intervalDays: number;
+  /** Scheduled interval in days that produced the current `due`. */
+  scheduledDays: number;
+  /** FSRS internal: tracks position within learning steps. */
+  learningSteps: number;
 }
 
 export interface LemmaMeta {
@@ -55,9 +70,6 @@ const DAY_MS = 86_400_000;
  * Pick the gloss to display for a lemma in the user's chosen learning language.
  * Falls back to the other language with a `[lang]` marker when the chosen
  * language has no translation. Returns null only when both glosses are absent.
- *
- * The Malay dictionary only covers the ~80 highest-frequency lemmas today, so
- * MS learners would see "—" for most cards without this fallback.
  */
 export function effectiveGloss(
   lemma: { en: string | null; ms: string | null },
@@ -79,78 +91,107 @@ export function effectiveGloss(
 /** Initial state for a card that has never been reviewed. */
 export function freshLemmaState(now: number = Date.now()): LemmaState {
   return {
-    streak: 0,
-    successes: 0,
+    due: now,
+    stability: 0,
+    difficulty: 0,
+    state: 0,
+    reps: 0,
     lapses: 0,
-    nextReview: now,
     lastReview: 0,
-    intervalDays: 0,
+    scheduledDays: 0,
+    learningSteps: 0,
   };
 }
 
-/** 
- * XP Rewards for different grades. 
+/**
+ * XP Rewards for different grades.
  * Correct on first try (Good/Easy) yields more than after a lapse.
  */
 export const XP_REWARDS: Record<Grade, number> = {
   easy: 15,
   good: 10,
-  again: 0, // No XP for failure
+  again: 0,
 };
 
-/** SM-2-lite scheduler. Simpler than full SM-2 — fixed multipliers, no ease factor. */
+// ── FSRS conversion helpers ────────────────────────────────────────────────
+
+function toLemmaStateCard(state: LemmaState | undefined, now: number): FsrsCard {
+  if (!state || state.reps === 0) {
+    return {
+      due: new Date(now),
+      stability: 0,
+      difficulty: 0,
+      elapsed_days: 0,
+      scheduled_days: 0,
+      reps: 0,
+      lapses: 0,
+      learning_steps: 0,
+      state: FsrsState.New,
+    };
+  }
+  return {
+    due: new Date(state.due),
+    stability: state.stability,
+    difficulty: state.difficulty,
+    elapsed_days: state.lastReview > 0
+      ? Math.max(0, (now - state.lastReview) / DAY_MS)
+      : 0,
+    scheduled_days: state.scheduledDays,
+    reps: state.reps,
+    lapses: state.lapses,
+    learning_steps: state.learningSteps ?? 0,
+    state: state.state as FsrsState,
+    last_review: state.lastReview > 0 ? new Date(state.lastReview) : undefined,
+  };
+}
+
+function fromFsrsCard(card: FsrsCard): LemmaState {
+  return {
+    due: card.due.getTime(),
+    stability: card.stability,
+    difficulty: card.difficulty,
+    state: card.state as 0 | 1 | 2 | 3,
+    reps: card.reps,
+    lapses: card.lapses,
+    lastReview: card.last_review?.getTime() ?? Date.now(),
+    scheduledDays: card.scheduled_days,
+    learningSteps: card.learning_steps ?? 0,
+  };
+}
+
+/** FSRS v5 scheduler. Replaces the old SM-2-lite `applyGrade`. */
 export function applyGrade(
   prev: LemmaState | undefined,
   grade: Grade,
   now: number = Date.now()
 ): LemmaState {
-  const state: LemmaState = prev ? { ...prev } : freshLemmaState(now);
-  state.lastReview = now;
-
-  if (grade === "again") {
-    state.lapses += 1;
-    state.streak = 0;
-    state.intervalDays = 0;
-    // Review again in 10 minutes.
-    state.nextReview = now + 10 * 60 * 1000;
-    return state;
-  }
-
-  state.successes += 1;
-  state.streak += 1;
-
-  if (grade === "easy") {
-    // Big jump on easy.
-    const base = Math.max(state.intervalDays, 1);
-    state.intervalDays = Math.min(Math.round(base * 4), 180);
-  } else {
-    // grade === "good" — Anki-style fixed steps then geometric growth.
-    if (state.intervalDays === 0) state.intervalDays = 1;
-    else if (state.intervalDays === 1) state.intervalDays = 3;
-    else if (state.intervalDays === 3) state.intervalDays = 7;
-    else state.intervalDays = Math.min(Math.round(state.intervalDays * 2.2), 180);
-  }
-  state.nextReview = now + state.intervalDays * DAY_MS;
-  return state;
+  const card = toLemmaStateCard(prev, now);
+  const rating =
+    grade === "again" ? Rating.Again :
+    grade === "easy"  ? Rating.Easy  :
+                        Rating.Good;
+  const { card: next } = _fsrs.repeat(card, new Date(now))[rating];
+  return fromFsrsCard(next);
 }
 
 export function statusOf(state: LemmaState | undefined): WordStatus {
-  if (!state || state.successes === 0) return "new";
-  if (state.lapses >= state.successes) return "weak";
-  if (state.streak >= 4 && state.intervalDays >= 14) return "strong";
-  if (state.streak >= 2) return "good";
+  if (!state || state.reps === 0) return "new";
+  // Learning (1) and Relearning (3) → still being drilled, not stable yet
+  if (state.state === FsrsState.Learning || state.state === FsrsState.Relearning) return "weak";
+  // Review state — classify by FSRS stability
+  if (state.stability >= 21) return "strong";
+  if (state.state === FsrsState.Review) return "good";
   return "weak";
 }
 
 export function isDue(state: LemmaState | undefined, now: number = Date.now()): boolean {
   if (!state) return true;
-  return state.nextReview <= now;
+  return state.due <= now;
 }
 
 /** Automatically determine SRS grade based on user performance in a multiple-choice quiz. */
 export function autoGrade(firstTry: boolean, durationMs: number): Grade {
   if (!firstTry) return "again";
-  // If answered correctly in less than 2.5 seconds, treat as "easy"
   if (durationMs < 2500) return "easy";
   return "good";
 }

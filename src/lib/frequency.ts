@@ -61,8 +61,8 @@ export interface RootOccurrence {
 }
 
 export function loadRootOccurrences(root: string): Promise<RootOccurrence[] | null> {
-  const encoded = encodeURIComponent(root);
-  return fetchJson<RootOccurrence[]>(`/data/roots/${encoded}.json`);
+  // Served via API route — Next 16's static layer 400s on percent-encoded paths.
+  return fetchJson<RootOccurrence[]>(`/api/roots/${encodeURIComponent(root)}`);
 }
 
 export function _resetFrequencyCaches() {

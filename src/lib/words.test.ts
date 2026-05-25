@@ -46,7 +46,7 @@ describe("words loader", () => {
     globalThis.fetch = spy as unknown as typeof fetch;
     await loadRootOccurrences("رحم");
     const calledUrl = String(spy.mock.calls[0][0]);
-    expect(calledUrl).toContain("/data/roots/");
+    expect(calledUrl).toContain("/api/roots/");
     expect(calledUrl).toContain(encodeURIComponent("رحم"));
   });
 

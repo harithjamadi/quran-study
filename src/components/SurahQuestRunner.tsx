@@ -25,6 +25,8 @@ type Stage =
   | { kind: "build-translation"; target: LemmaMeta; verseWordList: string[] }
   | { kind: "match-pairs"; lemmas: LemmaMeta[] }
   | { kind: "true-false"; target: LemmaMeta; pairedGloss: LemmaMeta; truthful: boolean }
+  | { kind: "cloze"; target: LemmaMeta; options: LemmaMeta[]; verseWordList: string[] }
+  | { kind: "listening"; target: LemmaMeta; options: LemmaMeta[] }
   | { kind: "complete" };
 
 function seededRng(seed: string) {
@@ -59,33 +61,36 @@ function playWordAudio(card: LemmaMeta) {
 export function SurahQuestRunner({ surahNumber, surahName, lemmas, ayahWords, difficulty }: Props) {
   const language = useLearning((s) => s.language);
   const recordSurahStar = useLearning((s) => s.recordSurahStar);
+  const introduceMany = useLearning((s) => s.introduceMany);
   const t = UI_STRINGS[language];
 
   const stages = useMemo<Stage[]>(() => {
     const rng = seededRng(`quest-${surahNumber}`);
     const list: Stage[] = [{ kind: "memorize" }];
 
-    // Round 1 — Arabic → Meaning
+    // Round 1 — Arabic → Meaning (all difficulties)
     for (const target of lemmas) {
       const others = lemmas.filter((l) => l.lemma !== target.lemma);
       const options = shuffleSeeded([target, ...shuffleSeeded(others, rng).slice(0, 3)], rng);
       list.push({ kind: "match-ar-to-gloss", target, options });
     }
 
-    // Round 2 — Meaning → Arabic
+    // Round 2 — Meaning → Arabic (all difficulties)
     for (const target of lemmas) {
       const others = lemmas.filter((l) => l.lemma !== target.lemma);
       const options = shuffleSeeded([target, ...shuffleSeeded(others, rng).slice(0, 3)], rng);
       list.push({ kind: "match-gloss-to-ar", target, options });
     }
 
-    // Round 3 — Build Translation (reconstruct the meaning from chips)
-    for (const target of lemmas) {
-      const verseWordList = ayahWords[String(target.sampleAyah)] ?? [target.sampleText];
-      list.push({ kind: "build-translation", target, verseWordList });
+    // Round 3 — Build Translation (Medium+)
+    if (difficulty >= 2) {
+      for (const target of lemmas) {
+        const verseWordList = ayahWords[String(target.sampleAyah)] ?? [target.sampleText];
+        list.push({ kind: "build-translation", target, verseWordList });
+      }
     }
 
-    // Round 4 — True / False
+    // Round 4 — True / False (all difficulties)
     for (let i = 0; i < 2; i++) {
       const target = lemmas[i % lemmas.length];
       const truthful = rng() > 0.5;
@@ -95,12 +100,33 @@ export function SurahQuestRunner({ surahNumber, surahName, lemmas, ayahWords, di
       list.push({ kind: "true-false", target, pairedGloss, truthful });
     }
 
-    // Round 5 — Match Pairs (all lemmas together)
-    list.push({ kind: "match-pairs", lemmas });
+    // Round 5 — Match Pairs (Medium+)
+    if (difficulty >= 2) {
+      list.push({ kind: "match-pairs", lemmas });
+    }
+
+    // Round 6 — Cloze / Fill-in-blank (Hard only)
+    if (difficulty >= 3) {
+      for (const target of lemmas) {
+        const others = lemmas.filter((l) => l.lemma !== target.lemma);
+        const options = shuffleSeeded([target, ...shuffleSeeded(others, rng).slice(0, 3)], rng);
+        const verseWordList = ayahWords[String(target.sampleAyah)] ?? [target.sampleText];
+        list.push({ kind: "cloze", target, options, verseWordList });
+      }
+    }
+
+    // Round 7 — Listening / Audio-only (Hard only)
+    if (difficulty >= 3) {
+      for (const target of lemmas) {
+        const others = lemmas.filter((l) => l.lemma !== target.lemma);
+        const options = shuffleSeeded([target, ...shuffleSeeded(others, rng).slice(0, 3)], rng);
+        list.push({ kind: "listening", target, options });
+      }
+    }
 
     list.push({ kind: "complete" });
     return list;
-  }, [surahNumber, lemmas, ayahWords]);
+  }, [surahNumber, lemmas, ayahWords, difficulty]);
 
   const [stageIdx, setStageIdx] = useState(0);
   const [stats, setStats] = useState({ correct: 0, wrong: 0 });
@@ -112,8 +138,9 @@ export function SurahQuestRunner({ surahNumber, surahName, lemmas, ayahWords, di
   useEffect(() => {
     if (stage.kind === "complete") {
       recordSurahStar(surahNumber, difficulty);
+      introduceMany(lemmas.map((l) => ({ lemma: l.lemma, text: l.sampleText })));
     }
-  }, [stage.kind, surahNumber, difficulty, recordSurahStar]);
+  }, [stage.kind, surahNumber, difficulty, recordSurahStar, introduceMany, lemmas]);
 
   const answered =
     stageIdx === 0
@@ -236,6 +263,27 @@ export function SurahQuestRunner({ surahNumber, surahName, lemmas, ayahWords, di
           target={stage.target}
           pairedGloss={stage.pairedGloss}
           truthful={stage.truthful}
+          language={language}
+          onAnswer={answer}
+        />
+      )}
+
+      {stage.kind === "cloze" && (
+        <ClozeStage
+          key={stageIdx}
+          target={stage.target}
+          options={stage.options}
+          verseWordList={stage.verseWordList}
+          language={language}
+          onAnswer={answer}
+        />
+      )}
+
+      {stage.kind === "listening" && (
+        <ListeningStage
+          key={stageIdx}
+          target={stage.target}
+          options={stage.options}
           language={language}
           onAnswer={answer}
         />
@@ -862,6 +910,195 @@ function MatchPairsStage({
             )}
           />
         ))}
+      </div>
+    </div>
+  );
+}
+
+/* ── Round 6: see the verse with a blank, pick the missing Arabic word ── */
+function ClozeStage({
+  target,
+  options,
+  verseWordList,
+  language,
+  onAnswer,
+}: {
+  target: LemmaMeta;
+  options: LemmaMeta[];
+  verseWordList: string[];
+  language: "en" | "ms";
+  onAnswer: (correct: boolean) => void;
+}) {
+  const [picked, setPicked] = useState<string | null>(null);
+  const targetIdx = target.sampleWord - 1;
+
+  const pick = (lemma: string) => {
+    if (picked) return;
+    setPicked(lemma);
+    setTimeout(() => onAnswer(lemma === target.lemma), 350);
+  };
+
+  return (
+    <div className="card-raised p-6 sm:p-8 animate-fade-up space-y-5">
+      <div className="text-center">
+        <p className="eyebrow mb-1">
+          {language === "ms" ? "Isi tempat kosong" : "Fill in the blank"}
+        </p>
+        <p className="text-xs text-[color:var(--muted)]">
+          {language === "ms"
+            ? "Pilih kata Arab yang hilang dalam ayat ini"
+            : "Pick the missing Arabic word in this verse"}
+        </p>
+      </div>
+
+      {/* Verse with blank */}
+      <div className="rounded-2xl bg-[color:var(--surface)] border border-[color:var(--border)] p-4">
+        <p className="arabic text-center leading-loose" lang="ar" dir="rtl" style={{ fontSize: "var(--arabic-md)" }}>
+          {verseWordList.map((word, i) => (
+            <span key={i} className="inline-block mx-0.5">
+              {i === targetIdx ? (
+                <span
+                  className={classNames(
+                    "inline-block min-w-[3ch] border-b-2 border-dashed transition-all duration-300 text-center",
+                    !picked && "border-[color:var(--gold)] text-transparent",
+                    picked && picked === target.lemma && "border-[color:var(--accent)] text-[color:var(--accent-strong)]",
+                    picked && picked !== target.lemma && "border-[color:var(--danger)] text-[color:var(--danger)]"
+                  )}
+                >
+                  {picked ? target.sampleText : "______"}
+                </span>
+              ) : (
+                <span className="text-[color:var(--foreground)]">{word}</span>
+              )}
+            </span>
+          ))}
+        </p>
+      </div>
+
+      {/* Options — Arabic words to choose from */}
+      <div className="grid grid-cols-2 gap-3">
+        {options.map((o) => {
+          const isPicked = picked === o.lemma;
+          const isCorrect = o.lemma === target.lemma;
+          return (
+            <button
+              key={o.lemma}
+              onClick={() => pick(o.lemma)}
+              disabled={picked !== null}
+              className={classNames(
+                "rounded-2xl border-2 px-3 py-5 text-center transition-all duration-300 active:scale-[0.98] min-h-[80px]",
+                !picked && "border-[color:var(--border)] bg-[color:var(--surface)] hover:border-[color:var(--accent)] hover:bg-[color:var(--accent-soft)]/30",
+                picked && isPicked && isCorrect && "border-[color:var(--accent)] bg-[color:var(--accent-soft)]/60",
+                picked && isPicked && !isCorrect && "border-[color:var(--danger)] bg-[color:var(--danger)]/15 animate-shake",
+                picked && !isPicked && isCorrect && "border-[color:var(--accent)] bg-[color:var(--accent-soft)]/60",
+                picked && !isPicked && !isCorrect && "opacity-40"
+              )}
+            >
+              <span
+                className="arabic text-[length:var(--arabic-sm)] text-[color:var(--accent-strong)] leading-none"
+                lang="ar"
+                dir="rtl"
+              >
+                {o.sampleText}
+              </span>
+            </button>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
+
+/* ── Round 7: hear audio, pick the meaning (no Arabic text shown) ── */
+function ListeningStage({
+  target,
+  options,
+  language,
+  onAnswer,
+}: {
+  target: LemmaMeta;
+  options: LemmaMeta[];
+  language: "en" | "ms";
+  onAnswer: (correct: boolean) => void;
+}) {
+  const [picked, setPicked] = useState<string | null>(null);
+  const audioRef = useRef<HTMLAudioElement | null>(null);
+  const [played, setPlayed] = useState(false);
+
+  useEffect(() => {
+    const a = new Audio(lemmaAudioUrl(target.sampleSurah, target.sampleAyah, target.sampleWord));
+    audioRef.current = a;
+    a.play().catch(() => undefined);
+    a.addEventListener("play", () => setPlayed(true), { once: true });
+    return () => { a.pause(); };
+  }, [target.lemma, target.sampleSurah, target.sampleAyah, target.sampleWord]);
+
+  const replay = () => {
+    audioRef.current?.play().catch(() => undefined);
+    setPlayed(true);
+  };
+
+  const pick = (lemma: string) => {
+    if (picked) return;
+    setPicked(lemma);
+    setTimeout(() => onAnswer(lemma === target.lemma), 350);
+  };
+
+  return (
+    <div className="card-raised p-6 sm:p-10 animate-fade-up space-y-6">
+      <div className="text-center">
+        <p className="eyebrow mb-1">
+          {language === "ms" ? "Ujian pendengaran" : "Listening challenge"}
+        </p>
+        <p className="text-xs text-[color:var(--muted)]">
+          {language === "ms"
+            ? "Dengar bacaan dan pilih maksudnya"
+            : "Listen to the recitation and pick its meaning"}
+        </p>
+      </div>
+
+      {/* Big play button — the only visual cue */}
+      <div className="flex justify-center">
+        <button
+          onClick={replay}
+          className={classNames(
+            "h-24 w-24 rounded-full grid place-items-center transition-all active:scale-95 shadow-lg",
+            played
+              ? "bg-[color:var(--accent)] text-white hover:bg-[color:var(--accent-strong)]"
+              : "bg-[color:var(--gold)] text-black hover:bg-[color:var(--gold-strong)] animate-pulse"
+          )}
+          aria-label={language === "ms" ? "Main semula" : "Play again"}
+        >
+          <svg viewBox="0 0 24 24" width="36" height="36" fill="currentColor" aria-hidden>
+            <path d="M8 5l12 7-12 7z" />
+          </svg>
+        </button>
+      </div>
+
+      {/* Gloss options */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+        {options.map((o) => {
+          const g = effectiveGloss(o, language);
+          const isPicked = picked === o.lemma;
+          const isCorrect = o.lemma === target.lemma;
+          return (
+            <button
+              key={o.lemma}
+              onClick={() => pick(o.lemma)}
+              disabled={picked !== null}
+              className={classNames(
+                "rounded-2xl border-2 px-4 py-4 text-left transition-all duration-300 active:scale-[0.98] min-h-[60px]",
+                !picked && "border-[color:var(--border)] bg-[color:var(--surface)] hover:border-[color:var(--accent)] hover:bg-[color:var(--accent-soft)]/30",
+                picked && isPicked && isCorrect && "border-[color:var(--accent)] bg-[color:var(--accent)] text-white",
+                picked && isPicked && !isCorrect && "border-[color:var(--danger)] bg-[color:var(--danger)] text-white animate-shake",
+                picked && !isPicked && isCorrect && "border-[color:var(--accent)] bg-[color:var(--accent-soft)]/60",
+                picked && !isPicked && !isCorrect && "opacity-40"
+              )}
+            >
+              <span className="text-[15px] font-semibold">{g?.text ?? "—"}</span>
+            </button>
+          );
+        })}
       </div>
     </div>
   );

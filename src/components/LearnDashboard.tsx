@@ -148,6 +148,11 @@ export function LearnDashboard({ previewLemmas, coverage }: Props) {
             href="/learn/vocabulary"
             badge={introduced}
           />
+          <ActionCard
+            title={language === "ms" ? "Analitik" : "Analytics"}
+            subtitle={language === "ms" ? "Peta kelemahan & kemajuan" : "Weakness map & progress"}
+            href="/analytics"
+          />
         </div>
       </section>
 

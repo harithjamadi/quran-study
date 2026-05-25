@@ -4,6 +4,8 @@ import { Fragment, useEffect, useState } from "react";
 import { loadSurahWords, type WordEntry } from "@/lib/words";
 import { WordPopover } from "@/components/WordPopover";
 import { toArabicDigits } from "@/lib/format";
+import { posUnderlineClass, type PosTag } from "@/lib/pos-colors";
+import { useLearning } from "@/store/learning";
 
 interface Props {
   surahNumber: number;
@@ -26,6 +28,7 @@ export function InteractiveVerse({
 }: Props) {
   const [words, setWords] = useState<WordEntry[] | null>(null);
   const [selection, setSelection] = useState<Selection | null>(null);
+  const language = useLearning((s) => s.language);
 
   useEffect(() => {
     let active = true;
@@ -70,7 +73,12 @@ export function InteractiveVerse({
                 const rect = e.currentTarget.getBoundingClientRect();
                 setSelection({ word: w, rect });
               }}
-              className="inline rounded-md px-0.5 -mx-0.5 hover:bg-[color:var(--accent-soft)] focus-visible:bg-[color:var(--accent-soft)] focus-visible:outline-none transition-colors cursor-pointer"
+              className={[
+                "inline rounded-md px-0.5 -mx-0.5",
+                "hover:bg-[color:var(--accent-soft)] focus-visible:bg-[color:var(--accent-soft)]",
+                "focus-visible:outline-none transition-colors cursor-pointer",
+                posUnderlineClass(w.pos as PosTag),
+              ].join(" ")}
               aria-label={
                 w.gloss ? `${w.text} — ${w.gloss}` : `Study word ${w.text}`
               }
@@ -84,6 +92,10 @@ export function InteractiveVerse({
           ﴿{toArabicDigits(ayahNumber)}﴾
         </span>
       </div>
+
+      {/* POS legend — compact, dismissible-by-nav */}
+      <PosLegend language={language} />
+
       {selection && (
         <WordPopover
           word={selection.word}
@@ -94,5 +106,25 @@ export function InteractiveVerse({
         />
       )}
     </>
+  );
+}
+
+/** Inline legend explaining the colour-coding. Shown once per verse area. */
+function PosLegend({ language }: { language: "en" | "ms" }) {
+  return (
+    <div className="flex flex-wrap gap-x-4 gap-y-1 mt-1 text-[10px] text-[color:var(--muted)] select-none">
+      <span className="flex items-center gap-1">
+        <span className="inline-block w-3 h-0.5 bg-blue-400 rounded-full opacity-70" />
+        {language === "ms" ? "Kata Kerja" : "Verb"}
+      </span>
+      <span className="flex items-center gap-1">
+        <span className="inline-block w-3 h-0.5 bg-emerald-500 rounded-full opacity-70" />
+        {language === "ms" ? "Kata Nama" : "Noun"}
+      </span>
+      <span className="flex items-center gap-1">
+        <span className="inline-block w-3 h-0.5 bg-amber-400 rounded-full opacity-50" />
+        {language === "ms" ? "Kata Tugas" : "Particle"}
+      </span>
+    </div>
   );
 }

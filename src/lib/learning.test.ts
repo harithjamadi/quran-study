@@ -13,71 +13,87 @@ import {
 
 const NOW = new Date("2026-05-24T10:00:00Z").getTime();
 
-describe("applyGrade", () => {
-  it("starts a fresh card on first 'good' review at a 1-day interval", () => {
+describe("applyGrade – FSRS v5", () => {
+  it("moves a new card to Learning state after first 'good'", () => {
     const next = applyGrade(undefined, "good", NOW);
-    expect(next.successes).toBe(1);
-    expect(next.streak).toBe(1);
-    expect(next.intervalDays).toBe(1);
-    expect(next.nextReview).toBe(NOW + 86_400_000);
+    expect(next.reps).toBe(1);
+    expect(next.state).toBe(1); // Learning
+    expect(next.due).toBeGreaterThan(NOW);
   });
 
-  it("'again' resets streak and schedules a 10-minute relearn", () => {
-    const after2 = applyGrade(applyGrade(undefined, "good", NOW), "good", NOW);
-    const lapse = applyGrade(after2, "again", NOW + 10);
-    expect(lapse.streak).toBe(0);
-    expect(lapse.lapses).toBe(1);
-    expect(lapse.intervalDays).toBe(0);
-    expect(lapse.nextReview).toBe(NOW + 10 + 10 * 60 * 1000);
+  it("'again' on a new card schedules a short retry", () => {
+    const lapse = applyGrade(undefined, "again", NOW);
+    // FSRS only increments lapses when a Review-state card is forgotten
+    expect(lapse.due).toBeGreaterThan(NOW);
+    expect(lapse.due - NOW).toBeLessThan(30 * 60 * 1000); // Within 30 minutes
   });
 
-  it("scales the interval up on consecutive 'good' grades", () => {
+  it("'again' on a Review-state card increments lapses", () => {
     let s = applyGrade(undefined, "good", NOW);
-    s = applyGrade(s, "good", NOW); // 1 → 3 days
-    expect(s.intervalDays).toBe(3);
-    s = applyGrade(s, "good", NOW); // 3 → ~7 days
-    expect(s.intervalDays).toBe(7);
-    s = applyGrade(s, "good", NOW); // ~7 → ~15 days
-    expect(s.intervalDays).toBeGreaterThanOrEqual(14);
+    s = applyGrade(s, "good", s.due); // Graduate to Review
+    expect(s.state).toBe(2);
+    const lapsed = applyGrade(s, "again", s.due);
+    expect(lapsed.lapses).toBe(1);
+    expect(lapsed.state).toBe(3); // Relearning
   });
 
-  it("'easy' applies a 4x multiplier", () => {
-    let s = applyGrade(undefined, "good", NOW); // 1 day
-    s = applyGrade(s, "easy", NOW); // 1 * 4 = 4
-    expect(s.intervalDays).toBe(4);
+  it("'easy' produces a later due date than 'good' from a fresh card", () => {
+    const good = applyGrade(undefined, "good", NOW);
+    const easy = applyGrade(undefined, "easy", NOW);
+    expect(easy.due).toBeGreaterThanOrEqual(good.due);
   });
 
-  it("caps interval at 180 days", () => {
-    const s = freshLemmaState(NOW);
-    s.intervalDays = 100;
-    s.streak = 10;
-    const next = applyGrade(s, "easy", NOW);
-    expect(next.intervalDays).toBe(180);
+  it("graduates from Learning to Review after passing learning steps", () => {
+    let s = applyGrade(undefined, "good", NOW);
+    expect(s.state).toBe(1); // Learning
+    s = applyGrade(s, "good", s.due); // Review on due date
+    expect(s.state).toBe(2); // Review
+  });
+
+  it("stability grows with correct reviews at proper intervals", () => {
+    let s = applyGrade(undefined, "good", NOW);
+    s = applyGrade(s, "good", s.due);
+    expect(s.stability).toBeGreaterThan(0);
+    const stability2 = s.stability;
+    s = applyGrade(s, "good", s.due);
+    expect(s.stability).toBeGreaterThanOrEqual(stability2);
+  });
+
+  it("reaches strong status after enough correct reviews with proper gaps", () => {
+    let s = applyGrade(undefined, "good", NOW);
+    s = applyGrade(s, "good", s.due);
+    s = applyGrade(s, "good", s.due);
+    s = applyGrade(s, "good", s.due);
+    // Stability should exceed 21 days (strong threshold) after 4 on-time reviews
+    expect(s.stability).toBeGreaterThan(21);
+    expect(statusOf(s)).toBe("strong");
   });
 });
 
-describe("statusOf", () => {
+describe("statusOf – FSRS states", () => {
   it("returns 'new' for never-reviewed cards", () => {
     expect(statusOf(undefined)).toBe("new");
     expect(statusOf(freshLemmaState(NOW))).toBe("new");
   });
-  it("flags weak when lapses outnumber successes", () => {
-    const s = freshLemmaState(NOW);
-    s.successes = 1;
-    s.lapses = 2;
+
+  it("returns 'weak' while card is in Learning state", () => {
+    const s = applyGrade(undefined, "good", NOW);
+    expect(s.state).toBe(1); // Learning
     expect(statusOf(s)).toBe("weak");
   });
-  it("promotes to good after a 2-streak", () => {
+
+  it("returns 'good' once card graduates to Review", () => {
     let s = applyGrade(undefined, "good", NOW);
-    s = applyGrade(s, "good", NOW);
+    s = applyGrade(s, "good", s.due);
+    expect(s.state).toBe(2); // Review
     expect(statusOf(s)).toBe("good");
   });
-  it("promotes to strong only after a 4-streak AND long interval", () => {
+
+  it("returns 'weak' after a lapse (Relearning state)", () => {
     let s = applyGrade(undefined, "good", NOW);
-    for (let i = 0; i < 5; i++) s = applyGrade(s, "good", NOW);
-    expect(s.streak).toBeGreaterThanOrEqual(4);
-    expect(s.intervalDays).toBeGreaterThanOrEqual(14);
-    expect(statusOf(s)).toBe("strong");
+    s = applyGrade(s, "good", s.due);
+    s = applyGrade(s, "again", s.due); // Lapse
+    expect(statusOf(s)).toBe("weak");
   });
 });
 
@@ -85,10 +101,13 @@ describe("isDue", () => {
   it("treats undefined cards as due now", () => {
     expect(isDue(undefined, NOW)).toBe(true);
   });
-  it("respects nextReview timestamp", () => {
+
+  it("respects the due timestamp", () => {
     const s = applyGrade(undefined, "good", NOW);
+    // Card in Learning — due in ~10 minutes, not due after 1 second
     expect(isDue(s, NOW + 1000)).toBe(false);
-    expect(isDue(s, NOW + 86_400_000 + 1)).toBe(true);
+    // Due after more than 10 minutes
+    expect(isDue(s, NOW + 11 * 60 * 1000)).toBe(true);
   });
 });
 
@@ -100,13 +119,14 @@ describe("comprehension math", () => {
   ];
 
   it("counts only good/strong lemmas toward coverage", () => {
+    // Two good reviews → Review state (good)
+    let reviewedState = applyGrade(undefined, "good", NOW);
+    reviewedState = applyGrade(reviewedState, "good", reviewedState.due);
+    expect(reviewedState.state).toBe(2); // Review state → "good"
+
     const states = {
-      "اللَّه": (() => {
-        let s = applyGrade(undefined, "good", NOW);
-        s = applyGrade(s, "good", NOW);
-        return s;
-      })(),
-      "كَتَب": freshLemmaState(NOW), // status new
+      "اللَّه": reviewedState,
+      "كَتَب": freshLemmaState(NOW), // status: new
     };
     expect(tokensCovered(freq, states)).toBe(100);
     expect(comprehensionPct(freq, states, 155)).toBeCloseTo((100 / 155) * 100, 2);

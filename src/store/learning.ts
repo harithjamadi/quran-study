@@ -13,8 +13,16 @@ import {
   type LemmaState,
   type WordStatus,
 } from "@/lib/learning";
+import { computeRootBoosts } from "@/lib/root-progression";
+import { loadRootIndex } from "@/lib/words";
 
 export type Language = "en" | "ms";
+
+/** Pair of lemma + the specific Arabic surface form the user encountered. */
+export interface SeenForm {
+  lemma: string;
+  text: string;
+}
 
 interface LearningState {
   lemmas: Record<string, LemmaState>;
@@ -27,20 +35,27 @@ interface LearningState {
   /**
    * Stars earned per surah number. Value is 0–3:
    *   1 = Easy completed, 2 = Medium completed, 3 = Hard completed.
-   * Each difficulty also implies all lower difficulties completed.
    */
   surahStars: Record<number, number>;
 
+  /**
+   * Surface forms (with diacritics) the user has been exposed to during learning.
+   * Keyed by the raw Arabic text. Used for pokedex-style "ENCOUNTERED" badges in
+   * the Combinations tab — distinct from `lemmas` which tracks lemma-level SRS.
+   */
+  seenForms: Record<string, true>;
+
   // actions
-  grade: (lemma: string, grade: Grade) => void;
+  grade: (lemma: string, gradeValue: Grade, root?: string | null, surfaceText?: string) => void;
   addXp: (amount: number) => void;
-  introduce: (lemma: string) => void;
-  introduceMany: (lemmas: string[]) => void;
+  introduce: (lemma: string, surfaceText?: string) => void;
+  introduceMany: (items: SeenForm[]) => void;
   advanceIntroducedTo: (rank: number) => void;
   setLanguage: (l: Language) => void;
   resetProgress: () => void;
   statusOf: (lemma: string) => WordStatus;
   recordSurahStar: (surahNumber: number, level: 1 | 2 | 3) => void;
+  markFormSeen: (surfaceText: string) => void;
 }
 
 const DEFAULTS = {
@@ -52,6 +67,7 @@ const DEFAULTS = {
   dayStreak: 0,
   reviewedToday: 0,
   surahStars: {} as Record<number, number>,
+  seenForms: {} as Record<string, true>,
 };
 
 function bumpStreak(state: LearningState, xpEarned = 0): Partial<LearningState> {
@@ -71,26 +87,57 @@ export const useLearning = create<LearningState>()(
   persist(
     (set, get) => ({
       ...DEFAULTS,
-      grade: (lemma, grade) => {
+      grade: (lemma, gradeValue, root, surfaceText) => {
         const cur = get();
-        const next = applyGrade(cur.lemmas[lemma], grade);
-        const reward = XP_REWARDS[grade] || 0;
-        set({ lemmas: { ...cur.lemmas, [lemma]: next }, ...bumpStreak(cur, reward) });
+        const next = applyGrade(cur.lemmas[lemma], gradeValue);
+        const reward = XP_REWARDS[gradeValue] || 0;
+        const seenForms = surfaceText && !cur.seenForms[surfaceText]
+          ? { ...cur.seenForms, [surfaceText]: true as const }
+          : cur.seenForms;
+        set({ lemmas: { ...cur.lemmas, [lemma]: next }, seenForms, ...bumpStreak(cur, reward) });
+
+        // Root-based progression: fire-and-forget boost to root siblings.
+        if (root && gradeValue !== "again") {
+          loadRootIndex().then((rootIdx) => {
+            if (!rootIdx) return;
+            const rootEntry = rootIdx[root];
+            const boosts = computeRootBoosts(lemma, gradeValue, get().lemmas, rootEntry);
+            if (Object.keys(boosts).length === 0) return;
+            const updated = { ...get().lemmas };
+            for (const [sib, patch] of Object.entries(boosts)) {
+              if (updated[sib]) updated[sib] = { ...updated[sib], ...patch };
+            }
+            set({ lemmas: updated });
+          });
+        }
       },
       addXp: (amount) => set((s) => ({ xp: s.xp + amount })),
-      introduce: (lemma) => {
+      introduce: (lemma, surfaceText) => {
         const cur = get();
-        if (cur.lemmas[lemma]) return;
-        set({ lemmas: { ...cur.lemmas, [lemma]: freshLemmaState() } });
+        const lemmaPatch = cur.lemmas[lemma]
+          ? cur.lemmas
+          : { ...cur.lemmas, [lemma]: freshLemmaState() };
+        const seenForms = surfaceText && !cur.seenForms[surfaceText]
+          ? { ...cur.seenForms, [surfaceText]: true as const }
+          : cur.seenForms;
+        if (lemmaPatch === cur.lemmas && seenForms === cur.seenForms) return;
+        set({ lemmas: lemmaPatch, seenForms });
       },
-      introduceMany: (lemmas) => {
+      introduceMany: (items) => {
         const cur = get();
         const nextLemmas = { ...cur.lemmas };
+        const nextSeen = { ...cur.seenForms };
         let changed = false;
-        for (const l of lemmas) {
-          if (!nextLemmas[l]) { nextLemmas[l] = freshLemmaState(); changed = true; }
+        for (const { lemma, text } of items) {
+          if (!nextLemmas[lemma]) { nextLemmas[lemma] = freshLemmaState(); changed = true; }
+          if (text && !nextSeen[text]) { nextSeen[text] = true; changed = true; }
         }
-        if (changed) set({ lemmas: nextLemmas });
+        if (changed) set({ lemmas: nextLemmas, seenForms: nextSeen });
+      },
+      markFormSeen: (surfaceText) => {
+        const cur = get();
+        if (!surfaceText || cur.seenForms[surfaceText]) return;
+        set({ seenForms: { ...cur.seenForms, [surfaceText]: true } });
       },
       advanceIntroducedTo: (rank) => {
         const cur = get();
@@ -107,15 +154,57 @@ export const useLearning = create<LearningState>()(
       },
     }),
     {
-      name: "noor.learning.v1",
-      version: 1,
-      // Migrate users who had the old perfectSurahs array (v0) to the new surahStars map (v1).
-      migrate: (persisted: unknown) => {
+      name: "noor.learning.v2",
+      version: 2,
+      migrate: (persisted: unknown, fromVersion: number) => {
         const state = persisted as Record<string, unknown>;
-        const perfectSurahs = (state.perfectSurahs as number[] | undefined) ?? [];
-        const surahStars: Record<number, number> = {};
-        for (const n of perfectSurahs) surahStars[n] = 1;
-        return { ...state, surahStars };
+
+        // v0 → v1: perfectSurahs[] → surahStars map
+        let surahStars = (state.surahStars as Record<number, number> | undefined) ?? {};
+        if (fromVersion === 0) {
+          const perfectSurahs = (state.perfectSurahs as number[] | undefined) ?? [];
+          for (const n of perfectSurahs) surahStars[n] = 1;
+        }
+
+        // v1 → v2: SM-2 LemmaState → FSRS LemmaState
+        const rawLemmas = (state.lemmas as Record<string, Record<string, unknown>>) ?? {};
+        const migratedLemmas: Record<string, LemmaState> = {};
+        const now = Date.now();
+
+        for (const [key, old] of Object.entries(rawLemmas)) {
+          if ("stability" in old) {
+            // Already v2 format
+            migratedLemmas[key] = old as unknown as LemmaState;
+          } else {
+            // Convert SM-2 fields → FSRS approximation
+            const streak = (old.streak as number) ?? 0;
+            const successes = (old.successes as number) ?? 0;
+            const lapses = (old.lapses as number) ?? 0;
+            const intervalDays = (old.intervalDays as number) ?? 0;
+            const nextReview = (old.nextReview as number) ?? now;
+            const lastReview = (old.lastReview as number) ?? 0;
+
+            // Map SM-2 state to FSRS state
+            const fsrsState: 0 | 1 | 2 | 3 =
+              successes === 0 ? 0 :        // New
+              streak === 0 ? 3 :            // Relearning (had lapses)
+              intervalDays >= 1 ? 2 : 1;   // Review vs Learning
+
+            migratedLemmas[key] = {
+              due: nextReview,
+              stability: Math.max(1, intervalDays),
+              difficulty: 5,
+              state: fsrsState,
+              reps: successes,
+              lapses,
+              lastReview,
+              scheduledDays: intervalDays,
+              learningSteps: 0,
+            };
+          }
+        }
+
+        return { ...state, surahStars, lemmas: migratedLemmas };
       },
       storage: createJSONStorage(() => localStorage),
     }

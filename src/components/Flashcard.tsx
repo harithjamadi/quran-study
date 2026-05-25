@@ -18,6 +18,12 @@ interface Props {
   onResult: (grade: Grade) => void;
   /** Called when the user clicks 'Next Word'. */
   onNext: () => void;
+  /**
+   * Optional verse words for contextual cloze mode.
+   * When provided, the verse is shown with the target word blanked out
+   * instead of the isolated Arabic form — activated for Review-state cards only.
+   */
+  verseWords?: string[];
 }
 
 function shuffle<T>(arr: T[]): T[] {
@@ -44,7 +50,7 @@ function buildOptions(card: LemmaMeta, pool: LemmaMeta[], lang: Language): Lemma
 
 type Phase = "guessing" | "revealed";
 
-export function Flashcard({ card, distractorPool, onResult, onNext }: Props) {
+export function Flashcard({ card, distractorPool, onResult, onNext, verseWords }: Props) {
   const language = useLearning((s) => s.language);
   const t = UI_STRINGS[language];
 
@@ -146,15 +152,35 @@ export function Flashcard({ card, distractorPool, onResult, onNext }: Props) {
         </div>
       )}
       <div className="text-center pt-2 sm:pt-4">
-        <p className="eyebrow mb-5 sm:mb-6">{t.flash_question}</p>
-        <p
-          className="arabic-display text-[color:var(--foreground)] transform-gpu"
-          lang="ar"
-          dir="rtl"
-          style={{ fontSize: "var(--arabic-xl)", textRendering: "geometricPrecision" }}
-        >
-          {card.sampleText}
+        <p className="eyebrow mb-5 sm:mb-6">
+          {verseWords
+            ? (language === "ms" ? "Pilih makna perkataan yang ditanda" : "What does the highlighted word mean?")
+            : t.flash_question}
         </p>
+        {/* Cloze mode: show the verse with target word highlighted */}
+        {verseWords ? (
+          <div className="rounded-xl bg-[color:var(--surface)] border border-[color:var(--border)] p-3 mb-4 text-right" dir="rtl">
+            <p className="arabic leading-loose" lang="ar" style={{ fontSize: "var(--arabic-sm)" }}>
+              {verseWords.map((w, i) => (
+                <span key={i} className={[
+                  "inline-block mx-0.5",
+                  i === card.sampleWord - 1
+                    ? "text-[color:var(--gold-strong)] dark:text-[color:var(--gold)] underline decoration-2 underline-offset-4 font-bold"
+                    : "text-[color:var(--foreground)]",
+                ].join(" ")}>{w}</span>
+              ))}
+            </p>
+          </div>
+        ) : (
+          <p
+            className="arabic-display text-[color:var(--foreground)] transform-gpu"
+            lang="ar"
+            dir="rtl"
+            style={{ fontSize: "var(--arabic-xl)", textRendering: "geometricPrecision" }}
+          >
+            {card.sampleText}
+          </p>
+        )}
         {card.translit && (
           <p className="mt-3 sm:mt-4 display-italic text-[color:var(--muted-strong)] text-[length:var(--text-base)] tracking-wide">
             {card.translit}

@@ -7,6 +7,7 @@ import { useHydrated } from "@/lib/use-hydrated";
 import { UI_STRINGS } from "@/lib/i18n";
 import type { LemmaMeta } from "@/lib/learning";
 import { effectiveGloss, statusOf } from "@/lib/learning";
+import { WordDetailPanel, type VocabItem } from "@/components/WordDetailPanel";
 
 interface Props {
   freq: LemmaMeta[];
@@ -20,6 +21,7 @@ export function VocabularyClient({ freq }: Props) {
 
   const [search, setSearch] = useState("");
   const [filter, setFilter] = useState<"all" | "mastered" | "learning">("all");
+  const [selected, setSelected] = useState<VocabItem | null>(null);
 
   const list = useMemo(() => {
     return freq
@@ -53,6 +55,14 @@ export function VocabularyClient({ freq }: Props) {
 
   return (
     <div className="space-y-6">
+      {selected && (
+        <WordDetailPanel
+          item={selected}
+          language={language}
+          freq={freq}
+          onClose={() => setSelected(null)}
+        />
+      )}
       <header className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
           <h1 className="text-2xl font-bold">{t.vocab_title}</h1>
@@ -117,9 +127,10 @@ export function VocabularyClient({ freq }: Props) {
       <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
         {list.length > 0 ? (
           list.map((item) => (
-            <div
+            <button
               key={item.lemma}
-              className="group rounded-2xl border border-[color:var(--border)] p-4 bg-[color:var(--surface)] hover:border-[color:var(--accent)] transition-all"
+              onClick={() => setSelected(item)}
+              className="group rounded-2xl border border-[color:var(--border)] p-4 bg-[color:var(--surface)] hover:border-[color:var(--accent)] hover:shadow-md transition-all text-left w-full"
             >
               <div className="flex items-start justify-between mb-2">
                 <div>
@@ -155,11 +166,11 @@ export function VocabularyClient({ freq }: Props) {
               
               <div className="flex items-center justify-between text-[11px] text-[color:var(--muted)]">
                 <span>{item.count.toLocaleString()}× in Quran</span>
-                {item.state && (
-                  <span>Streak: {item.state.streak}</span>
+                {item.state && item.state.reps > 0 && (
+                  <span>{item.state.reps}× reviewed</span>
                 )}
               </div>
-            </div>
+            </button>
           ))
         ) : (
           <div className="col-span-full py-12 text-center card bg-[color:var(--surface)]/40 border-dashed">

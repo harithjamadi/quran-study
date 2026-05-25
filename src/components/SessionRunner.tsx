@@ -6,6 +6,7 @@ import { Flashcard } from "@/components/Flashcard";
 import { useLearning } from "@/store/learning";
 import { UI_STRINGS } from "@/lib/i18n";
 import { isDue, statusOf, type Grade, type LemmaMeta } from "@/lib/learning";
+import { loadSurahWords } from "@/lib/words";
 
 interface Props {
   /** The full frequency list to draw new words from. */
@@ -30,6 +31,8 @@ export function SessionRunner({ freq, mode = "default" }: Props) {
   const [stats, setStats] = useState({ correct: 0, lapse: 0 });
   const [combo, setCombo] = useState(0);
   const [maxCombo, setMaxCombo] = useState(0);
+  // Verse words for cloze mode, keyed by `${surah}-${ayah}`
+  const [verseWordsCache, setVerseWordsCache] = useState<Record<string, string[]>>({});
 
   // Distractor pool is the top 300 words to keep options plausible.
   const distractorPool = useMemo(() => freq.slice(0, 300), [freq]);
@@ -105,9 +108,11 @@ export function SessionRunner({ freq, mode = "default" }: Props) {
 
     // Mark the new cards as introduced in the store (only in default mode)
     if (mode === "default") {
-      const introducedLemmas = finalQueue.filter(m => !lemmas[m.lemma]).map(m => m.lemma);
-      if (introducedLemmas.length > 0) {
-        introduceMany(introducedLemmas);
+      const newlyIntroduced = finalQueue
+        .filter((m) => !lemmas[m.lemma])
+        .map((m) => ({ lemma: m.lemma, text: m.sampleText }));
+      if (newlyIntroduced.length > 0) {
+        introduceMany(newlyIntroduced);
         // Advance the global introduced rank to the highest index we just touched
         const maxIdx = Math.max(...finalQueue.map(m => freq.indexOf(m)));
         if (maxIdx + 1 > snap.introducedThroughRank) {
@@ -119,6 +124,26 @@ export function SessionRunner({ freq, mode = "default" }: Props) {
     // eslint-disable-next-line react-hooks/set-state-in-effect
     setQueue(finalQueue);
   }, [freq, introduceMany, advanceIntroducedTo, mode, sessionKey]);
+
+  // Preload verse words for cloze mode — only for Review-state cards (~40% trigger)
+  useEffect(() => {
+    if (!queue) return;
+    const snap = useLearning.getState();
+    for (const item of queue) {
+      const lemmaState = snap.lemmas[item.lemma];
+      const cacheKey = `${item.sampleSurah}-${item.sampleAyah}`;
+      if (lemmaState?.state === 2 && !verseWordsCache[cacheKey]) {
+        loadSurahWords(item.sampleSurah).then((data) => {
+          if (!data) return;
+          const words = data[String(item.sampleAyah)]?.map((w) => w.text);
+          if (words) {
+            setVerseWordsCache((c) => ({ ...c, [cacheKey]: words }));
+          }
+        });
+      }
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [queue]);
 
   const onRestart = () => {
     setQueue(null);
@@ -164,7 +189,7 @@ export function SessionRunner({ freq, mode = "default" }: Props) {
   const card = queue[position];
 
   const onResult = (g: Grade) => {
-    grade(card.lemma, g);
+    grade(card.lemma, g, card.root, card.sampleText);
     if (g === "again") {
       setStats((s) => ({ ...s, lapse: s.lapse + 1 }));
       setCombo(0);
@@ -196,6 +221,7 @@ export function SessionRunner({ freq, mode = "default" }: Props) {
         distractorPool={distractorPool}
         onResult={onResult}
         onNext={onNext}
+        verseWords={verseWordsCache[`${card.sampleSurah}-${card.sampleAyah}`]}
       />
     </SessionFrame>
   );
