@@ -24,6 +24,7 @@ export function SessionRunner({ freq, mode = "default" }: Props) {
   const language = useLearning((s) => s.language);
   const t = UI_STRINGS[language];
 
+  const [sessionKey, setSessionKey] = useState(0);
   const [queue, setQueue] = useState<LemmaMeta[] | null>(null);
   const [position, setPosition] = useState(0);
   const [stats, setStats] = useState({ correct: 0, lapse: 0 });
@@ -117,7 +118,16 @@ export function SessionRunner({ freq, mode = "default" }: Props) {
 
     // eslint-disable-next-line react-hooks/set-state-in-effect
     setQueue(finalQueue);
-  }, [freq, introduceMany, advanceIntroducedTo, mode]);
+  }, [freq, introduceMany, advanceIntroducedTo, mode, sessionKey]);
+
+  const onRestart = () => {
+    setQueue(null);
+    setPosition(0);
+    setStats({ correct: 0, lapse: 0 });
+    setCombo(0);
+    setMaxCombo(0);
+    setSessionKey((k) => k + 1);
+  };
 
   if (!queue) {
     return (
@@ -145,6 +155,7 @@ export function SessionRunner({ freq, mode = "default" }: Props) {
           lapse={stats.lapse}
           total={queue.length}
           maxCombo={maxCombo}
+          onRestart={onRestart}
         />
       </SessionFrame>
     );
@@ -294,11 +305,13 @@ function Summary({
   lapse,
   total,
   maxCombo,
+  onRestart,
 }: {
   correct: number;
   lapse: number;
   total: number;
   maxCombo: number;
+  onRestart: () => void;
 }) {
   const language = useLearning((s) => s.language);
   const t = UI_STRINGS[language];
@@ -315,19 +328,19 @@ function Summary({
 
       <div className="flex justify-center gap-8 py-4 border-y border-[color:var(--border)]/50">
         <div className="text-center">
-          <p className="text-[10px] uppercase tracking-widest text-[color:var(--muted)] mb-1">Max Combo</p>
+          <p className="text-[10px] uppercase tracking-widest text-[color:var(--muted)] mb-1">{t.sess_max_combo}</p>
           <p className="text-2xl font-bold text-orange-500 italic">{maxCombo}</p>
         </div>
         <div className="text-center">
-          <p className="text-[10px] uppercase tracking-widest text-[color:var(--muted)] mb-1">Accuracy</p>
+          <p className="text-[10px] uppercase tracking-widest text-[color:var(--muted)] mb-1">{t.sess_accuracy}</p>
           <p className="text-2xl font-bold text-[color:var(--accent-strong)]">{Math.round((correct / total) * 100)}%</p>
         </div>
       </div>
 
       <p className="text-sm text-[color:var(--muted)]">
         {lapse > 0
-          ? `${lapse} ${lapse === 1 ? "card" : "cards"} will return soon for review.`
-          : "Perfect session! Vocabulary mastery increased."}
+          ? t.sess_lapse_msg.replace("{count}", lapse.toString())
+          : t.sess_perfect}
       </p>
 
       <div className="flex flex-wrap items-center justify-center gap-3">
@@ -337,12 +350,12 @@ function Summary({
         >
           {t.sess_back_dash}
         </Link>
-        <Link
-          href="/learn/session"
+        <button
+          onClick={onRestart}
           className="rounded-full border border-[color:var(--border)] px-6 py-2.5 text-sm font-semibold hover:bg-[color:var(--accent-soft)]/20 transition-all active:scale-95"
         >
           {t.sess_one_more} →
-        </Link>
+        </button>
       </div>
     </div>
   );
@@ -353,10 +366,7 @@ function EmptyState() {
   const t = UI_STRINGS[language];
   return (
     <div className="card p-10 text-center">
-      <p className="text-xs uppercase tracking-widest text-[color:var(--muted)]">
-        {t.sess_empty_title}
-      </p>
-      <h1 className="text-xl font-semibold mt-2">{t.sess_complete}</h1>
+      <h1 className="text-xl font-semibold">{t.sess_empty_title}</h1>
       <p className="text-sm text-[color:var(--muted)] mt-2">
         {t.sess_empty_desc}
       </p>

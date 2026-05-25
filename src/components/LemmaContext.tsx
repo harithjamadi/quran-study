@@ -74,7 +74,9 @@ const CORE_MEANINGS: Record<string, { en: string; ms: string }> = {
   "إِن": { en: "If / Indeed (emphasis).", ms: "Jika / Sesungguhnya (penegasan)." },
   "لَا": { en: "No, not.", ms: "Tidak, bukan." },
   "أَن": { en: "That (conjunction).", ms: "Bahawa." },
+  "أَمَّا": { en: "As for, however, but.", ms: "Adapun, kalau, manakala." },
   "ذا": { en: "That, those, that which.", ms: "Itu, yang tersebut, yang demikian." },
+  "جمع": { en: "To collect, gather, all, together.", ms: "Kumpul, semua, segala, seluruh." },
   "أرض": { en: "Earth, land, ground, soil.", ms: "Bumi, tanah, daratan." },
   "سمو": { en: "Heaven, sky, high, lofty.", ms: "Langit, syurga, tinggi." },
   "نزل": { en: "To descend, reveal, send down.", ms: "Turun, wahyu, menurunkan." },
@@ -247,7 +249,7 @@ export function LemmaContext({ card }: { card: LemmaMeta }) {
   // High-integrity meaning retrieval:
   // 1. Check hardcoded root/lemma meanings
   // 2. Fallback to verified metadata glosses (already verified against Abdullah Basmeih/Sahih)
-  const coreEntry = (card.root && CORE_MEANINGS[card.root]) || CORE_MEANINGS[card.lemma] || CORE_MEANINGS[card.lemma.replace(/[\u064B-\u065F\u0670]/g, "")];
+  const coreEntry = (card.root && CORE_MEANINGS[card.root]) || CORE_MEANINGS[card.lemma] || CORE_MEANINGS[card.lemma.replace(/[\u064B-\u065F\u0670\u0640]/g, "")];
   const coreMeaning = coreEntry
     ? (language === "ms" ? coreEntry.ms : coreEntry.en)
     : effectiveGloss(card, language)?.text ?? null;
@@ -255,10 +257,10 @@ export function LemmaContext({ card }: { card: LemmaMeta }) {
   const grammarTip = card.pos ? GRAMMAR_TIPS[card.pos] : null;
   const tipText = grammarTip ? (language === "ms" ? grammarTip.ms : grammarTip.en) : null;
 
-  const insightEntry = COMPREHENSIVE_INSIGHTS[card.lemma] || (card.root && COMPREHENSIVE_INSIGHTS[card.root]) || COMPREHENSIVE_INSIGHTS[card.lemma.replace(/[\u064B-\u065F\u0670]/g, "")];
+  const insightEntry = COMPREHENSIVE_INSIGHTS[card.lemma] || (card.root && COMPREHENSIVE_INSIGHTS[card.root]) || COMPREHENSIVE_INSIGHTS[card.lemma.replace(/[\u064B-\u065F\u0670\u0640]/g, "")];
   const insightText = insightEntry ? (language === "ms" ? insightEntry.ms : insightEntry.en) : null;
 
-  const normalizedLemma = card.lemma.replace(/[\u064B-\u065F\u0670]/g, "");
+  const normalizedLemma = card.lemma.replace(/[\u064B-\u065F\u0670\u0640]/g, "");
 
   return (
     <div className="mt-6 space-y-6">
@@ -367,7 +369,7 @@ export function LemmaContext({ card }: { card: LemmaMeta }) {
                     lang="ar"
                     dir="rtl"
                   >
-                    <HighlightedText text={ex.arabic} lemma={card.lemma} sample={card.sampleText} />
+                    <HighlightedText text={ex.arabic} lemma={card.lemma} sample={card.sampleText} root={card.root} />
                   </div>
                   <div className="text-sm text-[color:var(--foreground)] leading-relaxed mb-3 opacity-90">
                     <HighlightedTranslation
@@ -391,13 +393,13 @@ export function LemmaContext({ card }: { card: LemmaMeta }) {
         ) : (
           <div className="text-center py-12 border-2 border-dashed border-[color:var(--border)] rounded-2xl bg-[color:var(--surface)]/30">
              <p className="text-xs text-[color:var(--muted)] italic mb-2">
-               {t.flash_incorrect}... No additional examples found.
+               {language === "ms" ? "Tiada contoh ayat ditemui." : "No example verses found."}
              </p>
-             <button 
+             <button
                onClick={() => window.location.reload()}
                className="text-[10px] uppercase tracking-widest font-bold text-[color:var(--accent-strong)] hover:underline"
              >
-               Try reloading data
+               {language === "ms" ? "Cuba semula" : "Retry"}
              </button>
           </div>
         )}
@@ -410,54 +412,50 @@ function HighlightedTranslation({ text, targets }: { text: string; targets: stri
   if (targets.length === 0) return <>{text}</>;
 
   const language = useLearning.getState().language;
-  const stopWords = ["and", "the", "a", "an", "of", "on", "at", "in", "to", "dengan", "bagi", "dan", "iaitu", "ini", "itu"];
+  const stopWords = ["and", "the", "a", "an", "of", "on", "at", "in", "to", "dengan", "bagi", "dan", "iaitu", "ini", "itu", "yang", "untuk", "dari", "daripada", "kepada"];
 
-  // 1. Clean and prepare queries: remove parentheses, split by punctuation
+  // 1. Clean and prepare queries
   const queries = targets
     .flatMap((t) => t.toLowerCase().split(/[/,;]/))
     .flatMap((q) => {
-      const cleanQ = q.replace(/\([^)]*\)/g, "").replace(/[^a-z0-9\s]/gi, "").trim();
+      const cleanQ = q.replace(/\([^)]*\)/g, "").replace(/[^a-z0-9\s-]/gi, "").trim();
       if (!cleanQ) return [];
       
       const variants = [cleanQ];
+      const words = cleanQ.split(/\s+/);
       
-      // If Malay, generate common morphological variants (imbuhan)
-      if (language === "ms") {
-        const words = cleanQ.split(/\s+/);
-        for (const w of words) {
-          if (w.length < 3 || stopWords.includes(w)) continue;
-          
-          // Basic prefix additions
-          variants.push("me" + w, "mem" + w, "men" + w, "meng" + w, "ber" + w, "ter" + w, "di" + w, "se" + w);
-          // Complex replacements (Nasalization)
-          if (w.startsWith("s")) variants.push("meny" + w.slice(1));
-          if (w.startsWith("p")) variants.push("mem" + w.slice(1));
-          if (w.startsWith("t")) variants.push("men" + w.slice(1));
-          if (w.startsWith("k")) variants.push("meng" + w.slice(1));
-          
-          // Suffixes
-          variants.push(w + "kan", w + "i", w + "an", w + "nya");
-        }
-      } else {
-        // English/Generic individual word support
-        const words = cleanQ.split(/\s+/);
-        if (words.length > 1) {
-          for (const w of words) {
-            if (w.length >= 3 && !stopWords.includes(w)) variants.push(w);
+      for (const w of words) {
+        if (w.length < 3 || stopWords.includes(w)) continue;
+        variants.push(w);
+
+        if (language === "ms") {
+          // Malay stemming and variant generation
+          const stem = w.replace(/^(me[ny|m|ng|l]?|be[r|l]?|te[r]?|di|pe[ny|m|ng]?|ke|se)/, "")
+                        .replace(/(kan|i|an|nya)$/, "");
+          if (stem.length >= 3 && !stopWords.includes(stem)) {
+            variants.push(stem);
+            const prefixes = ["me", "mem", "men", "meng", "meny", "ber", "ter", "di", "se", "pe"];
+            const suffixes = ["kan", "i", "an", "nya"];
+            prefixes.forEach(p => variants.push(p + stem));
+            suffixes.forEach(s => variants.push(stem + s));
+            variants.push(stem + "-" + stem);
           }
+        } else {
+          // English pluralization
+          if (w.endsWith("y")) variants.push(w.slice(0, -1) + "ies");
+          else if (w.endsWith("s") || w.endsWith("sh") || w.endsWith("ch")) variants.push(w + "es");
+          else variants.push(w + "s");
         }
       }
       return variants;
     })
-    .filter((q) => q.length >= 3)
-    .sort((a, b) => b.length - a.length); // Try longest matches first
+    .filter((q, i, self) => q.length >= 3 && self.indexOf(q) === i)
+    .sort((a, b) => b.length - a.length);
 
   if (queries.length === 0) return <>{text}</>;
 
-  // 2. Escape for regex and join into a single pattern
   const escape = (s: string) => s.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
-  const pattern = new RegExp(`(\\b${queries.map(escape).join("\\b|\\b")}\\b)`, "gi");
-
+  const pattern = new RegExp(`(${queries.map(escape).join("|")})`, "gi");
   const parts = text.split(pattern);
 
   return (
@@ -465,10 +463,7 @@ function HighlightedTranslation({ text, targets }: { text: string; targets: stri
       {parts.map((part, i) => {
         const isMatch = queries.some((q) => part.toLowerCase() === q.toLowerCase());
         return isMatch ? (
-          <span
-            key={i}
-            className="font-bold underline decoration-[color:var(--accent)]/60 decoration-2 underline-offset-4 text-[color:var(--foreground)]"
-          >
+          <span key={i} className="font-bold underline decoration-[color:var(--accent)]/60 decoration-2 underline-offset-4 text-[color:var(--foreground)]">
             {part}
           </span>
         ) : (
@@ -479,57 +474,64 @@ function HighlightedTranslation({ text, targets }: { text: string; targets: stri
   );
 }
 
-function HighlightedText({ text, lemma, sample }: { text: string; lemma: string; sample: string }) {
-  const normalize = (s: string) => s.replace(/[\u064B-\u065F\u0670]/g, "");
-  const target = normalize(sample || lemma);
-  const normalizedText = normalize(text);
+function HighlightedText({ text, lemma, sample, root }: { text: string; lemma: string; sample: string; root?: string | null }) {
+  // Normalize: strip harakat, tatwil, and special Quranic stop signs
+  const normalize = (s: string) => s.replace(/[\u064B-\u065F\u0670\u0640\u06D6-\u06ED]/g, ""); 
   
-  if (!target) return <>{text}</>;
+  if (!lemma) return <>{text}</>;
 
-  const matches: { start: number; end: number }[] = [];
-  let lastIdx = -1;
+  const lNorm = normalize(lemma);
+  const sNorm = sample ? normalize(sample) : "";
+  const rRaw = root || "";
+  // For geminate roots (like D-L-L), the normalized text usually has D-L (ضل).
+  // We include both the full root and the shortened version for matching.
+  const rNorm = normalize(rRaw);
+  const rShort = rNorm.length > 2 && rNorm[1] === rNorm[2] ? rNorm.slice(0, 2) : rNorm;
   
-  while ((lastIdx = normalizedText.indexOf(target, lastIdx + 1)) !== -1) {
-    let originalStart = -1;
-    let originalEnd = -1;
-    let normIdx = 0;
-    
-    for (let i = 0; i < text.length; i++) {
-      if (normIdx === lastIdx && originalStart === -1) {
-        originalStart = i;
-      }
-      if (!/[\u064B-\u065F\u0670]/.test(text[i])) {
-        normIdx++;
-      }
-      if (normIdx === lastIdx + target.length && originalEnd === -1) {
-        originalEnd = i + 1;
-        while (originalEnd < text.length && /[\u064B-\u065F\u0670]/.test(text[originalEnd])) {
-          originalEnd++;
-        }
-        break;
-      }
-    }
-    
-    if (originalStart !== -1 && originalEnd !== -1) {
-      matches.push({ start: originalStart, end: originalEnd });
-    }
-  }
+  const targets = Array.from(new Set([
+    sNorm,
+    lNorm,
+    rNorm,
+    rShort,
+    "ال" + lNorm,
+    "و" + lNorm,
+    "ف" + lNorm,
+    "ي" + rShort,
+    "ت" + rShort,
+    "ن" + rShort,
+    "أ" + rShort,
+  ])).filter(t => t && t.length >= 2).sort((a, b) => b.length - a.length);
 
-  if (matches.length === 0) return <>{text}</>;
+  if (targets.length === 0) return <>{text}</>;
 
+  // Tokenize by whitespace BUT keep the whitespace in the result
+  const tokens = text.split(/(\s+)/);
   const result: React.ReactNode[] = [];
-  let lastPos = 0;
-  
-  matches.forEach((m, i) => {
-    result.push(text.substring(lastPos, m.start));
-    result.push(
-      <span key={i} className="text-[color:var(--accent-strong)] font-black border-b-2 border-[color:var(--accent-strong)]/30 px-0.5">
-        {text.substring(m.start, m.end)}
-      </span>
-    );
-    lastPos = m.end;
+
+  tokens.forEach((token, idx) => {
+    if (/^\s+$/.test(token)) {
+      result.push(token);
+      return;
+    }
+
+    const tNorm = normalize(token);
+    // A word matches if it contains any of our targets as a substring.
+    // This catches conjugations, prefixes, and attached pronouns.
+    const isMatch = targets.some(t => {
+      if (t.length <= 2) return tNorm === t || tNorm.startsWith(t);
+      return tNorm.includes(t);
+    });
+
+    if (isMatch) {
+      result.push(
+        <span key={idx} className="text-[color:var(--accent-strong)] font-black border-b-2 border-[color:var(--accent-strong)]/30 px-0.5">
+          {token}
+        </span>
+      );
+    } else {
+      result.push(token);
+    }
   });
-  result.push(text.substring(lastPos));
 
   return <>{result}</>;
 }

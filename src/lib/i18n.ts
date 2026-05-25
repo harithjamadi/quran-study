@@ -193,6 +193,12 @@ export const UI_STRINGS = {
     vocab_filter_learning: "Learning",
     vocab_filter_mastered: "Mastered",
     vocab_none: "No words found matching your filters.",
+
+    // Session Summary
+    sess_max_combo: "Max Combo",
+    sess_accuracy: "Accuracy",
+    sess_perfect: "Perfect session — mastery increased.",
+    sess_lapse_msg: "{count} word(s) still need practice.",
   },
   ms: {
     // Nav
@@ -284,8 +290,8 @@ export const UI_STRINGS = {
     flash_in_quran: "dalam Al-Quran",
     flash_pos: "Jenis kata",
     flash_root: "Akar",
-    flash_correct: "Betul!",
-    flash_incorrect: "Cuba lagi",
+    flash_correct: "BETUL",
+    flash_incorrect: "cuba lagi",
     flash_mastery: "Penguasaan",
     flash_tip: "Nota Tatabahasa",
     flash_insight: "Info Linguistik",
@@ -386,5 +392,11 @@ export const UI_STRINGS = {
     vocab_filter_learning: "Belajar",
     vocab_filter_mastered: "Dikuasai",
     vocab_none: "Tiada perkataan dijumpai untuk filter ini.",
+
+    // Session Summary
+    sess_max_combo: "Combo Terbaik",
+    sess_accuracy: "Ketepatan",
+    sess_perfect: "Sesi sempurna — penguasaan meningkat.",
+    sess_lapse_msg: "{count} perkataan masih perlu diasah.",
   },
 };

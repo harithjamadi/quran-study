@@ -8,6 +8,7 @@ import {
   isConsecutiveDay,
   localDateKey,
   statusOf,
+  XP_REWARDS,
   type Grade,
   type LemmaState,
   type WordStatus,
@@ -80,9 +81,6 @@ export const useLearning = create<LearningState>()(
       grade: (lemma, grade) => {
         const cur = get();
         const next = applyGrade(cur.lemmas[lemma], grade);
-        const xpEarned = (cur.lemmas[lemma]?.streak ?? 0) === 0 ? 10 : 5; // simplified XP logic for now
-        // But let's use the XP_REWARDS we just added to lib
-        const { XP_REWARDS } = require("@/lib/learning");
         const reward = XP_REWARDS[grade] || 0;
 
         set({

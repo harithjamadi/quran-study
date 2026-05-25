@@ -101,33 +101,14 @@ export function SurahQuestRunner({ surahNumber, surahName, lemmas }: Props) {
       : stages.slice(0, stageIdx).filter((s) => s.kind !== "memorize" && s.kind !== "complete").length;
   const pct = stage.kind === "complete" ? 100 : (answered / Math.max(1, totalQuestions)) * 100;
 
-  // The correct-answer text we show when the user got it wrong (so they
-  // learn what the right answer actually was before continuing).
-  const correctAnswerText = useMemo(() => {
-    if (!feedback || feedback.tone !== "bad") return null;
-    if (stage.kind === "match-ar-to-gloss") {
-      return effectiveGloss(stage.target, language)?.text ?? null;
-    }
-    if (stage.kind === "match-gloss-to-ar") {
-      return stage.target.sampleText;
-    }
-    if (stage.kind === "true-false") {
-      return stage.truthful
-        ? language === "ms" ? "BETUL" : "TRUE"
-        : language === "ms" ? "SALAH" : "FALSE";
-    }
-    return null;
-  }, [feedback, stage, language]);
-
   function answer(isCorrect: boolean) {
     setFeedback({ tone: isCorrect ? "good" : "bad", key: Date.now() });
     if (isCorrect) setStats((s) => ({ ...s, correct: s.correct + 1 }));
     else setStats((s) => ({ ...s, wrong: s.wrong + 1 }));
-  }
-
-  function dismissAndContinue() {
-    setFeedback(null);
-    setStageIdx((i) => Math.min(i + 1, stages.length - 1));
+    setTimeout(() => {
+      setFeedback(null);
+      setStageIdx((i) => Math.min(i + 1, stages.length - 1));
+    }, 800);
   }
 
   return (
@@ -163,14 +144,20 @@ export function SurahQuestRunner({ surahNumber, surahName, lemmas }: Props) {
         </div>
       </header>
 
-      {/* Unmissable bottom feedback bar */}
+      {/* Big unmissable correct/wrong banner */}
       {feedback && (
-        <QuestFeedbackBar
-          tone={feedback.tone}
-          correctAnswer={correctAnswerText}
-          language={language}
-          onContinue={dismissAndContinue}
-        />
+        <div
+          key={feedback.key}
+          className={classNames(
+            "fixed left-1/2 -translate-x-1/2 top-20 z-50 inline-flex items-center gap-2 rounded-full px-5 py-2 text-sm font-bold shadow-2xl animate-pop",
+            feedback.tone === "good"
+              ? "bg-[color:var(--accent)] text-white"
+              : "bg-[color:var(--danger)] text-white"
+          )}
+          role="status"
+        >
+          {feedback.tone === "good" ? "✓ " + t.flash_correct : "✕ " + t.flash_incorrect}
+        </div>
       )}
 
       {stage.kind === "memorize" && (
@@ -577,80 +564,6 @@ function CompleteStage({
             {language === "ms" ? "Papan pemuka" : "Dashboard"}
           </Link>
         </div>
-      </div>
-    </div>
-  );
-}
-
-/* ─────────────────────────────────────────────────────────────────────
-   Bottom feedback bar — same Duolingo pattern as the Flashcard's.
-   Fixed at the viewport bottom, persistent until "Continue" is tapped.
-   ──────────────────────────────────────────────────────────────────── */
-function QuestFeedbackBar({
-  tone,
-  correctAnswer,
-  language,
-  onContinue,
-}: {
-  tone: "good" | "bad";
-  correctAnswer: string | null;
-  language: "en" | "ms";
-  onContinue: () => void;
-}) {
-  const isGood = tone === "good";
-  return (
-    <div
-      role="status"
-      aria-live="polite"
-      className={classNames(
-        "fixed inset-x-0 bottom-0 z-[60] animate-fade-up border-t-4 shadow-[0_-12px_32px_-8px_rgba(0,0,0,0.25)]",
-        isGood
-          ? "bg-[color:var(--accent)] border-[color:var(--accent-strong)] text-white"
-          : "bg-[color:var(--danger)] border-[color:var(--ink)] text-white"
-      )}
-    >
-      <div className="mx-auto w-full max-w-5xl px-4 sm:px-6 py-4 sm:py-5 flex items-center gap-3 sm:gap-4">
-        <div className="h-12 w-12 sm:h-14 sm:w-14 shrink-0 rounded-full bg-white/20 grid place-items-center animate-pop">
-          {isGood ? (
-            <svg viewBox="0 0 24 24" width="28" height="28" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
-              <path d="m5 12 5 5L20 7" />
-            </svg>
-          ) : (
-            <svg viewBox="0 0 24 24" width="28" height="28" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" aria-hidden>
-              <path d="M6 6l12 12M18 6 6 18" />
-            </svg>
-          )}
-        </div>
-        <div className="flex-1 min-w-0">
-          <p
-            className="display text-[length:var(--text-xl)] sm:text-[length:var(--text-2xl)] leading-none"
-            style={{ fontWeight: 700 }}
-          >
-            {isGood
-              ? language === "ms" ? "Tepat!" : "Correct!"
-              : language === "ms" ? "Tidak tepat" : "Not quite"}
-          </p>
-          {!isGood && correctAnswer && (
-            <p className="text-sm sm:text-base opacity-95 mt-1 truncate">
-              {language === "ms" ? "Jawapan: " : "Answer: "}
-              <span className="font-bold">{correctAnswer}</span>
-            </p>
-          )}
-        </div>
-        <button
-          type="button"
-          onClick={onContinue}
-          autoFocus
-          className={classNames(
-            "shrink-0 inline-flex items-center gap-1.5 rounded-full px-5 sm:px-7 py-2.5 sm:py-3 text-sm font-bold transition-all active:scale-95",
-            isGood
-              ? "bg-white text-[color:var(--accent-strong)] hover:bg-white/90"
-              : "bg-white text-[color:var(--danger)] hover:bg-white/90"
-          )}
-        >
-          {language === "ms" ? "Teruskan" : "Continue"}
-          <span aria-hidden>→</span>
-        </button>
       </div>
     </div>
   );

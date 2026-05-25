@@ -5,6 +5,7 @@ import { createPortal } from "react-dom";
 import Link from "next/link";
 import { useLearning } from "@/store/learning";
 import { UI_STRINGS } from "@/lib/i18n";
+import { getAyahWbw } from "@/lib/api";
 import type { WordEntry } from "@/lib/words";
 import { loadRootIndex } from "@/lib/words";
 import { getSurah } from "@/data/surahs";
@@ -30,6 +31,7 @@ export function WordPopover({
 }: Props) {
   const ref = useRef<HTMLDivElement>(null);
   const [count, setCount] = useState<number | null>(null);
+  const [liveGloss, setLiveGloss] = useState<string | null>(null);
   
   const language = useLearning((s) => s.language);
   const introduce = useLearning((s) => s.introduce);
@@ -54,6 +56,25 @@ export function WordPopover({
     );
     return { top, left, popWidth };
   }, [anchorRect]);
+
+  useEffect(() => {
+    // Fetch accurate Word-by-Word data from Quran.com for the specific ayah
+    let active = true;
+    const verseKey = `${surahNumber}:${ayahNumber}`;
+    
+    getAyahWbw(verseKey, language).then(data => {
+      if (!active) return;
+      // Match the specific word by its position
+      const liveWord = data.verse.words.find(w => w.position === word.i);
+      if (liveWord?.translation?.text) {
+        setLiveGloss(liveWord.translation.text);
+      }
+    }).catch(err => {
+      console.warn("[WordPopover] Quran.com WBW fetch failed:", err);
+    });
+
+    return () => { active = false; };
+  }, [surahNumber, ayahNumber, word.i, language]);
 
   useEffect(() => {
     if (!word.root) return;
@@ -121,11 +142,9 @@ export function WordPopover({
       {word.translit && (
         <p className="text-xs text-[color:var(--muted)] italic mb-1">{word.translit}</p>
       )}
-      {word.gloss && (
-        <p className="text-[15px] font-medium text-[color:var(--foreground)] mb-3">
-          {word.gloss}
-        </p>
-      )}
+      <p className="text-[15px] font-medium text-[color:var(--foreground)] mb-3">
+        {liveGloss || word.gloss}
+      </p>
 
       <dl className="text-xs space-y-1.5">
         {word.root ? (

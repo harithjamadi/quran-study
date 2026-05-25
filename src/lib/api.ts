@@ -3,10 +3,12 @@ import type {
   AyahEdition,
   SearchResult,
   EditionInfo,
+  QuranComVerseResponse,
 } from "@/lib/types";
 import { ARABIC_EDITION } from "@/lib/editions";
 
 const API_BASE = "https://api.alquran.cloud/v1";
+const QURAN_COM_API = "https://api.quran.com/api/v4";
 const AUDIO_CDN = "https://cdn.islamic.network/quran/audio";
 const AUDIO_BITRATE = 128;
 
@@ -95,6 +97,25 @@ export async function searchQuran(
 
 export async function listEditions(): Promise<EditionInfo[]> {
   return fetchJson<EditionInfo[]>("/edition");
+}
+
+/** 
+ * Fetches accurate Word-by-Word data from Quran.com v4.
+ * verseKey: "1:1", "2:255", etc.
+ * lang: "ms" for Malay, "en" for English.
+ */
+export async function getAyahWbw(verseKey: string, lang = "en"): Promise<QuranComVerseResponse> {
+  const url = `${QURAN_COM_API}/verses/by_key/${verseKey}?words=true&word_translation_language=${lang}`;
+  const res = await fetch(url, {
+    next: { revalidate: 86400 },
+    headers: { Accept: "application/json" },
+  });
+
+  if (!res.ok) {
+    throw new QuranApiError(`Quran.com API request failed (${res.status}) for ${verseKey}`, res.status);
+  }
+
+  return (await res.json()) as QuranComVerseResponse;
 }
 
 export function audioUrlForAyah(globalAyahNumber: number, reciterId = "ar.alafasy"): string {

@@ -78,3 +78,27 @@ export interface LastRead {
 
 export type ThemeMode = "light" | "dark" | "system";
 export type ArabicScript = "uthmani" | "indopak" | "simple";
+
+/** Quran.com v4 Word structure */
+export interface QuranComWord {
+  id: number;
+  position: number;
+  audio_url: string | null;
+  char_type_name: string;
+  text_uthmani: string;
+  transliteration: { text: string | null };
+  translation: { text: string | null };
+}
+
+/** Quran.com v4 Verse structure */
+export interface QuranComVerse {
+  id: number;
+  verse_number: number;
+  verse_key: string;
+  text_uthmani: string;
+  words: QuranComWord[];
+}
+
+export interface QuranComVerseResponse {
+  verse: QuranComVerse;
+}
