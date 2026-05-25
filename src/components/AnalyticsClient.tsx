@@ -202,30 +202,39 @@ export function AnalyticsClient({ freq }: Props) {
             ))}
           </div>
         </div>
-        <div className="grid grid-cols-10 gap-1.5">
+        <div className="grid grid-cols-5 sm:grid-cols-10 gap-1.5">
           {stats.top100.map(({ item, status }, idx) => {
             const state = lemmasState[item.lemma];
             const isMastered = status === "good" || status === "strong";
+            const gloss = (language === "ms" ? item.ms : item.en) ?? item.en ?? item.ms ?? "—";
             return (
               <button
                 key={item.lemma}
                 onClick={() => setSelected({ ...item, state, status })}
-                className="group relative aspect-square rounded-md transition-all hover:scale-110 hover:z-10 hover:ring-2 hover:ring-[color:var(--accent)]/50 focus:outline-none focus:ring-2 focus:ring-[color:var(--accent)]"
+                className="group relative aspect-square rounded-md transition-all hover:scale-110 hover:z-10 hover:ring-2 hover:ring-[color:var(--accent)]/60 focus:outline-none focus:ring-2 focus:ring-[color:var(--accent)] overflow-visible"
                 style={{
                   background: STATUS_COLORS[status],
-                  opacity: status === "new" ? 0.35 : isMastered ? 0.95 : 0.85,
+                  opacity: status === "new" ? 0.45 : isMastered ? 0.95 : 0.9,
                 }}
-                aria-label={`${item.lemma} — ${status}`}
+                aria-label={`#${idx + 1} ${item.lemma} — ${gloss} — ${status}`}
+                title={`#${idx + 1} · ${item.lemma} — ${gloss}`}
               >
-                <span className="absolute inset-0 flex items-center justify-center text-[8px] sm:text-[9px] font-bold text-white/95 tabular-nums select-none">
+                {/* Arabic lemma — primary content */}
+                <span
+                  className="absolute inset-0 flex items-center justify-center px-1 arabic text-base sm:text-lg leading-none text-white drop-shadow-sm select-none"
+                  lang="ar" dir="rtl"
+                >
+                  {item.lemma}
+                </span>
+                {/* Rank in the corner */}
+                <span className="absolute top-0.5 left-1 text-[8px] sm:text-[9px] font-bold text-white/70 tabular-nums select-none leading-none">
                   {idx + 1}
                 </span>
+                {/* Hover tooltip — gloss only, since the lemma is now on the cell */}
                 <span
                   className="pointer-events-none absolute -top-1 left-1/2 -translate-x-1/2 -translate-y-full whitespace-nowrap rounded-md bg-black/90 px-2 py-1 text-[10px] font-medium text-white opacity-0 group-hover:opacity-100 transition-opacity z-20"
                 >
-                  <span className="arabic" lang="ar" dir="rtl">{item.lemma}</span>
-                  {" — "}
-                  {item.en ?? item.ms ?? "—"}
+                  {gloss}
                 </span>
               </button>
             );
