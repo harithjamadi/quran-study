@@ -133,15 +133,18 @@ export function TajweedText({
             const waqf = findWaqf(seg.text);
             if (waqf) {
               return (
-                <button
+                // span keeps Arabic text in one inline run so letters stay connected
+                <span
                   key={idx}
-                  type="button"
+                  role="button"
+                  tabIndex={0}
                   onClick={(e) => handleWaqfClick(waqf, seg.text, e)}
-                  className="inline cursor-pointer hover:opacity-70 transition-opacity underline decoration-dotted decoration-[color:var(--gold)]"
+                  onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") handleWaqfClick(waqf, seg.text, e as unknown as React.MouseEvent<HTMLElement>); }}
+                  className="cursor-pointer hover:opacity-70 transition-opacity underline decoration-dotted decoration-[color:var(--gold)]"
                   title={waqf.name[language]}
                 >
                   {seg.text}
-                </button>
+                </span>
               );
             }
             return <Fragment key={idx}>{seg.text}</Fragment>;
@@ -152,19 +155,21 @@ export function TajweedText({
             return <Fragment key={idx}>{seg.text}</Fragment>;
           }
 
-          // Use CSS custom property for dark-mode-aware color
           return (
-            <button
+            // span keeps Arabic text in one inline run so letters stay connected
+            <span
               key={idx}
-              type="button"
+              role="button"
+              tabIndex={0}
               onClick={(e) => handleSegmentClick(seg, e)}
-              className="inline cursor-pointer rounded-sm transition-opacity hover:opacity-75 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-current"
+              onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") handleSegmentClick(seg, e as unknown as React.MouseEvent<HTMLElement>); }}
+              className="cursor-pointer hover:opacity-75 transition-opacity"
               style={{ color: rule.color }}
               aria-label={`${rule.name[language]}: ${seg.text}`}
               title={rule.name[language]}
             >
               {seg.text}
-            </button>
+            </span>
           );
         })}
         <span className="arabic inline-block mr-2 text-[color:var(--gold)]" aria-hidden>
