@@ -1,5 +1,5 @@
 import type { Metadata, Viewport } from "next";
-import { Fraunces, Hanken_Grotesk } from "next/font/google";
+import { Fraunces, Hanken_Grotesk, Amiri_Quran } from "next/font/google";
 import "./globals.css";
 import { Nav } from "@/components/Nav";
 import { ThemeProvider } from "@/components/ThemeProvider";
@@ -24,6 +24,17 @@ const body = Hanken_Grotesk({
   subsets: ["latin"],
   weight: ["300", "400", "500", "600", "700"],
   variable: "--font-body-family",
+  display: "swap",
+});
+
+// Arabic: Amiri Quran — Khaled Hosny's Quran-specific cut, tuned for proper
+// Mushaf typography. Without this self-hosted, the .arabic stack falls
+// back to system fonts that render small-high marks like ۛ as wrong glyphs
+// (e.g. a ring instead of three triangulated dots).
+const arabicQuran = Amiri_Quran({
+  subsets: ["arabic"],
+  weight: "400",
+  variable: "--font-arabic-family",
   display: "swap",
 });
 
@@ -71,7 +82,7 @@ export default function RootLayout({
     <html
       lang="en"
       suppressHydrationWarning
-      className={`${display.variable} ${body.variable}`}
+      className={`${display.variable} ${body.variable} ${arabicQuran.variable}`}
     >
       <head>
         <link

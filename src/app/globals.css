@@ -113,7 +113,7 @@
 
   --font-display: var(--font-display-family);
   --font-sans: var(--font-body-family);
-  --font-arabic: "Amiri Quran", "Scheherazade New", "Traditional Arabic", "Times New Roman", serif;
+  --font-arabic: var(--font-arabic-family), "Amiri Quran", "Scheherazade New", "Traditional Arabic", "Times New Roman", serif;
 }
 
 /* ============================================================
