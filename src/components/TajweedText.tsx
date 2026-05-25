@@ -158,8 +158,8 @@ export function TajweedText({
                       tabIndex={0}
                       onClick={(e) => handleWaqfClick(p.waqf!, p.text, e)}
                       onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") handleWaqfClick(p.waqf!, p.text, e as unknown as React.MouseEvent<HTMLElement>); }}
-                      className="cursor-pointer text-[color:var(--gold)] hover:text-[color:var(--gold-strong)] transition-colors mx-0.5 align-middle"
-                      style={{ fontSize: "1.15em" }}
+                      className="cursor-pointer text-[color:var(--gold-strong)] dark:text-[color:var(--gold)] hover:opacity-70 transition-opacity mx-1 font-bold"
+                      style={{ fontSize: "1.9em", lineHeight: 1, verticalAlign: "-0.15em" }}
                       title={p.waqf.name[language]}
                       aria-label={p.waqf.name[language]}
                     >
