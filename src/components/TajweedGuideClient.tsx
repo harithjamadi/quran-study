@@ -217,15 +217,29 @@ function WaqfSection({ language }: { language: Language }) {
 
 function WaqfCard({ sign, language }: { sign: WaqfSign; language: Language }) {
   return (
-    <article className="card p-5 space-y-2 border-t-2 border-t-[color:var(--gold)]">
-      <div className="flex items-center gap-3">
-        <span className="arabic text-3xl text-[color:var(--gold)]" lang="ar" aria-hidden>{sign.char}</span>
-        <div>
-          <h3 className="font-bold text-[color:var(--foreground)]">{sign.name[language]}</h3>
-          <p className="arabic text-sm text-[color:var(--muted)]" lang="ar" dir="rtl">{sign.name.ar}</p>
+    <article className="card p-5 border-t-2 border-t-[color:var(--gold)]">
+      {/* Fixed-size icon badge keeps every card's header geometry identical,
+          regardless of whether sign.char is a wide letter, a tiny combining
+          mark like ۛ, or an ornate glyph like ۩. */}
+      <div className="flex items-start gap-4">
+        <div
+          className="shrink-0 w-14 h-14 rounded-xl bg-[color:var(--gold)]/10 border border-[color:var(--gold)]/20 flex items-center justify-center"
+          aria-hidden
+        >
+          <span
+            className="arabic text-3xl text-[color:var(--gold-strong)] dark:text-[color:var(--gold)]"
+            style={{ lineHeight: 1 }}
+            lang="ar"
+          >
+            {sign.char}
+          </span>
+        </div>
+        <div className="min-w-0 flex-1">
+          <h3 className="font-bold text-[color:var(--foreground)] leading-snug">{sign.name[language]}</h3>
+          <p className="arabic text-sm text-[color:var(--muted)] mt-0.5" lang="ar" dir="rtl">{sign.name.ar}</p>
         </div>
       </div>
-      <p className="text-sm text-[color:var(--foreground)] leading-relaxed">{sign.instruction[language]}</p>
+      <p className="text-sm text-[color:var(--foreground)] leading-relaxed mt-3">{sign.instruction[language]}</p>
       {sign.char === "۩" && (
         <div className="rounded-xl border border-[color:var(--gold)]/30 bg-[color:var(--gold)]/5 p-4 space-y-3 mt-3">
           <p className="text-[10px] uppercase tracking-widest text-[color:var(--gold-strong)] dark:text-[color:var(--gold)] font-bold">
