@@ -1,6 +1,8 @@
 // Client-side loader for the static word-by-word dataset under /public/data.
 // The data is built by scripts/build-word-data.mjs.
 
+import type { LemmaMeta } from "@/lib/learning";
+
 export interface WordEntry {
   /** 1-indexed word position within its ayah. */
   i: number;
@@ -10,6 +12,8 @@ export interface WordEntry {
   translit: string | null;
   /** Short English gloss. */
   gloss: string | null;
+  /** Short Malay gloss (contextual). */
+  glossMs: string | null;
   /** 3-letter Arabic root (e.g. "رحم"). Null for particles/pronouns. */
   root: string | null;
   /** Dictionary form. */
@@ -30,6 +34,7 @@ export interface RootOccurrence {
   text: string;
   lemma: string | null;
   gloss: string | null;
+  glossMs: string | null;
 }
 
 export interface RootIndexEntry {
@@ -42,6 +47,7 @@ export type RootIndex = Record<string, RootIndexEntry>;
 const surahCache = new Map<number, Promise<SurahWords | null>>();
 const rootCache = new Map<string, Promise<RootOccurrence[] | null>>();
 let rootIndexPromise: Promise<RootIndex | null> | null = null;
+let frequencyPromise: Promise<LemmaMeta[] | null> | null = null;
 
 async function fetchJson<T>(url: string): Promise<T | null> {
   try {
@@ -83,6 +89,13 @@ export function loadRootIndex(): Promise<RootIndex | null> {
   return rootIndexPromise;
 }
 
+export function loadLemmaFrequency(): Promise<LemmaMeta[] | null> {
+  if (!frequencyPromise) {
+    frequencyPromise = fetchJson<LemmaMeta[]>("/data/lemma-frequency.json");
+  }
+  return frequencyPromise;
+}
+
 /**
  * Scan early surahs for all occurrences of a specific lemma.
  * Used for particles (pos=P) that have no trilateral root file.
@@ -109,6 +122,7 @@ export function loadLemmaExamples(lemma: string): Promise<RootOccurrence[]> {
                 text: w.text,
                 lemma: w.lemma,
                 gloss: w.gloss,
+                glossMs: w.glossMs ?? null,
               });
             }
           }

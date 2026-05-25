@@ -5,9 +5,11 @@ import Link from "next/link";
 import type { Metadata } from "next";
 import { getSurah } from "@/data/surahs";
 import type { RootOccurrence, RootIndex } from "@/lib/words";
+import type { LemmaMeta } from "@/lib/learning";
 
 interface Params {
   params: Promise<{ root: string }>;
+  searchParams: Promise<{ lang?: string }>;
 }
 
 const DATA_DIR = path.join(process.cwd(), "public", "data");
@@ -40,6 +42,16 @@ async function readRootIndex(): Promise<RootIndex | null> {
   }
 }
 
+async function readFrequency(): Promise<Map<string, LemmaMeta> | null> {
+  try {
+    const raw = await fs.readFile(path.join(DATA_DIR, "lemma-frequency.json"), "utf-8");
+    const list = JSON.parse(raw) as LemmaMeta[];
+    return new Map(list.map(l => [l.lemma, l]));
+  } catch {
+    return null;
+  }
+}
+
 export async function generateMetadata({ params }: Params): Promise<Metadata> {
   const { root: rawRoot } = await params;
   const root = decodeParam(rawRoot);
@@ -50,20 +62,32 @@ export async function generateMetadata({ params }: Params): Promise<Metadata> {
   };
 }
 
-export default async function RootPage({ params }: Params) {
+export default async function RootPage({ params, searchParams }: Params) {
   const { root: rawRoot } = await params;
+  const { lang = "en" } = await searchParams;
   const root = decodeParam(rawRoot);
-  const [occurrences, index] = await Promise.all([
+  const [occurrences, index, freqMap] = await Promise.all([
     readRootData(root),
     readRootIndex(),
+    readFrequency(),
   ]);
   if (!occurrences || occurrences.length === 0) notFound();
 
   const indexEntry = index?.[root];
   const lemmas = indexEntry?.lemmas ?? [];
 
-  const bySurah = new Map<number, RootOccurrence[]>();
+  // Deduplicate by word form, keeping only the first occurrence of each unique text
+  const seenForms = new Set<string>();
+  const uniqueOccurrences: RootOccurrence[] = [];
   for (const o of occurrences) {
+    if (!seenForms.has(o.text)) {
+      seenForms.add(o.text);
+      uniqueOccurrences.push(o);
+    }
+  }
+
+  const bySurah = new Map<number, RootOccurrence[]>();
+  for (const o of uniqueOccurrences) {
     if (!bySurah.has(o.s)) bySurah.set(o.s, []);
     bySurah.get(o.s)!.push(o);
   }
@@ -85,7 +109,7 @@ export default async function RootPage({ params }: Params) {
         <p className="text-sm text-[color:var(--muted)] mt-3">
           {occurrences.length} {occurrences.length === 1 ? "occurrence" : "occurrences"}
           {" · "}
-          across {surahNumbers.length} {surahNumbers.length === 1 ? "surah" : "surahs"}
+          {uniqueOccurrences.length} unique {uniqueOccurrences.length === 1 ? "form" : "forms"}
         </p>
         {lemmas.length > 0 && (
           <div className="mt-4 flex flex-wrap items-center justify-center gap-2">
@@ -130,45 +154,55 @@ export default async function RootPage({ params }: Params) {
                   )}
                 </h2>
                 <span className="text-xs text-[color:var(--muted)]">
-                  {items.length}×
+                  {items.length} {items.length === 1 ? "form" : "forms"}
                 </span>
               </header>
               <ul className="divide-y divide-[color:var(--border)]">
-                {items.map((o, idx) => (
-                  <li key={idx} className="py-3 first:pt-0 last:pb-0">
-                    <div className="flex items-baseline justify-between gap-3 mb-1">
-                      <Link
-                        href={`/surah/${o.s}#v${o.a}`}
-                        className="text-xs text-[color:var(--muted)] hover:text-[color:var(--foreground)] hover:underline"
-                      >
-                        {o.s}:{o.a}
-                      </Link>
-                      {o.lemma && (
-                        <span
-                          className="arabic text-[color:var(--muted)] text-sm"
+                {items.map((o, idx) => {
+                  const meta = o.lemma ? freqMap?.get(o.lemma) : null;
+                  const gloss = lang === "ms"
+                    ? (meta?.ms || o.glossMs || o.gloss)
+                    : o.gloss;
+
+                  return (
+                    <li key={idx} className="py-3 first:pt-0 last:pb-0">
+                      <div className="flex items-baseline justify-between gap-3 mb-1">
+                        <div className="flex items-baseline gap-2">
+                          <Link
+                            href={`/surah/${o.s}#v${o.a}`}
+                            className="text-xs text-[color:var(--muted)] hover:text-[color:var(--foreground)] hover:underline"
+                          >
+                            {o.s}:{o.a}
+                          </Link>
+                          <span className="text-[10px] text-[color:var(--muted)]/60 italic">first occ.</span>
+                        </div>
+                        {o.lemma && (
+                          <span
+                            className="arabic text-[color:var(--muted)] text-sm"
+                            lang="ar"
+                            dir="rtl"
+                          >
+                            {o.lemma}
+                          </span>
+                        )}
+                      </div>
+                      <div className="flex items-baseline justify-between gap-4 flex-wrap">
+                        <p
+                          className="arabic text-2xl text-[color:var(--accent-strong)]"
                           lang="ar"
                           dir="rtl"
                         >
-                          {o.lemma}
-                        </span>
-                      )}
-                    </div>
-                    <div className="flex items-baseline justify-between gap-4 flex-wrap">
-                      <p
-                        className="arabic text-2xl text-[color:var(--accent-strong)]"
-                        lang="ar"
-                        dir="rtl"
-                      >
-                        {o.text}
-                      </p>
-                      {o.gloss && (
-                        <p className="text-sm text-[color:var(--foreground)]/85">
-                          {o.gloss}
+                          {o.text}
                         </p>
-                      )}
-                    </div>
-                  </li>
-                ))}
+                        {gloss && (
+                          <p className="text-sm text-[color:var(--foreground)]/85">
+                            {gloss}
+                          </p>
+                        )}
+                      </div>
+                    </li>
+                  );
+                })}
               </ul>
             </section>
           );

@@ -58,6 +58,7 @@ export interface RootOccurrence {
   text: string;
   lemma: string;
   gloss: string;
+  glossMs?: string | null;
 }
 
 export function loadRootOccurrences(root: string): Promise<RootOccurrence[] | null> {

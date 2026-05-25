@@ -53,8 +53,8 @@ function isSampleMismatch(item: LemmaMeta): boolean {
 }
 
 function singleLangGloss(meta: { en: string | null; ms: string | null }, language: "en" | "ms") {
-  if (language === "ms") return meta.ms ?? meta.en ?? null;
-  return meta.en ?? meta.ms ?? null;
+  if (language === "ms") return meta.ms || meta.en || null;
+  return meta.en || meta.ms || null;
 }
 
 /* ── panel ── */
@@ -217,6 +217,7 @@ export function WordDetailPanel({ item, language, freq, onClose }: Props) {
               loading={loading}
               combinations={combinations}
               seenForms={seenForms}
+              freq={freq}
             />
           )}
         </div>
@@ -378,15 +379,18 @@ function OverviewTab({
 /* ── Combinations tab (universal — surface forms of THIS lemma) ──────────── */
 
 function CombinationsTab({
-  item, language, loading, combinations, seenForms,
+  item, language, loading, combinations, seenForms, freq,
 }: {
   item: VocabItem;
   language: "en" | "ms";
   loading: boolean;
   combinations: { text: string; count: number; example: RootOccurrence }[];
   seenForms: Record<string, true>;
+  freq: LemmaMeta[];
 }) {
   if (loading) return <LoadingState />;
+
+  const freqMap = useMemo(() => new Map(freq.map(f => [f.lemma, f])), [freq]);
 
   const discoveredCount = combinations.filter((c) => seenForms[c.text]).length;
   const discoveredPct = combinations.length === 0 ? 0 : Math.round((discoveredCount / combinations.length) * 100);
@@ -459,7 +463,12 @@ function CombinationsTab({
                       </span>
                     )}
                     <p className={`text-xs mt-1 truncate ${encountered ? "text-[color:var(--muted)]" : "text-[color:var(--muted)] opacity-50 font-mono tracking-widest"}`}>
-                      {encountered ? (example.gloss ?? "—") : "??? ??? ???"}
+                      {encountered ? (() => {
+                        const meta = example.lemma ? freqMap.get(example.lemma) : null;
+                        return (language === "ms"
+                          ? (example.glossMs || meta?.ms || example.gloss)
+                          : (meta?.en || example.gloss)) || "—";
+                      })() : "??? ??? ???"}
                     </p>
                   </div>
                   <div className="shrink-0 text-right">
