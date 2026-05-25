@@ -2,6 +2,7 @@
 
 import { useAudio } from "@/components/AudioProvider";
 import { InteractiveVerse } from "@/components/InteractiveVerse";
+import { TajweedText } from "@/components/TajweedText";
 import { useBookmarks } from "@/store/bookmarks";
 import { useSettings } from "@/store/settings";
 import { useLearning } from "@/store/learning";
@@ -25,6 +26,7 @@ export function VerseRow({ surahNumber, surahName, arabic, translation, translit
   const showTransliteration = useSettings((s) => s.showTransliteration);
   const highlight = useSettings((s) => s.highlightCurrentVerse);
   const wordStudyMode = useSettings((s) => s.wordStudyMode);
+  const tajweedMode = useSettings((s) => s.tajweedMode);
   const language = useLearning((s) => s.language);
   const t = UI_STRINGS[language];
 
@@ -149,7 +151,14 @@ export function VerseRow({ surahNumber, surahName, arabic, translation, translit
         </div>
       </header>
 
-      {wordStudyMode ? (
+      {tajweedMode ? (
+        <TajweedText
+          surahNumber={surahNumber}
+          ayahNumber={arabic.numberInSurah}
+          arabicFallback={arabic.text}
+          fontSize={arabicFontSize}
+        />
+      ) : wordStudyMode ? (
         <InteractiveVerse
           surahNumber={surahNumber}
           ayahNumber={arabic.numberInSurah}

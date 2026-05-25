@@ -149,6 +149,11 @@ export function LearnDashboard({ previewLemmas, coverage }: Props) {
             badge={introduced}
           />
           <ActionCard
+            title={language === "ms" ? "Panduan Tajweed" : "Tajweed Guide"}
+            subtitle={language === "ms" ? "Warna sebutan, tanda berhenti, cara baca" : "Color-coded rules, stop signs, how to recite"}
+            href="/learn/tajweed"
+          />
+          <ActionCard
             title={language === "ms" ? "Analitik" : "Analytics"}
             subtitle={language === "ms" ? "Peta kelemahan & kemajuan" : "Weakness map & progress"}
             href="/analytics"

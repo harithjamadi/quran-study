@@ -99,6 +99,25 @@ export function SettingsPanel() {
         </p>
       </Section>
 
+      <Section title={language === "ms" ? "Warna Tajweed" : "Tajweed Colors"}>
+        <Toggle
+          label={language === "ms" ? "Tunjukkan warna tajweed" : "Show tajweed colors"}
+          value={s.tajweedMode}
+          onChange={s.setTajweedMode}
+        />
+        <p className="text-xs text-[color:var(--muted)]">
+          {language === "ms"
+            ? "Apabila aktif, setiap huruf dipaparkan mengikut peraturan tajweed yang dilakarkan. Tap huruf berwarna untuk baca penerangannya. (Tersedia untuk Surah 1–81)"
+            : "When on, each letter is color-coded by its tajweed rule. Tap any colored letter to read its description and how to pronounce it. (Available for Surahs 1–81)"}
+        </p>
+        <a
+          href="/learn/tajweed"
+          className="inline-flex items-center gap-1 text-sm text-[color:var(--accent-strong)] hover:underline font-medium"
+        >
+          {language === "ms" ? "Panduan Tajweed →" : "Open Tajweed Guide →"}
+        </a>
+      </Section>
+
       <Section title={t.set_translation}>
         <Field label={t.set_default_trans}>
           <select

@@ -15,6 +15,7 @@ interface SettingsState {
   autoplayNext: boolean;
   highlightCurrentVerse: boolean;
   wordStudyMode: boolean;
+  tajweedMode: boolean;
   setTranslation: (id: string) => void;
   setReciter: (id: string) => void;
   setShowTransliteration: (v: boolean) => void;
@@ -25,6 +26,7 @@ interface SettingsState {
   setAutoplayNext: (v: boolean) => void;
   setHighlightCurrentVerse: (v: boolean) => void;
   setWordStudyMode: (v: boolean) => void;
+  setTajweedMode: (v: boolean) => void;
   reset: () => void;
 }
 
@@ -39,6 +41,7 @@ const DEFAULTS = {
   autoplayNext: true,
   highlightCurrentVerse: true,
   wordStudyMode: true,
+  tajweedMode: false,
 };
 
 export const useSettings = create<SettingsState>()(
@@ -57,6 +60,7 @@ export const useSettings = create<SettingsState>()(
       setAutoplayNext: (autoplayNext) => set({ autoplayNext }),
       setHighlightCurrentVerse: (highlightCurrentVerse) => set({ highlightCurrentVerse }),
       setWordStudyMode: (wordStudyMode) => set({ wordStudyMode }),
+      setTajweedMode: (tajweedMode) => set({ tajweedMode }),
       reset: () => set(DEFAULTS),
     }),
     {

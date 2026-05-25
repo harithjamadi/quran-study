@@ -1,0 +1,421 @@
+"use client";
+
+import { Fragment, useEffect, useRef, useState } from "react";
+import { createPortal } from "react-dom";
+import {
+  loadTajweedSurah,
+  parseTajweedVerse,
+  type TajweedSegment,
+} from "@/lib/tajweed-parser";
+import {
+  getTajweedRule,
+  WAQF_SIGNS,
+  type TajweedRule,
+  type WaqfSign,
+} from "@/lib/tajweed";
+import { toArabicDigits } from "@/lib/format";
+import { useLearning } from "@/store/learning";
+
+interface Props {
+  surahNumber: number;
+  ayahNumber: number;
+  arabicFallback: string;
+  fontSize: number;
+}
+
+interface ClickedSegment {
+  rule: TajweedRule | null;
+  waqf: WaqfSign | null;
+  text: string;
+  rect: DOMRect;
+}
+
+/* ── Waqf character lookup ─────────────────────────────────────────────────── */
+const WAQF_MAP = new Map<string, WaqfSign>(
+  WAQF_SIGNS.map((w) => [w.char, w])
+);
+
+// Unicode waqf/pause characters that warrant a tooltip
+const WAQF_CHARS = new Set([
+  "۩",
+  "ۛ",
+  "ۖ", // small high ligature sad with lam with alef maksura
+  "ۗ",
+  "ۘ",
+  "ۙ",
+  "ۚ",
+  "ۛ",
+  "ۜ",
+]);
+
+function findWaqf(text: string): WaqfSign | null {
+  for (const [char, sign] of WAQF_MAP) {
+    if (text.includes(char)) return sign;
+  }
+  if ([...text].some((c) => WAQF_CHARS.has(c))) {
+    // Fallback for embedded waqf marks without explicit entry
+    return null;
+  }
+  return null;
+}
+
+/* ── Main component ─────────────────────────────────────────────────────────── */
+
+export function TajweedText({
+  surahNumber,
+  ayahNumber,
+  arabicFallback,
+  fontSize,
+}: Props) {
+  const [segments, setSegments] = useState<TajweedSegment[] | null>(null);
+  const [clicked, setClicked] = useState<ClickedSegment | null>(null);
+  const language = useLearning((s) => s.language);
+
+  useEffect(() => {
+    let active = true;
+    loadTajweedSurah(surahNumber).then((data) => {
+      if (!active || !data) return;
+      const raw = data[String(ayahNumber)];
+      if (!raw) return;
+      setSegments(parseTajweedVerse(raw));
+    });
+    return () => {
+      active = false;
+    };
+  }, [surahNumber, ayahNumber]);
+
+  // Fallback while loading or if no tajweed data exists for this surah
+  if (!segments) {
+    return (
+      <p
+        className="arabic text-right text-[color:var(--foreground)]"
+        style={{ fontSize: `${fontSize}px` }}
+        lang="ar"
+      >
+        {arabicFallback}
+        <span className="arabic inline-block ml-2 text-[color:var(--gold)]" aria-hidden>
+          ﴿{toArabicDigits(ayahNumber)}﴾
+        </span>
+      </p>
+    );
+  }
+
+  const handleSegmentClick = (
+    seg: TajweedSegment,
+    e: React.MouseEvent<HTMLElement>
+  ) => {
+    if (!seg.code) return;
+    const rect = e.currentTarget.getBoundingClientRect();
+    const rule = getTajweedRule(seg.code) ?? null;
+    setClicked({ rule, waqf: null, text: seg.text, rect });
+  };
+
+  const handleWaqfClick = (
+    waqf: WaqfSign,
+    text: string,
+    e: React.MouseEvent<HTMLElement>
+  ) => {
+    const rect = e.currentTarget.getBoundingClientRect();
+    setClicked({ rule: null, waqf, text, rect });
+  };
+
+  return (
+    <>
+      <div
+        className="arabic text-right text-[color:var(--foreground)] leading-loose"
+        style={{ fontSize: `${fontSize}px` }}
+        lang="ar"
+        dir="rtl"
+      >
+        {segments.map((seg, idx) => {
+          // Check for embedded waqf characters within plain text
+          if (!seg.code) {
+            const waqf = findWaqf(seg.text);
+            if (waqf) {
+              return (
+                <button
+                  key={idx}
+                  type="button"
+                  onClick={(e) => handleWaqfClick(waqf, seg.text, e)}
+                  className="inline cursor-pointer hover:opacity-70 transition-opacity underline decoration-dotted decoration-[color:var(--gold)]"
+                  title={waqf.name[language]}
+                >
+                  {seg.text}
+                </button>
+              );
+            }
+            return <Fragment key={idx}>{seg.text}</Fragment>;
+          }
+
+          const rule = getTajweedRule(seg.code);
+          if (!rule) {
+            return <Fragment key={idx}>{seg.text}</Fragment>;
+          }
+
+          // Use CSS custom property for dark-mode-aware color
+          return (
+            <button
+              key={idx}
+              type="button"
+              onClick={(e) => handleSegmentClick(seg, e)}
+              className="inline cursor-pointer rounded-sm transition-opacity hover:opacity-75 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-current"
+              style={{ color: rule.color }}
+              aria-label={`${rule.name[language]}: ${seg.text}`}
+              title={rule.name[language]}
+            >
+              {seg.text}
+            </button>
+          );
+        })}
+        <span className="arabic inline-block mr-2 text-[color:var(--gold)]" aria-hidden>
+          ﴿{toArabicDigits(ayahNumber)}﴾
+        </span>
+      </div>
+
+      {/* Inline legend */}
+      <TajweedLegend language={language} />
+
+      {clicked && (
+        <TajweedPopover
+          clicked={clicked}
+          language={language}
+          onClose={() => setClicked(null)}
+        />
+      )}
+    </>
+  );
+}
+
+/* ── Tajweed Popover ────────────────────────────────────────────────────────── */
+
+const POP_WIDTH = 340;
+const POP_H_EST = 260;
+const EDGE_PAD = 12;
+
+function TajweedPopover({
+  clicked,
+  language,
+  onClose,
+}: {
+  clicked: ClickedSegment;
+  language: "en" | "ms";
+  onClose: () => void;
+}) {
+  const ref = useRef<HTMLDivElement>(null);
+  const { rule, waqf, text, rect } = clicked;
+
+  // Position identical to WordPopover
+  const popWidth = typeof window !== "undefined"
+    ? Math.min(POP_WIDTH, window.innerWidth - EDGE_PAD * 2)
+    : POP_WIDTH;
+  const spaceBelow = typeof window !== "undefined"
+    ? window.innerHeight - rect.bottom
+    : 0;
+  const placeBelow = spaceBelow >= POP_H_EST + EDGE_PAD;
+  const top = placeBelow
+    ? rect.bottom + 8 + (typeof window !== "undefined" ? window.scrollY : 0)
+    : rect.top - 8 + (typeof window !== "undefined" ? window.scrollY : 0) - POP_H_EST;
+  const desiredLeft =
+    rect.left + rect.width / 2 - popWidth / 2 +
+    (typeof window !== "undefined" ? window.scrollX : 0);
+  const left = typeof window !== "undefined"
+    ? Math.max(
+        window.scrollX + EDGE_PAD,
+        Math.min(desiredLeft, window.scrollX + window.innerWidth - popWidth - EDGE_PAD)
+      )
+    : desiredLeft;
+
+  useEffect(() => {
+    const onDoc = (e: MouseEvent) => {
+      if (ref.current && !ref.current.contains(e.target as Node)) onClose();
+    };
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === "Escape") onClose();
+    };
+    const onScroll = () => onClose();
+    document.addEventListener("mousedown", onDoc);
+    document.addEventListener("keydown", onKey);
+    window.addEventListener("scroll", onScroll, { passive: true, capture: true });
+    return () => {
+      document.removeEventListener("mousedown", onDoc);
+      document.removeEventListener("keydown", onKey);
+      window.removeEventListener("scroll", onScroll, { capture: true });
+    };
+  }, [onClose]);
+
+  if (typeof document === "undefined") return null;
+
+  const isSajdah = text.includes("۩") || (waqf && waqf.char === "۩");
+
+  return createPortal(
+    <div
+      ref={ref}
+      role="dialog"
+      aria-label="Tajweed rule"
+      className="absolute z-50 rounded-2xl border border-[color:var(--border)] bg-[color:var(--surface)] shadow-xl text-left overflow-hidden"
+      style={{ top, left, width: popWidth }}
+    >
+      {/* Header */}
+      <div
+        className="px-4 pt-4 pb-3"
+        style={rule ? { borderBottom: `2px solid ${rule.color}30` } : undefined}
+      >
+        <div className="flex items-start justify-between gap-3">
+          <div className="flex-1 min-w-0">
+            <div className="flex items-center gap-2 flex-wrap">
+              {rule && (
+                <span
+                  className="inline-block w-2.5 h-2.5 rounded-full shrink-0"
+                  style={{ backgroundColor: rule.color }}
+                  aria-hidden
+                />
+              )}
+              <p className="font-bold text-sm text-[color:var(--foreground)]">
+                {rule
+                  ? rule.name[language]
+                  : waqf
+                  ? waqf.name[language]
+                  : "Tajweed"}
+              </p>
+              {rule && (
+                <span className="text-xs text-[color:var(--muted)] font-mono">
+                  {rule.name.ar}
+                </span>
+              )}
+            </div>
+            {/* The clicked Arabic text */}
+            <p
+              className="arabic text-2xl mt-1 leading-tight"
+              lang="ar"
+              dir="rtl"
+              style={rule ? { color: rule.color } : undefined}
+            >
+              {text}
+            </p>
+          </div>
+          <button
+            onClick={onClose}
+            className="text-[color:var(--muted)] hover:text-[color:var(--foreground)] text-lg leading-none -mt-1 shrink-0"
+            aria-label="Close"
+          >
+            ×
+          </button>
+        </div>
+      </div>
+
+      {/* Body */}
+      <div className="p-4 space-y-3">
+        {rule && (
+          <>
+            {rule.letters && (
+              <div>
+                <p className="text-[10px] uppercase tracking-widest text-[color:var(--muted)] font-bold mb-1">
+                  {language === "ms" ? "Huruf Berkaitan" : "Letters"}
+                </p>
+                <p
+                  className="arabic text-lg text-[color:var(--foreground)] leading-loose"
+                  lang="ar"
+                  dir="rtl"
+                >
+                  {rule.letters}
+                </p>
+              </div>
+            )}
+            <div>
+              <p className="text-[10px] uppercase tracking-widest text-[color:var(--muted)] font-bold mb-1">
+                {language === "ms" ? "Syarat" : "Condition"}
+              </p>
+              <p className="text-sm text-[color:var(--foreground)] leading-relaxed">
+                {rule.condition[language]}
+              </p>
+            </div>
+            <div className="rounded-xl bg-[color:var(--border)]/30 p-3">
+              <p className="text-[10px] uppercase tracking-widest text-[color:var(--muted)] font-bold mb-1">
+                {language === "ms" ? "Cara Sebut" : "How to Read"}
+              </p>
+              <p className="text-sm text-[color:var(--foreground)] leading-relaxed">
+                {rule.howToRead[language]}
+              </p>
+            </div>
+          </>
+        )}
+
+        {waqf && (
+          <>
+            <div>
+              <p className="text-[10px] uppercase tracking-widest text-[color:var(--muted)] font-bold mb-1">
+                {language === "ms" ? "Arahan" : "Instruction"}
+              </p>
+              <p className="text-sm text-[color:var(--foreground)] leading-relaxed">
+                {waqf.instruction[language]}
+              </p>
+            </div>
+
+            {isSajdah && (
+              <div className="rounded-xl border border-[color:var(--gold)]/30 bg-[color:var(--gold)]/5 p-3 space-y-2">
+                <p className="text-[10px] uppercase tracking-widest text-[color:var(--gold-strong)] dark:text-[color:var(--gold)] font-bold">
+                  {language === "ms" ? "Doa Sujud Tilawah" : "Sajdah Supplication"}
+                </p>
+                <p
+                  className="arabic text-lg leading-loose text-[color:var(--foreground)]"
+                  lang="ar"
+                  dir="rtl"
+                >
+                  سَجَدَ وَجْهِيَ لِلَّذِي خَلَقَهُ وَشَقَّ سَمْعَهُ وَبَصَرَهُ بِحَوْلِهِ وَقُوَّتِهِ
+                </p>
+                <p className="text-xs text-[color:var(--muted)] italic">
+                  {language === "ms"
+                    ? "Wajahku sujud kepada Yang menciptakannya dan menjadikan pendengaran dan penglihatannya dengan kekuasaan dan kekuatan-Nya."
+                    : "My face prostrates to the One who created it and formed its hearing and sight by His power and strength."}
+                </p>
+              </div>
+            )}
+          </>
+        )}
+
+        <a
+          href="/learn/tajweed"
+          className="inline-flex items-center gap-1 text-xs text-[color:var(--accent-strong)] hover:underline"
+        >
+          {language === "ms" ? "Panduan Tajweed Penuh" : "Full Tajweed Guide"} →
+        </a>
+      </div>
+    </div>,
+    document.body
+  );
+}
+
+/* ── Inline legend ──────────────────────────────────────────────────────────── */
+
+const LEGEND_RULES = [
+  { code: "q", colorKey: "#EF4444", label: { en: "Qalqalah", ms: "Qalqalah" } },
+  { code: "n", colorKey: "#60A5FA", label: { en: "Madd", ms: "Mad" } },
+  { code: "g", colorKey: "#22C55E", label: { en: "Ghunna", ms: "Ghunnah" } },
+  { code: "f", colorKey: "#F59E0B", label: { en: "Ikhfa", ms: "Ikhfa'" } },
+  { code: "a", colorKey: "#14B8A6", label: { en: "Idgham", ms: "Idgham" } },
+  { code: "h", colorKey: "#9CA3AF", label: { en: "Hamzat Wasl", ms: "Hamzat Wasl" } },
+];
+
+function TajweedLegend({ language }: { language: "en" | "ms" }) {
+  return (
+    <div className="flex flex-wrap gap-x-4 gap-y-1 mt-1 text-[10px] text-[color:var(--muted)] select-none">
+      {LEGEND_RULES.map(({ code, colorKey, label }) => (
+        <span key={code} className="flex items-center gap-1">
+          <span
+            className="inline-block w-2.5 h-2.5 rounded-full"
+            style={{ backgroundColor: colorKey }}
+            aria-hidden
+          />
+          {label[language]}
+        </span>
+      ))}
+      <a
+        href="/learn/tajweed"
+        className="ml-auto text-[color:var(--accent-strong)] hover:underline"
+        title={language === "ms" ? "Panduan Tajweed" : "Tajweed Guide"}
+      >
+        {language === "ms" ? "Panduan →" : "Guide →"}
+      </a>
+    </div>
+  );
+}
