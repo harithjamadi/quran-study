@@ -31,6 +31,8 @@ interface LearningState {
   dayStreak: number;
   /** Cards reviewed today (resets at midnight local). */
   reviewedToday: number;
+  /** Surah numbers the user has completed with a perfect score in Surah Quest. */
+  perfectSurahs: number[];
 
   // actions
   grade: (lemma: string, grade: Grade) => void;
@@ -41,6 +43,7 @@ interface LearningState {
   setLanguage: (l: Language) => void;
   resetProgress: () => void;
   statusOf: (lemma: string) => WordStatus;
+  recordSurahPerfect: (surahNumber: number) => void;
 }
 
 const DEFAULTS = {
@@ -51,6 +54,7 @@ const DEFAULTS = {
   lastSessionDate: null as string | null,
   dayStreak: 0,
   reviewedToday: 0,
+  perfectSurahs: [] as number[],
 };
 
 function bumpStreak(state: LearningState, xpEarned = 0): Partial<LearningState> {
@@ -113,6 +117,11 @@ export const useLearning = create<LearningState>()(
       setLanguage: (language) => set({ language }),
       resetProgress: () => set(DEFAULTS),
       statusOf: (lemma) => statusOf(get().lemmas[lemma]),
+      recordSurahPerfect: (surahNumber) => {
+        const cur = get();
+        if (cur.perfectSurahs.includes(surahNumber)) return;
+        set({ perfectSurahs: [...cur.perfectSurahs, surahNumber] });
+      },
     }),
     {
       name: "noor.learning.v1",

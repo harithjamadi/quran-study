@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState, useCallback } from "react";
 import Link from "next/link";
 import { useLearning } from "@/store/learning";
 import { UI_STRINGS } from "@/lib/i18n";
@@ -54,6 +54,7 @@ function playWordAudio(card: LemmaMeta) {
 
 export function SurahQuestRunner({ surahNumber, surahName, lemmas }: Props) {
   const language = useLearning((s) => s.language);
+  const recordSurahPerfect = useLearning((s) => s.recordSurahPerfect);
   const t = UI_STRINGS[language];
 
   // Build a fixed stage list once per mount (deterministic per surah)
@@ -95,6 +96,13 @@ export function SurahQuestRunner({ surahNumber, surahName, lemmas }: Props) {
 
   const stage = stages[stageIdx];
   const totalQuestions = stages.filter((s) => s.kind !== "memorize" && s.kind !== "complete").length;
+
+  // Record a perfect run as soon as the complete stage is reached.
+  useEffect(() => {
+    if (stage.kind === "complete" && stats.correct === totalQuestions && totalQuestions > 0) {
+      recordSurahPerfect(surahNumber);
+    }
+  }, [stage.kind, stats.correct, totalQuestions, surahNumber, recordSurahPerfect]);
   const answered =
     stageIdx === 0
       ? 0
