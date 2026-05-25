@@ -160,8 +160,12 @@ export default async function RootPage({ params, searchParams }: Params) {
               <ul className="divide-y divide-[color:var(--border)]">
                 {items.map((o, idx) => {
                   const meta = o.lemma ? freqMap?.get(o.lemma) : null;
+                  // Strip Indonesian preposition prefixes that bleed in from Arabic prefix morphology
+                  // e.g. "dengan mengambilnya" (بِ + verb) → "mengambilnya"
+                  const stripMsPrefix = (g: string | null) =>
+                    g?.replace(/^(dengan|bagi|untuk|kepada|oleh|dari|pada)\s+/i, "") ?? null;
                   const gloss = lang === "ms"
-                    ? (meta?.ms || o.glossMs || o.gloss)
+                    ? (stripMsPrefix(o.glossMs) || meta?.ms || o.gloss)
                     : o.gloss;
 
                   return (
