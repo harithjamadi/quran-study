@@ -7,7 +7,8 @@ import { useLearning } from "@/store/learning";
 import { UI_STRINGS } from "@/lib/i18n";
 import { getAyahWbw } from "@/lib/api";
 import type { WordEntry } from "@/lib/words";
-import { loadRootIndex } from "@/lib/words";
+import { loadRootIndex, loadLemmaFrequency } from "@/lib/words";
+import { effectiveGloss } from "@/lib/learning";
 import { getSurah } from "@/data/surahs";
 import { posLabel, posBadgeClass, type PosTag } from "@/lib/pos-colors";
 import { getTadabbur } from "@/data/tadabbur";
@@ -36,12 +37,25 @@ export function WordPopover({
   const ref = useRef<HTMLDivElement>(null);
   const [rootCount, setRootCount] = useState<number | null>(null);
   const [liveGloss, setLiveGloss] = useState<string | null>(null);
+  const [curatedGloss, setCuratedGloss] = useState<string | null>(null);
   const [tab, setTab] = useState<Tab>("translation");
 
   const language = useLearning((s) => s.language);
   const introduce = useLearning((s) => s.introduce);
   const isIntroduced = useLearning((s) => !!s.lemmas[word.lemma || ""]);
   const t = UI_STRINGS[language];
+
+  useEffect(() => {
+    if (!word.lemma) return;
+    loadLemmaFrequency().then(list => {
+      if (!list) return;
+      const meta = list.find(m => m.lemma === word.lemma);
+      if (meta) {
+        const eg = effectiveGloss(meta, language);
+        if (eg) setCuratedGloss(eg.text);
+      }
+    });
+  }, [word.lemma, language]);
 
   const layout = useMemo(() => {
     if (typeof window === "undefined") {
@@ -104,7 +118,9 @@ export function WordPopover({
   if (typeof document === "undefined") return null;
 
   const surah = getSurah(surahNumber);
-  const surahName = surah ? surah.englishName : `Surah ${surahNumber}`;
+  const surahName = surah 
+    ? (language === "ms" ? surah.name : surah.englishName) 
+    : `Surah ${surahNumber}`;
   const pos = word.pos as PosTag;
 
   const tabs: { id: Tab; label: string }[] = [
@@ -163,7 +179,7 @@ export function WordPopover({
         {tab === "translation" && (
           <TranslationTab
             word={word}
-            liveGloss={liveGloss}
+            meaning={liveGloss || curatedGloss || word.gloss}
             isIntroduced={isIntroduced}
             surahName={surahName}
             ayahNumber={ayahNumber}
@@ -201,7 +217,7 @@ export function WordPopover({
 
 function TranslationTab({
   word,
-  liveGloss,
+  meaning,
   isIntroduced,
   surahName,
   ayahNumber,
@@ -211,7 +227,7 @@ function TranslationTab({
   onClose,
 }: {
   word: WordEntry;
-  liveGloss: string | null;
+  meaning: string | null;
   isIntroduced: boolean;
   surahName: string;
   ayahNumber: number;
@@ -220,10 +236,15 @@ function TranslationTab({
   onIntroduce: () => void;
   onClose: () => void;
 }) {
+  const displayMeaning = 
+    language === "ms" 
+      ? (word.glossMs || meaning || word.gloss)
+      : (meaning || word.gloss);
+
   return (
     <div className="space-y-3">
       <p className="text-[15px] font-medium text-[color:var(--foreground)]">
-        {liveGloss || word.gloss || "—"}
+        {displayMeaning || "—"}
       </p>
 
       {word.root && (
@@ -237,7 +258,7 @@ function TranslationTab({
             </Row>
           )}
           <Link
-            href={`/root/${encodeURIComponent(word.root)}`}
+            href={`/root/${encodeURIComponent(word.root)}?lang=${language}`}
             onClick={onClose}
             className="mt-2 inline-flex items-center gap-1 text-sm text-[color:var(--accent-strong)] hover:underline font-medium"
           >
@@ -276,7 +297,7 @@ function TranslationTab({
       )}
 
       <p className="text-[10px] text-[color:var(--muted)] font-medium border-t border-[color:var(--border)] pt-2">
-        {surahName} · {ayahNumber} · word {word.i}
+        {surahName} · {ayahNumber} · {t.word_idx} {word.i}
       </p>
     </div>
   );
@@ -373,7 +394,7 @@ function GrammarTab({
 
       {word.root && (
         <Link
-          href={`/root/${encodeURIComponent(word.root)}`}
+          href={`/root/${encodeURIComponent(word.root)}?lang=${language}`}
           onClick={onClose}
           className="inline-flex items-center gap-1 text-sm text-[color:var(--accent-strong)] hover:underline font-medium"
         >

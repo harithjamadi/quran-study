@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useEffect, useState } from "react";
 import { useLearning } from "@/store/learning";
+import { useSettings } from "@/store/settings";
 import { UI_STRINGS } from "@/lib/i18n";
 import { LastReadCard } from "@/components/LastReadCard";
 import { SurahCard } from "@/components/SurahCard";
@@ -41,6 +42,16 @@ function useCountUp(target: number, durationMs = 1200) {
 
 export default function HomePage() {
   const language = useLearning((s) => s.language);
+  const setTranslation = useSettings((s) => s.setTranslation);
+  const translationId = useSettings((s) => s.translationId);
+
+  useEffect(() => {
+    // One-time sync for Malay users who haven't changed translation yet
+    if (language === "ms" && translationId === "en.sahih") {
+      setTranslation("ms.basmeih");
+    }
+  }, [language, translationId, setTranslation]);
+
   const t = UI_STRINGS[language];
   const hydrated = useHydrated();
   const lemmaCount = useCountUp(500, 1400);
@@ -53,15 +64,8 @@ export default function HomePage() {
 
   return (
     <div className="space-y-20 sm:space-y-28">
-      {/* ────────────────────────────────────────────────────────────────
-          HERO — two-column on desktop. Left: editorial typographic
-          headline with Bismillah as eyebrow + ticking-counter callout.
-          Right: oversized, transparent decorative Arabic that bleeds
-          off the canvas — the brand mark itself ("مُبِين") rendered
-          as ornamental typography.
-          ──────────────────────────────────────────────────────────── */}
+      {/* atmospheric Green glow behind hero */}
       <section className="relative pt-2 sm:pt-6 lg:pt-10 overflow-hidden">
-        {/* atmospheric green glow behind hero */}
         <div
           aria-hidden
           className="absolute -top-32 -left-32 h-[40rem] w-[40rem] rounded-full bg-[color:var(--accent)]/10 blur-3xl pointer-events-none"
@@ -72,9 +76,7 @@ export default function HomePage() {
         />
 
         <div className="relative grid grid-cols-1 lg:grid-cols-[1.15fr_1fr] gap-10 lg:gap-16 items-center">
-          {/* ── LEFT: typographic stack ── */}
           <div className="stagger-children relative z-10 lg:pr-2">
-            {/* Bismillah as eyebrow — close to headline, framed */}
             <div className="flex items-center gap-4 mb-5 sm:mb-7">
               <span
                 aria-hidden
@@ -127,7 +129,6 @@ export default function HomePage() {
               </Link>
             </div>
 
-            {/* Counter callout — the 500 ticks up on mount */}
             <div className="mt-10 sm:mt-12 flex items-baseline gap-3 sm:gap-4 border-t border-[color:var(--border)] pt-6 sm:pt-7 max-w-md">
               <span className="stat-display text-[length:var(--text-3xl)] text-[color:var(--accent-strong)] tabular-nums">
                 {lemmaCount.toLocaleString()}
@@ -146,12 +147,7 @@ export default function HomePage() {
             </div>
           </div>
 
-          {/* ── RIGHT: decorative Arabic mark ──
-              "مُبِين" rendered massive, semi-transparent, slightly
-              rotated, with a thin gold underline tracking it — like
-              calligraphy in a manuscript margin. */}
           <div className="relative hidden lg:flex items-center justify-center min-h-[28rem]">
-            {/* decorative grid pattern */}
             <div
               aria-hidden
               className="absolute inset-0 opacity-[0.04] pointer-events-none"
@@ -161,7 +157,6 @@ export default function HomePage() {
                 backgroundSize: "32px 32px",
               }}
             />
-            {/* the brand mark, oversized */}
             <p
               className="arabic select-none pointer-events-none text-[color:var(--accent-strong)]/15 dark:text-[color:var(--accent)]/30 text-[clamp(12rem,16vw,19rem)] leading-none"
               lang="ar"
@@ -171,7 +166,6 @@ export default function HomePage() {
             >
               مُبِين
             </p>
-            {/* small floating data ornament — circle of dots representing frequency */}
             <div className="absolute bottom-8 right-0 flex items-center gap-3 rounded-full border border-[color:var(--border-strong)] bg-[color:var(--surface)]/80 backdrop-blur px-4 py-2.5 shadow-[var(--shadow)]">
               <span className="h-1.5 w-1.5 rounded-full bg-[color:var(--accent)] animate-pulse-soft" />
               <span className="text-xs font-medium text-[color:var(--foreground-soft)]">
@@ -180,7 +174,6 @@ export default function HomePage() {
             </div>
           </div>
 
-          {/* Mobile: smaller decorative mark inline */}
           <p
             className="lg:hidden arabic absolute -right-2 top-0 select-none pointer-events-none text-[color:var(--accent-strong)]/8 dark:text-[color:var(--accent)]/15 text-[clamp(6rem,22vw,10rem)] leading-none -z-0 overflow-hidden"
             lang="ar"
@@ -192,16 +185,9 @@ export default function HomePage() {
         </div>
       </section>
 
-      {/* Hairline section divider */}
       <div className="divider" />
-
-      {/* Last-read continuation strip */}
       <LastReadCard />
 
-      {/* ────────────────────────────────────────────────────────────────
-          THREE PILLARS — each card now has an icon, hover lift + glow.
-          01 (Belajar) is the gold-tinted anchor.
-          ──────────────────────────────────────────────────────────── */}
       <section className="grid grid-cols-1 md:grid-cols-3 gap-4 sm:gap-5 stagger-children">
         <PillarCard
           ordinal="01"
@@ -233,7 +219,6 @@ export default function HomePage() {
 
       <div className="divider" />
 
-      {/* ── Popular surahs ── */}
       <section>
         <header className="flex items-end justify-between mb-6 sm:mb-8">
           <div>
@@ -257,7 +242,6 @@ export default function HomePage() {
         </div>
       </section>
 
-      {/* ── Short surahs ── */}
       <section>
         <header className="mb-6 sm:mb-8">
           <p className="eyebrow mb-1">قصار السور</p>
@@ -276,7 +260,6 @@ export default function HomePage() {
   );
 }
 
-/* ── Pillar card with icon + hover glow ── */
 function PillarCard({
   ordinal,
   eyebrow,
@@ -308,7 +291,6 @@ function PillarCard({
           : "border border-[color:var(--border)] bg-[color:var(--surface)] hover:-translate-y-1 hover:border-[color:var(--accent)]/60 hover:shadow-[var(--shadow-glow)]"
       } ${href ? "cursor-pointer" : ""}`}
     >
-      {/* hover glow */}
       <div
         aria-hidden
         className={`absolute -top-12 -right-12 h-40 w-40 rounded-full blur-3xl transition-opacity duration-500 ${
@@ -350,7 +332,6 @@ function PillarCard({
   );
 }
 
-/* ── Inline SVG icons (no external lib) ── */
 function IconBrain() {
   return (
     <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" aria-hidden>

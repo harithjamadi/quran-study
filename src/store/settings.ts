@@ -66,6 +66,10 @@ export const useSettings = create<SettingsState>()(
     {
       name: "noor.settings.v1",
       storage: createJSONStorage(() => localStorage),
+      onRehydrateStorage: () => (state) => {
+        // Migration/Fix: If translationId is still default but language is ms,
+        // we might want to sync here, but useLearning handles the switch.
+      }
     }
   )
 );

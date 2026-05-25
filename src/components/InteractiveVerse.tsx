@@ -106,7 +106,9 @@ export function InteractiveVerse({
                 posUnderlineClass(w.pos as PosTag),
               ].join(" ")}
               aria-label={
-                w.gloss ? `${w.text} — ${w.gloss}` : `Study word ${w.text}`
+                w.gloss 
+                  ? (language === "ms" ? `${w.text} — ${w.gloss}` : `${w.text} — ${w.gloss}`) 
+                  : (language === "ms" ? `Kaji kata ${w.text}` : `Study word ${w.text}`)
               }
             >
               {renderWordWithMuanaqah(w.text)}

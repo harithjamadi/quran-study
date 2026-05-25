@@ -9,6 +9,7 @@
 // Sources:
 //   - Morphology / roots: mustafa0x/quran-morphology (Quranic Arabic Corpus, cleaned)
 //   - Per-word translit/gloss: Quran.com API v4 (https://api.quran.com)
+//   - Per-word Indonesian (Malay fallback): ekoheri/Al_Quran_Terjemahan_per_kata_per_ayat
 
 import { promises as fs } from "node:fs";
 import path from "node:path";
@@ -26,6 +27,8 @@ const PROJECT_ROOT = path.resolve(__dirname, "..");
 const MORPHOLOGY_URL =
   "https://raw.githubusercontent.com/mustafa0x/quran-morphology/master/quran-morphology.txt";
 const QURAN_API = "https://api.quran.com/api/v4";
+const ID_WBW_URL =
+  "https://raw.githubusercontent.com/ekoheri/Al_Quran_Terjemahan_per_kata_per_ayat/master/backend/database/surah_per_kata";
 
 const OUT_WORDS = path.join(PROJECT_ROOT, "public", "data", "words");
 const OUT_ROOTS = path.join(PROJECT_ROOT, "public", "data", "roots");
@@ -94,6 +97,20 @@ async function fetchSurahWordsFromQuranCom(surahNumber) {
   return verses;
 }
 
+async function fetchMalayWbw(surahNumber) {
+  const url = `${ID_WBW_URL}/${surahNumber}.json`;
+  try {
+    const res = await fetchWithRetry(url);
+    const j = await res.json();
+    const chapter = j[String(surahNumber)] || j[surahNumber];
+    if (!chapter || !chapter.terjemah) return null;
+    return chapter.terjemah;
+  } catch (err) {
+    console.warn(`  failed to fetch Malay WBW for ${surahNumber}: ${err.message}`);
+    return null;
+  }
+}
+
 function encodeRootForFilename(root) {
   return encodeURIComponent(root);
 }
@@ -117,8 +134,27 @@ async function main() {
 
   for (const n of surahsToProcess) {
     process.stdout.write(`[${n}/114] surah ${n}... `);
-    const qWords = await fetchSurahWordsFromQuranCom(n);
+    const [qWords, msWbw] = await Promise.all([
+      fetchSurahWordsFromQuranCom(n),
+      fetchMalayWbw(n),
+    ]);
+    
     const merged = mergeSurah(morphMap, qWords, n);
+    
+    // Inject Malay contextual glosses
+    if (msWbw) {
+      for (const [ayahKey, words] of Object.entries(merged)) {
+        const msAyah = msWbw[ayahKey];
+        if (!msAyah) continue;
+        for (const w of words) {
+          const msGloss = msAyah[String(w.i)] || msAyah[w.i];
+          if (msGloss && typeof msGloss === "string") {
+            w.glossMs = msGloss.trim();
+          }
+        }
+      }
+    }
+
     allSurahs[n] = merged;
 
     // simple coverage stat

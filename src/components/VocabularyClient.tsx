@@ -36,7 +36,8 @@ export function VocabularyClient({ freq }: Props) {
         
         const matchesSearch = 
           item.lemma.includes(search) || 
-          (item.en?.toLowerCase().includes(search.toLowerCase()));
+          (item.en?.toLowerCase().includes(search.toLowerCase())) ||
+          (item.ms?.toLowerCase().includes(search.toLowerCase()));
         
         if (!matchesSearch) return false;
 

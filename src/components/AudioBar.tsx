@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useAudio } from "@/components/AudioProvider";
 import { useSettings } from "@/store/settings";
 import { useLearning } from "@/store/learning";
@@ -73,17 +74,22 @@ export function AudioBar() {
           </div>
 
           <div className="flex-1 min-w-0">
-            <div className="flex items-center justify-between gap-2 text-xs">
-              <div className="truncate">
-                <span className="font-medium">
-                  {current.surahName} · {current.ayahNumber}
-                </span>
-                <span className="text-[color:var(--muted)]"> · {reciter.name}</span>
+            <Link
+              href={`/surah/${current.surahNumber}#v${current.ayahNumber}`}
+              className="group/info block"
+            >
+              <div className="flex items-center justify-between gap-2 text-xs">
+                <div className="truncate">
+                  <span className="font-medium group-hover/info:text-[color:var(--accent)] transition-colors">
+                    {current.surahName} · {current.ayahNumber}
+                  </span>
+                  <span className="text-[color:var(--muted)]"> · {reciter.name}</span>
+                </div>
+                <div className="tabular-nums text-[color:var(--muted)]">
+                  {formatTime(position)} / {formatTime(duration)}
+                </div>
               </div>
-              <div className="tabular-nums text-[color:var(--muted)]">
-                {formatTime(position)} / {formatTime(duration)}
-              </div>
-            </div>
+            </Link>
             <div className="mt-1.5 relative h-1.5 bg-[color:var(--border)] rounded-full overflow-hidden">
               <div
                 className="absolute inset-y-0 left-0 bg-[color:var(--accent)]"

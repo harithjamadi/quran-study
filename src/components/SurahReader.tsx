@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo } from "react";
+import { useEffect, useMemo, useRef } from "react";
 import Link from "next/link";
 import type { SurahEdition, SurahMeta } from "@/lib/types";
 import { VerseRow } from "@/components/VerseRow";
@@ -34,18 +34,52 @@ export function SurahReader({ meta, arabic, translation, translationId, children
     [arabic.ayahs, meta]
   );
 
+  const lastScrolledAyah = useRef<number | null>(null);
+
+  // Handle initial deep link scroll
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    const hash = window.location.hash;
+    if (hash.startsWith("#v")) {
+      const ayahNum = parseInt(hash.substring(2), 10);
+      if (!isNaN(ayahNum)) {
+        // Wait for a frame to ensure render is complete
+        requestAnimationFrame(() => {
+          const el = document.getElementById(`v${ayahNum}`);
+          if (el) {
+            el.scrollIntoView({ behavior: "auto", block: "center" });
+            lastScrolledAyah.current = ayahNum;
+          }
+        });
+      }
+    }
+  }, [arabic.ayahs.length]); // Re-run if ayahs change
+
   useEffect(() => {
     setQueue(queue);
   }, [queue, setQueue]);
 
+  // Centralize view on the playing ayah and sync URL
   useEffect(() => {
-    setLastRead({
-      surahNumber: meta.number,
-      ayahNumber: 1,
-      surahName: meta.englishName,
-      timestamp: Date.now(),
-    });
-  }, [meta.number, meta.englishName, setLastRead]);
+    if (!current || current.surahNumber !== meta.number) return;
+    
+    // Update URL hash without jumping
+    if (typeof window !== "undefined") {
+      const hash = `#v${current.ayahNumber}`;
+      if (window.location.hash !== hash) {
+        window.history.replaceState(null, "", hash);
+      }
+    }
+
+    // Scroll into view if it's a new ayah
+    if (lastScrolledAyah.current !== current.ayahNumber) {
+      const el = document.getElementById(`v${current.ayahNumber}`);
+      if (el) {
+        el.scrollIntoView({ behavior: "smooth", block: "center" });
+        lastScrolledAyah.current = current.ayahNumber;
+      }
+    }
+  }, [current, meta.number]);
 
   const startPlayback = () => {
     if (!queue[0]) return;

@@ -99,18 +99,21 @@ export async function listEditions(): Promise<EditionInfo[]> {
   return fetchJson<EditionInfo[]>("/edition");
 }
 
-/** 
+/**
  * Fetches accurate Word-by-Word data from Quran.com v4.
  * verseKey: "1:1", "2:255", etc.
  * lang: "ms" for Malay, "en" for English.
  */
 export async function getAyahWbw(verseKey: string, lang = "en"): Promise<QuranComVerseResponse> {
-  const url = `${QURAN_COM_API}/verses/by_key/${verseKey}?words=true&word_translation_language=${lang}`;
+  // For Malay, we use 'id' (Indonesian) resource 33 (Kemenag) which is 
+  // the highest quality WBW dataset available that aligns with 
+  // Nusantara-style sentence translations.
+  const language = lang === "ms" ? "id" : "en";
+  const url = `${QURAN_COM_API}/verses/by_key/${verseKey}?words=true&word_translation_language=${language}`;
   const res = await fetch(url, {
     next: { revalidate: 86400 },
     headers: { Accept: "application/json" },
   });
-
   if (!res.ok) {
     throw new QuranApiError(`Quran.com API request failed (${res.status}) for ${verseKey}`, res.status);
   }

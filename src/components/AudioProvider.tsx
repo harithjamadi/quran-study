@@ -11,6 +11,7 @@ import {
 } from "react";
 import { audioUrlForAyah } from "@/lib/api";
 import { useSettings } from "@/store/settings";
+import { useBookmarks } from "@/store/bookmarks";
 
 export interface PlayTarget {
   surahNumber: number;
@@ -46,6 +47,7 @@ export function useAudio(): AudioContextValue {
 export function AudioProvider({ children }: { children: React.ReactNode }) {
   const reciterId = useSettings((s) => s.reciterId);
   const autoplayNext = useSettings((s) => s.autoplayNext);
+  const setLastRead = useBookmarks((s) => s.setLastRead);
 
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const [current, setCurrent] = useState<PlayTarget | null>(null);
@@ -110,6 +112,12 @@ export function AudioProvider({ children }: { children: React.ReactNode }) {
       setError(null);
       setLoading(true);
       setCurrent(t);
+      setLastRead({
+        surahNumber: t.surahNumber,
+        ayahNumber: t.ayahNumber,
+        surahName: t.surahName,
+        timestamp: Date.now(),
+      });
       el.src = audioUrlForAyah(t.globalAyahNumber, reciterId);
       el.currentTime = 0;
       const p = el.play();

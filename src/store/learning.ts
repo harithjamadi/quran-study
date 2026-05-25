@@ -15,6 +15,7 @@ import {
 } from "@/lib/learning";
 import { computeRootBoosts } from "@/lib/root-progression";
 import { loadRootIndex } from "@/lib/words";
+import { useSettings } from "./settings";
 
 export type Language = "en" | "ms";
 
@@ -143,7 +144,16 @@ export const useLearning = create<LearningState>()(
         const cur = get();
         if (rank > cur.introducedThroughRank) set({ introducedThroughRank: rank });
       },
-      setLanguage: (language) => set({ language }),
+      setLanguage: (language) => {
+        set({ language });
+        // Sync default translation
+        const settings = useSettings.getState();
+        if (language === "ms") {
+          settings.setTranslation("ms.basmeih");
+        } else {
+          settings.setTranslation("en.sahih");
+        }
+      },
       resetProgress: () => set(DEFAULTS),
       statusOf: (lemma) => statusOf(get().lemmas[lemma]),
       recordSurahStar: (surahNumber, level) => {

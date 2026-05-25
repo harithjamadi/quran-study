@@ -34,6 +34,7 @@ export function VerseRow({ surahNumber, surahName, arabic, translation, translit
     audio.current?.surahNumber === surahNumber &&
     audio.current?.ayahNumber === arabic.numberInSurah;
 
+  const setLastRead = useBookmarks((s) => s.setLastRead);
   const isBookmarked = useBookmarks((s) =>
     s.has(surahNumber, arabic.numberInSurah)
   );
@@ -45,6 +46,15 @@ export function VerseRow({ surahNumber, surahName, arabic, translation, translit
       ayahNumber: arabic.numberInSurah,
       globalAyahNumber: arabic.number,
       surahName,
+    });
+  };
+
+  const onInteraction = () => {
+    setLastRead({
+      surahNumber,
+      ayahNumber: arabic.numberInSurah,
+      surahName,
+      timestamp: Date.now(),
     });
   };
 
@@ -77,6 +87,7 @@ export function VerseRow({ surahNumber, surahName, arabic, translation, translit
   return (
     <article
       id={`v${arabic.numberInSurah}`}
+      onClick={onInteraction}
       className={classNames(
         "group rounded-2xl border border-[color:var(--border)] bg-[color:var(--surface)] p-5 sm:p-6 transition-colors scroll-mt-24",
         isCurrent && highlight && "verse-highlight border-[color:var(--accent)]/60"

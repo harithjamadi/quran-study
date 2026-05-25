@@ -20,19 +20,20 @@ const normalize = (s) => s ? s.replace(/[\u064B-\u065F\u0670]/g, "") : "";
 // Covers the top ~280 lemmas (~70% of all Quran tokens by frequency).
 const RAW_MS_GLOSSES = {
   // — Particles, prepositions, conjunctions —
-  "من": "dari / daripada",
-  "إن": "jika / sesungguhnya",
-  "أن": "bahawa",
+  "من|P": "daripada / dari",
+  "من|N": "siapa / sesiapa",
+  "إن": "sekiranya / sesungguhnya",
+  "أن": "bahawa / untuk",
   "لا": "tidak / bukan",
-  "في": "dalam / di dalam",
-  "ما": "apa / apa yang / tidak",
-  "على": "atas / ke atas",
-  "إلى": "kepada / menuju",
-  "مع": "bersama",
-  "ب": "dengan",
-  "ل": "bagi / untuk",
-  "إذا": "apabila",
-  "إذ": "ketika / tatkala",
+  "في": "di dalam / pada",
+  "ما": "apa yang / tidak",
+  "على": "ke atas / di atas",
+  "إلى": "kepada / ke arah",
+  "مع": "bersama-sama",
+  "ب": "dengan / pada",
+  "ل": "untuk / bagi / kepunyaan",
+  "إذا": "apabila / tatkala",
+  "إذ": "ketika / sewaktu",
   "ثم": "kemudian",
   "أو": "atau",
   "لم": "tidak / belum",
@@ -255,6 +256,7 @@ const RAW_MS_GLOSSES = {
   "عدو": "musuh",
   "نعمة": "nikmat",
   "أمر": "perintah / urusan / memerintah",
+  "مَرْضِيَّة": "diredhai",
 
   // — Fatihah / very-common phrases (preserved from original) —
   "إياك": "hanya Engkau",
@@ -268,10 +270,61 @@ const RAW_MS_GLOSSES = {
   "ضالين": "sesat",
 };
 
-// Map normalized keys to the glosses
+// Map normalized keys (with POS for disambiguation) to the glosses
 const MS_GLOSSES = {};
 for (const k of Object.keys(RAW_MS_GLOSSES)) {
-  MS_GLOSSES[normalize(k)] = RAW_MS_GLOSSES[k];
+  const [ar, pos] = k.split("|");
+  const key = pos ? `${normalize(ar)}|${pos}` : normalize(ar);
+  MS_GLOSSES[key] = RAW_MS_GLOSSES[k];
+}
+
+const RAW_EN_GLOSSES = {
+  "من|P": "from / of",
+  "من|N": "who / whoever",
+  "اللَّه": "Allah",
+  "ما": "what / that which / not",
+  "فِي": "in / inside",
+  "لا": "no / not",
+  "إِنّ": "indeed / surely",
+  "قالَ": "to say / said",
+  "الَّذِي": "who / which / that",
+  "عَلَى": "on / upon / against",
+  "كانَ": "to be / was / were",
+  "ل": "for / to",
+  "ذا": "that / this",
+  "رَبّ": "Lord / Master",
+  "إِلَى": "to / towards",
+  "إِن": "if",
+  "إِلّا": "except / but",
+  "أَن": "that",
+  "آمَنَ": "to believe",
+  "ب": "with / by / in",
+  "و": "and",
+  "يَوْم": "day",
+  "عَن": "from / about",
+  "أَرْض": "earth / land",
+  "إِذا": "when / if",
+  "قَد": "already / surely",
+  "قَوْم": "people / folk",
+  "عَلِمَ": "to know",
+  "آيَة": "sign / verse",
+  "أَنّ": "that",
+  "كُلّ": "all / every / each",
+  "لَم": "not",
+  "جَعَلَ": "to make / to set",
+  "ثُمّ": "then",
+  "رَسُول": "messenger",
+  "عَذاب": "punishment / torment",
+  "سَماء": "sky / heaven",
+  "نَفْس": "self / soul",
+  "كَفَرَ": "to disbelieve / to deny",
+};
+
+const EN_GLOSSES = {};
+for (const k of Object.keys(RAW_EN_GLOSSES)) {
+  const [ar, pos] = k.split("|");
+  const key = pos ? `${normalize(ar)}|${pos}` : normalize(ar);
+  EN_GLOSSES[key] = RAW_EN_GLOSSES[k];
 }
 
 // Source for contextual per-word Indonesian translations (~95% intelligible
@@ -359,8 +412,12 @@ async function main() {
           // 2. Indonesian per-word translation aligned at the sample occurrence
           //    (contextual, fluent, ~95% intelligible to Malay readers)
           // 3. null → UI falls back to English with an "EN" badge
+          const lemmaKey = `${normalize(w.lemma)}|${w.pos}`;
+          const textKey = `${normalize(w.text)}|${w.pos}`;
           const curated =
+            MS_GLOSSES[lemmaKey] || MS_GLOSSES[textKey] ||
             MS_GLOSSES[normalize(w.lemma)] || MS_GLOSSES[normalize(w.text)] || null;
+
           const idGloss = curated
             ? null
             : idMap.get(`${surah}:${ayah}:${w.i}`) || null;
@@ -372,7 +429,8 @@ async function main() {
             root: w.root,
             pos: w.pos,
             count: 1,
-            en: w.gloss,
+            en: EN_GLOSSES[lemmaKey] || EN_GLOSSES[textKey] ||
+                EN_GLOSSES[normalize(w.lemma)] || EN_GLOSSES[normalize(w.text)] || w.gloss,
             ms: curated || idGloss,
             msSource: curated ? "curated" : idGloss ? "id" : null,
             translit: w.translit,

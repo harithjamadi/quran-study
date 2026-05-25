@@ -170,6 +170,7 @@ export const UI_STRINGS = {
     word_root: "Root",
     word_lemma: "Lemma",
     word_all_occurrences: "View all occurrences",
+    word_idx: "word",
 
     // Verse Row
     verse_play: "Play this verse",
@@ -369,6 +370,7 @@ export const UI_STRINGS = {
     word_root: "Akar",
     word_lemma: "Kata dasar",
     word_all_occurrences: "Lihat semua kemunculan",
+    word_idx: "perkataan",
 
     // Verse Row
     verse_play: "Main ayat ini",

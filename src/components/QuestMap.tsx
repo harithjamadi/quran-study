@@ -421,19 +421,28 @@ function DifficultyPicker({
     {
       level: 1 as const,
       label: labels[0],
-      desc: language === "ms" ? "Hafal + pilih jawapan" : "Memorise + multiple choice",
+      desc:
+        language === "ms"
+          ? "Kenali — cari dalam ayat, pilihan jawapan"
+          : "Recognize — spot in verse, multiple choice",
       locked: false,
     },
     {
       level: 2 as const,
       label: labels[1],
-      desc: language === "ms" ? "Bina terjemahan + soalan lanjut" : "Build translations + harder questions",
+      desc:
+        language === "ms"
+          ? "Hasilkan — Arab dari maksud, bina terjemahan"
+          : "Produce — Arabic from meaning, build the translation",
       locked: earned < 1,
     },
     {
       level: 3 as const,
       label: labels[2],
-      desc: language === "ms" ? "Isi tempat kosong + ujian pendengaran" : "Fill-in-blank + listening challenges",
+      desc:
+        language === "ms"
+          ? "Aplikasi — dengar, isi tempat kosong, susun ayat"
+          : "Apply — listen, fill the blank, reorder the verse",
       locked: earned < 2,
     },
   ];
