@@ -8,6 +8,7 @@ import { AudioBar } from "@/components/AudioBar";
 import { Footer } from "@/components/Footer";
 import { PWARegister } from "@/components/PWARegister";
 import { SpeedInsights } from "@vercel/speed-insights/next";
+import { Analytics } from "@vercel/analytics/next";
 
 // Display: Fraunces — variable serif with optical sizing, soft characterful
 // italics. Used for headings, big stats, editorial moments.
@@ -115,6 +116,7 @@ export default function RootLayout({
           </AudioProvider>
         </ThemeProvider>
         <SpeedInsights />
+        <Analytics />
       </body>
     </html>
   );
