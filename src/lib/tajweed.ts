@@ -262,9 +262,20 @@ export const TAJWEED_RULES: Record<string, TajweedRule> = {
   },
 };
 
-/** Waqf (stop sign) characters and their meanings. */
+/**
+ * Waqf (stop sign) characters and their meanings.
+ *
+ * `char` is the conventional shorthand letter used in tajweed textbooks
+ * (e.g. م for Waqf Lazim) — shown in the educational guide.
+ *
+ * `mushafChars` are the actual Unicode codepoints embedded in the Mushaf
+ * text — used to detect occurrences in verse text. These are the small
+ * high marks in the U+06D6–U+06DC range (plus U+06E9 for Sajdah), not the
+ * full-size base letters that appear throughout normal Arabic text.
+ */
 export interface WaqfSign {
   char: string;
+  mushafChars: string[];
   name: { ar: string; en: string; ms: string };
   instruction: { en: string; ms: string };
 }
@@ -272,6 +283,7 @@ export interface WaqfSign {
 export const WAQF_SIGNS: WaqfSign[] = [
   {
     char: "م",
+    mushafChars: ["ۘ"], // ۘ ARABIC SMALL HIGH MEEM INITIAL FORM
     name: { ar: "وقف لازم", en: "Waqf Lazim", ms: "Waqf Lazim" },
     instruction: {
       en: "Must stop here. Continuing without stopping would change the meaning.",
@@ -280,6 +292,7 @@ export const WAQF_SIGNS: WaqfSign[] = [
   },
   {
     char: "ط",
+    mushafChars: [],
     name: { ar: "وقف مطلق", en: "Waqf Mutlaq", ms: "Waqf Mutlaq" },
     instruction: {
       en: "Preferred to stop. Stopping is better than continuing.",
@@ -288,6 +301,7 @@ export const WAQF_SIGNS: WaqfSign[] = [
   },
   {
     char: "ج",
+    mushafChars: ["ۚ"], // ۚ ARABIC SMALL HIGH JEEM
     name: { ar: "وقف جائز", en: "Waqf Ja'iz", ms: "Waqf Ja'iz" },
     instruction: {
       en: "Permissible to stop. Both stopping and continuing are acceptable.",
@@ -296,6 +310,7 @@ export const WAQF_SIGNS: WaqfSign[] = [
   },
   {
     char: "ز",
+    mushafChars: [],
     name: { ar: "وقف مجوّز", en: "Waqf Mujawwaz", ms: "Waqf Mujawwaz" },
     instruction: {
       en: "Permissible to stop, though continuing is slightly preferred.",
@@ -304,6 +319,7 @@ export const WAQF_SIGNS: WaqfSign[] = [
   },
   {
     char: "ص",
+    mushafChars: [],
     name: { ar: "وقف مرخّص", en: "Waqf Murakhkhas", ms: "Waqf Murakhkhas" },
     instruction: {
       en: "Permissible to stop only due to the length of the verse — stopping here is a concession, not ideal.",
@@ -312,6 +328,7 @@ export const WAQF_SIGNS: WaqfSign[] = [
   },
   {
     char: "قلی",
+    mushafChars: ["ۗ"], // ۗ ARABIC SMALL HIGH LIGATURE QAF WITH LAM WITH ALEF MAKSURA
     name: { ar: "الوقف أولى", en: "Stop Preferred", ms: "Berhenti Lebih Utama" },
     instruction: {
       en: "Stopping is preferred (al-waqf awla).",
@@ -320,6 +337,7 @@ export const WAQF_SIGNS: WaqfSign[] = [
   },
   {
     char: "صلی",
+    mushafChars: ["ۖ"], // ۖ ARABIC SMALL HIGH LIGATURE SAD WITH LAM WITH ALEF MAKSURA
     name: { ar: "الوصل أولى", en: "Continue Preferred", ms: "Teruskan Lebih Utama" },
     instruction: {
       en: "Continuing without stopping is preferred (al-wasl awla).",
@@ -328,6 +346,7 @@ export const WAQF_SIGNS: WaqfSign[] = [
   },
   {
     char: "لا",
+    mushafChars: ["ۙ"], // ۙ ARABIC SMALL HIGH LAM ALEF
     name: { ar: "لا تقف", en: "No Stop", ms: "Jangan Berhenti" },
     instruction: {
       en: "Do not stop here. Stopping would distort the meaning.",
@@ -335,7 +354,17 @@ export const WAQF_SIGNS: WaqfSign[] = [
     },
   },
   {
+    char: "س",
+    mushafChars: ["ۜ"], // ۜ ARABIC SMALL HIGH SEEN
+    name: { ar: "السكتة", en: "Saktah", ms: "Saktah" },
+    instruction: {
+      en: "A brief silent pause — stop the sound without taking a new breath, then continue.",
+      ms: "Berhenti seketika tanpa bunyi — hentikan bacaan tanpa mengambil nafas baharu, kemudian sambung.",
+    },
+  },
+  {
     char: "ۛ",
+    mushafChars: ["ۛ"], // ۛ ARABIC SMALL HIGH THREE DOTS
     name: { ar: "وقف المعانقة", en: "Waqf Mu'anaqah", ms: "Waqf Mu'anaqah" },
     instruction: {
       en: "This stop comes in pairs — stop at one ۛ or the other, but not both.",
@@ -344,10 +373,11 @@ export const WAQF_SIGNS: WaqfSign[] = [
   },
   {
     char: "۩",
+    mushafChars: ["۩"], // ۩ ARABIC PLACE OF SAJDAH
     name: { ar: "سجدة التلاوة", en: "Sajdah Tilawah", ms: "Sujud Tilawah" },
     instruction: {
-      en: "Perform a prostration of recitation (Sujud Tilawah). Recite: سَجَدَ وَجْهِيَ لِلَّذِي خَلَقَهُ وَشَقَّ سَمْعَهُ وَبَصَرَهُ بِحَوْلِهِ وَقُوَّتِهِ — meaning: 'My face prostrates to the One who created it and formed its hearing and sight by His power and strength.'",
-      ms: "Lakukan sujud tilawah. Bacaan sujud: سَجَدَ وَجْهِيَ لِلَّذِي خَلَقَهُ وَشَقَّ سَمْعَهُ وَبَصَرَهُ بِحَوْلِهِ وَقُوَّتِهِ — maksud: 'Wajahku sujud kepada Yang menciptakannya dan menjadikan pendengaran dan penglihatannya dengan kekuasaan dan kekuatan-Nya.'",
+      en: "Perform a prostration of recitation (Sujud Tilawah). The supplication to recite in sujud is shown below.",
+      ms: "Lakukan sujud tilawah. Bacaan sujud ditunjukkan di bawah.",
     },
   },
 ];

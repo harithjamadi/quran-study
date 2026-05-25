@@ -227,17 +227,17 @@ function WaqfCard({ sign, language }: { sign: WaqfSign; language: Language }) {
       </div>
       <p className="text-sm text-[color:var(--foreground)] leading-relaxed">{sign.instruction[language]}</p>
       {sign.char === "۩" && (
-        <div className="rounded-xl border border-[color:var(--gold)]/30 bg-[color:var(--gold)]/5 p-3 space-y-2 mt-2">
+        <div className="rounded-xl border border-[color:var(--gold)]/30 bg-[color:var(--gold)]/5 p-4 space-y-3 mt-3">
           <p className="text-[10px] uppercase tracking-widest text-[color:var(--gold-strong)] dark:text-[color:var(--gold)] font-bold">
             {language === "ms" ? "Doa Sujud Tilawah" : "Sajdah Supplication"}
           </p>
-          <p className="arabic text-base leading-loose text-[color:var(--foreground)]" lang="ar" dir="rtl">
+          <p className="arabic text-xl leading-loose text-[color:var(--foreground)] text-center" lang="ar" dir="rtl">
             سَجَدَ وَجْهِيَ لِلَّذِي خَلَقَهُ وَشَقَّ سَمْعَهُ وَبَصَرَهُ بِحَوْلِهِ وَقُوَّتِهِ
           </p>
-          <p className="text-xs text-[color:var(--muted)] italic">
+          <p className="text-xs text-[color:var(--muted)] italic leading-relaxed text-center">
             {language === "ms"
-              ? "\"Wajahku sujud kepada Yang menciptakannya dan menjadikan pendengaran dan penglihatannya dengan kekuasaan dan kekuatan-Nya.\" — Baca dalam sujud."
-              : "\"My face prostrates to the One who created it and formed its hearing and sight by His power and strength.\" — Recite in sujud."}
+              ? "Wajahku sujud kepada Yang menciptakannya dan menjadikan pendengaran dan penglihatannya dengan kekuasaan dan kekuatan-Nya."
+              : "My face prostrates to the One who created it and formed its hearing and sight by His power and strength."}
           </p>
         </div>
       )}

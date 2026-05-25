@@ -31,30 +31,18 @@ interface ClickedSegment {
 }
 
 /* ── Waqf character lookup ─────────────────────────────────────────────────── */
+// Map each Mushaf waqf codepoint (U+06D6–U+06DC, U+06E9) to its sign metadata.
+// We must NOT match against the conventional shorthand letters (م, ج, ل, …)
+// in WaqfSign.char because those are regular Arabic letters that appear all
+// over the Quran in normal words — e.g. م in ٱلْحَمْدُ.
 const WAQF_MAP = new Map<string, WaqfSign>(
-  WAQF_SIGNS.map((w) => [w.char, w])
+  WAQF_SIGNS.flatMap((w) => w.mushafChars.map((c) => [c, w] as const))
 );
 
-// Unicode waqf/pause characters that warrant a tooltip
-const WAQF_CHARS = new Set([
-  "۩",
-  "ۛ",
-  "ۖ", // small high ligature sad with lam with alef maksura
-  "ۗ",
-  "ۘ",
-  "ۙ",
-  "ۚ",
-  "ۛ",
-  "ۜ",
-]);
-
 function findWaqf(text: string): WaqfSign | null {
-  for (const [char, sign] of WAQF_MAP) {
-    if (text.includes(char)) return sign;
-  }
-  if ([...text].some((c) => WAQF_CHARS.has(c))) {
-    // Fallback for embedded waqf marks without explicit entry
-    return null;
+  for (const ch of text) {
+    const sign = WAQF_MAP.get(ch);
+    if (sign) return sign;
   }
   return null;
 }
@@ -357,18 +345,18 @@ function TajweedPopover({
             </div>
 
             {isSajdah && (
-              <div className="rounded-xl border border-[color:var(--gold)]/30 bg-[color:var(--gold)]/5 p-3 space-y-2">
+              <div className="rounded-xl border border-[color:var(--gold)]/30 bg-[color:var(--gold)]/5 p-4 space-y-3">
                 <p className="text-[10px] uppercase tracking-widest text-[color:var(--gold-strong)] dark:text-[color:var(--gold)] font-bold">
                   {language === "ms" ? "Doa Sujud Tilawah" : "Sajdah Supplication"}
                 </p>
                 <p
-                  className="arabic text-lg leading-loose text-[color:var(--foreground)]"
+                  className="arabic text-xl leading-loose text-[color:var(--foreground)] text-center"
                   lang="ar"
                   dir="rtl"
                 >
                   سَجَدَ وَجْهِيَ لِلَّذِي خَلَقَهُ وَشَقَّ سَمْعَهُ وَبَصَرَهُ بِحَوْلِهِ وَقُوَّتِهِ
                 </p>
-                <p className="text-xs text-[color:var(--muted)] italic">
+                <p className="text-xs text-[color:var(--muted)] italic leading-relaxed text-center">
                   {language === "ms"
                     ? "Wajahku sujud kepada Yang menciptakannya dan menjadikan pendengaran dan penglihatannya dengan kekuasaan dan kekuatan-Nya."
                     : "My face prostrates to the One who created it and formed its hearing and sight by His power and strength."}
