@@ -208,30 +208,42 @@ function RuleCard({ rule, language }: { rule: TajweedRule; language: Language })
 function WaqfSection({ language }: { language: Language }) {
   return (
     <div className="grid gap-4 sm:grid-cols-2">
-      {WAQF_SIGNS.map((sign) => (
-        <WaqfCard key={sign.char} sign={sign} language={language} />
+      {WAQF_SIGNS.map((sign, idx) => (
+        <WaqfCard 
+          key={sign.char} 
+          sign={sign} 
+          language={language} 
+          className={idx === WAQF_SIGNS.length - 1 ? "sm:col-span-2" : ""}
+        />
       ))}
     </div>
   );
 }
 
-function WaqfCard({ sign, language }: { sign: WaqfSign; language: Language }) {
+function WaqfCard({ sign, language, className = "" }: { sign: WaqfSign; language: Language; className?: string }) {
+  // For Mu'anaqah (ۛ) — a combining mark with no visible glyph on its own —
+  // pair it with the dotted circle ◌ (U+25CC). That's the Unicode-standard
+  // way to display isolated combining marks and gives the three dots a
+  // visible base so they don't float at the top of an empty em-box.
+  const iconChar = sign.char === "ۛ" ? "◌ۛ" : sign.char;
+
   return (
-    <article className="card p-5 border-t-2 border-t-[color:var(--gold)]">
-      {/* Fixed-size icon badge keeps every card's header geometry identical,
-          regardless of whether sign.char is a wide letter, a tiny combining
-          mark like ۛ, or an ornate glyph like ۩. */}
+    <article className={`card p-5 border-t-2 border-t-[color:var(--gold)] ${className}`}>
       <div className="flex items-start gap-4">
         <div
-          className="shrink-0 w-14 h-14 rounded-xl bg-[color:var(--gold)]/10 border border-[color:var(--gold)]/20 flex items-center justify-center"
+          className="shrink-0 w-16 h-16 rounded-full bg-[color:var(--gold)]/10 border border-[color:var(--gold)]/30 grid place-items-center"
           aria-hidden
         >
           <span
-            className="arabic text-3xl text-[color:var(--gold-strong)] dark:text-[color:var(--gold)]"
-            style={{ lineHeight: 1 }}
+            className="text-2xl text-[color:var(--gold-strong)] dark:text-[color:var(--gold)] select-none"
+            style={{ 
+              fontFamily: 'var(--font-arabic-family)',
+              lineHeight: 0.85,
+            }}
             lang="ar"
+            dir="rtl"
           >
-            {sign.char}
+            {iconChar}
           </span>
         </div>
         <div className="min-w-0 flex-1">
@@ -239,13 +251,13 @@ function WaqfCard({ sign, language }: { sign: WaqfSign; language: Language }) {
           <p className="arabic text-sm text-[color:var(--muted)] mt-0.5" lang="ar" dir="rtl">{sign.name.ar}</p>
         </div>
       </div>
-      <p className="text-sm text-[color:var(--foreground)] leading-relaxed mt-3">{sign.instruction[language]}</p>
+      <p className="text-sm text-[color:var(--foreground-soft)] leading-relaxed mt-3">{sign.instruction[language]}</p>
       {sign.char === "۩" && (
-        <div className="rounded-xl border border-[color:var(--gold)]/30 bg-[color:var(--gold)]/5 p-4 space-y-3 mt-3">
+        <div className="rounded-xl border border-[color:var(--gold)]/30 bg-[color:var(--gold)]/5 px-4 py-6 space-y-3 mt-3">
           <p className="text-[10px] uppercase tracking-widest text-[color:var(--gold-strong)] dark:text-[color:var(--gold)] font-bold">
             {language === "ms" ? "Doa Sujud Tilawah" : "Sajdah Supplication"}
           </p>
-          <p className="arabic text-xl leading-loose text-[color:var(--foreground)] text-center" lang="ar" dir="rtl">
+          <p className="arabic text-xl leading-[2.5] text-[color:var(--foreground)] text-center py-4" lang="ar" dir="rtl">
             سَجَدَ وَجْهِيَ لِلَّذِي خَلَقَهُ وَشَقَّ سَمْعَهُ وَبَصَرَهُ بِحَوْلِهِ وَقُوَّتِهِ
           </p>
           <p className="text-xs text-[color:var(--muted)] italic leading-relaxed text-center">
