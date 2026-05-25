@@ -59,6 +59,16 @@ export function SurahReader({ meta, arabic, translation, translationId, children
     setQueue(queue);
   }, [queue, setQueue]);
 
+  useEffect(() => {
+    setLastRead({
+      surahNumber: meta.number,
+      ayahNumber: 1,
+      surahName: meta.englishName,
+      timestamp: Date.now(),
+    });
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [meta.number]);
+
   // Centralize view on the playing ayah and sync URL
   useEffect(() => {
     if (!current || current.surahNumber !== meta.number) return;

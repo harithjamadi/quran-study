@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useLearning } from "@/store/learning";
 import { useSettings } from "@/store/settings";
 import { UI_STRINGS } from "@/lib/i18n";
@@ -47,8 +47,11 @@ export default function HomePage() {
   const setTranslation = useSettings((s) => s.setTranslation);
   const translationId = useSettings((s) => s.translationId);
 
+  const lastSyncedLanguage = useRef<string | null>(null);
   useEffect(() => {
-    // One-time sync for Malay users who haven't changed translation yet
+    // Only sync once per language value — prevents overwriting a manual translation choice.
+    if (lastSyncedLanguage.current === language) return;
+    lastSyncedLanguage.current = language;
     if (language === "ms" && translationId === "en.sahih") {
       setTranslation("ms.basmeih");
     }

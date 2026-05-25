@@ -87,7 +87,9 @@ export function VerseRow({ surahNumber, surahName, arabic, translation, translit
   return (
     <article
       id={`v${arabic.numberInSurah}`}
-      onClick={onInteraction}
+      onClick={(e) => {
+        if (!(e.target as HTMLElement).closest("button, a")) onInteraction();
+      }}
       className={classNames(
         "group rounded-2xl border border-[color:var(--border)] bg-[color:var(--surface)] p-5 sm:p-6 transition-colors scroll-mt-24",
         isCurrent && highlight && "verse-highlight border-[color:var(--accent)]/60"

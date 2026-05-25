@@ -103,8 +103,9 @@ export function SurahQuestRunner({ surahNumber, surahName, lemmas, ayahWords, di
       // 3 true-false picks, mix of truthful/lie, drawn without overlap with same target+gloss.
       const tfTargets = shuffleSeeded(lemmas, rng).slice(0, 3);
       tfTargets.forEach((target, i) => {
-        const truthful = (i + Math.floor(rng() * 2)) % 2 === 0;
         const otherGlosses = lemmas.filter((l) => l.lemma !== target.lemma);
+        // Force truthful when there are no alternatives — avoids undefined pairedGloss.
+        const truthful = otherGlosses.length === 0 || (i + Math.floor(rng() * 2)) % 2 === 0;
         const pairedGloss = truthful ? target : shuffleSeeded(otherGlosses, rng)[0];
         list.push({ kind: "true-false", target, pairedGloss, truthful });
       });
@@ -1430,15 +1431,15 @@ function OrderTheVerseStage({
 
       <button
         onClick={checkAnswer}
-        disabled={placed.length === 0 || submitted !== null}
+        disabled={placed.length < words.length || submitted !== null}
         className={classNames(
           "w-full rounded-2xl py-4 text-base font-bold transition-all active:scale-[0.98]",
-          placed.length > 0 && !submitted
+          placed.length === words.length && !submitted
             ? "text-white hover:-translate-y-0.5"
             : "bg-[color:var(--border)] text-[color:var(--muted)] cursor-not-allowed"
         )}
         style={
-          placed.length > 0 && !submitted
+          placed.length === words.length && !submitted
             ? {
                 background: "linear-gradient(135deg, var(--accent), var(--accent-strong))",
                 boxShadow: "0 12px 32px -8px var(--accent-glow)",

@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import type { SurahEdition, SurahMeta } from "@/lib/types";
 import { getSurahWithEditions } from "@/lib/api";
 import { ARABIC_EDITION } from "@/lib/editions";
@@ -24,14 +24,16 @@ export function SurahReaderClient({ surahNumber, meta, translationParam }: Props
   const [data, setData] = useState<{ arabic: SurahEdition; trans?: SurahEdition } | null>(null);
   const [error, setError] = useState(false);
 
-  // Sync translation with language for initial state
+  const lastSyncedLanguage = useRef<string | null>(null);
   useEffect(() => {
-    if (hydrated && !translationParam) {
-      if (language === "ms" && persistedTranslationId === "en.sahih") {
-        setTranslation("ms.basmeih");
-      } else if (language === "en" && persistedTranslationId === "ms.basmeih") {
-        setTranslation("en.sahih");
-      }
+    // Only sync once per language value — prevents overwriting a manual translation choice.
+    if (!hydrated || translationParam) return;
+    if (lastSyncedLanguage.current === language) return;
+    lastSyncedLanguage.current = language;
+    if (language === "ms" && persistedTranslationId === "en.sahih") {
+      setTranslation("ms.basmeih");
+    } else if (language === "en" && persistedTranslationId === "ms.basmeih") {
+      setTranslation("en.sahih");
     }
   }, [hydrated, language, persistedTranslationId, translationParam, setTranslation]);
 
