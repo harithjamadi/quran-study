@@ -10,15 +10,31 @@ interface BeforeInstallPromptEvent extends Event {
 
 const DISMISSED_KEY = "noor.pwa.installDismissed";
 
+function isIOSSafari(): boolean {
+  if (typeof navigator === "undefined") return false;
+  const ua = navigator.userAgent;
+  const isIOS = /iphone|ipad|ipod/i.test(ua);
+  // Safari on iOS includes "Safari" but not "CriOS" (Chrome) or "FxiOS" (Firefox)
+  const isSafari = /safari/i.test(ua) && !/crios|fxios|chrome/i.test(ua);
+  return isIOS && isSafari;
+}
+
+function isAlreadyInstalled(): boolean {
+  // iOS standalone mode
+  if ("standalone" in navigator && (navigator as { standalone?: boolean }).standalone === true) return true;
+  // Chrome/Android installed PWA
+  if (typeof window !== "undefined" && window.matchMedia("(display-mode: standalone)").matches) return true;
+  return false;
+}
+
 export function PWARegister() {
-  const [prompt, setPrompt] = useState<BeforeInstallPromptEvent | null>(null);
+  const [chromePrompt, setChromePrompt] = useState<BeforeInstallPromptEvent | null>(null);
+  const [showIOSHint, setShowIOSHint] = useState(false);
   const [hidden, setHidden] = useState(false);
 
   useEffect(() => {
     if (typeof window === "undefined") return;
 
-    // Only register the service worker in production builds. The dev server's
-    // HMR pipeline conflicts with cached scripts.
     if (process.env.NODE_ENV === "production" && "serviceWorker" in navigator) {
       navigator.serviceWorker.register("/sw.js").catch(() => undefined);
     }
@@ -27,17 +43,27 @@ export function PWARegister() {
     const sevenDays = 7 * 24 * 60 * 60 * 1000;
     if (Date.now() - dismissedAt < sevenDays) {
       setHidden(true);
+      return;
+    }
+
+    if (isAlreadyInstalled()) return;
+
+    // Show iOS-specific "Add to Home Screen" guide for Safari users.
+    // Apple never fires beforeinstallprompt, so we need our own nudge.
+    if (isIOSSafari()) {
+      setShowIOSHint(true);
+      return;
     }
 
     const onPrompt = (e: Event) => {
       e.preventDefault();
-      setPrompt(e as BeforeInstallPromptEvent);
+      setChromePrompt(e as BeforeInstallPromptEvent);
     };
     window.addEventListener("beforeinstallprompt", onPrompt);
     return () => window.removeEventListener("beforeinstallprompt", onPrompt);
   }, []);
 
-  if (!prompt || hidden) return null;
+  if (hidden || (!chromePrompt && !showIOSHint)) return null;
 
   const dismiss = () => {
     localStorage.setItem(DISMISSED_KEY, String(Date.now()));
@@ -45,10 +71,11 @@ export function PWARegister() {
   };
 
   const install = async () => {
-    await prompt.prompt();
-    const choice = await prompt.userChoice;
+    if (!chromePrompt) return;
+    await chromePrompt.prompt();
+    const choice = await chromePrompt.userChoice;
     if (choice.outcome === "dismissed") dismiss();
-    setPrompt(null);
+    setChromePrompt(null);
   };
 
   return (
@@ -59,23 +86,65 @@ export function PWARegister() {
         </div>
         <div className="flex-1 min-w-0">
           <p className="text-sm font-bold">Install Mubin</p>
-          <p className="text-xs text-[color:var(--muted)] mt-0.5 leading-relaxed">
-            Add to your home screen for offline reading and faster launches.
-          </p>
-          <div className="flex items-center gap-2 mt-3">
-            <button
-              onClick={install}
-              className="rounded-full bg-[color:var(--accent)] text-white px-3 py-1.5 text-xs font-bold hover:bg-[color:var(--accent-strong)] transition-colors"
-            >
-              Install
-            </button>
-            <button
-              onClick={dismiss}
-              className="text-xs text-[color:var(--muted)] hover:text-[color:var(--foreground)] transition-colors"
-            >
-              Not now
-            </button>
-          </div>
+
+          {showIOSHint ? (
+            <>
+              <p className="text-xs text-[color:var(--muted)] mt-0.5 leading-relaxed">
+                Tap the{" "}
+                <span className="inline-flex items-center gap-0.5 font-medium text-[color:var(--foreground)]">
+                  {/* iOS Share icon */}
+                  <svg
+                    width="13"
+                    height="13"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="2"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    aria-hidden
+                    className="inline-block"
+                  >
+                    <path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8" />
+                    <polyline points="16 6 12 2 8 6" />
+                    <line x1="12" y1="2" x2="12" y2="15" />
+                  </svg>{" "}
+                  Share
+                </span>{" "}
+                button in Safari, then choose{" "}
+                <span className="font-medium text-[color:var(--foreground)]">
+                  &ldquo;Add to Home Screen&rdquo;
+                </span>
+                .
+              </p>
+              <button
+                onClick={dismiss}
+                className="mt-3 text-xs text-[color:var(--muted)] hover:text-[color:var(--foreground)] transition-colors"
+              >
+                Dismiss
+              </button>
+            </>
+          ) : (
+            <>
+              <p className="text-xs text-[color:var(--muted)] mt-0.5 leading-relaxed">
+                Add to your home screen for offline reading and faster launches.
+              </p>
+              <div className="flex items-center gap-2 mt-3">
+                <button
+                  onClick={install}
+                  className="rounded-full bg-[color:var(--accent)] text-white px-3 py-1.5 text-xs font-bold hover:bg-[color:var(--accent-strong)] transition-colors"
+                >
+                  Install
+                </button>
+                <button
+                  onClick={dismiss}
+                  className="text-xs text-[color:var(--muted)] hover:text-[color:var(--foreground)] transition-colors"
+                >
+                  Not now
+                </button>
+              </div>
+            </>
+          )}
         </div>
       </div>
     </div>

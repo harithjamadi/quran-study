@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { useMemo, useState } from "react";
 import { useLearning } from "@/store/learning";
-import { statusOf, isDue, type LemmaMeta, type WordStatus } from "@/lib/learning";
+import { statusOf, isDue, freshLemmaState, type LemmaMeta, type WordStatus } from "@/lib/learning";
 import { PieChart, Pie, Cell, BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer } from "recharts";
 import { WordDetailPanel, type VocabItem } from "@/components/WordDetailPanel";
 
@@ -210,7 +210,7 @@ export function AnalyticsClient({ freq }: Props) {
             return (
               <button
                 key={item.lemma}
-                onClick={() => setSelected({ ...item, state, status })}
+                onClick={() => setSelected({ ...item, state: state ?? freshLemmaState(), status })}
                 className="group relative aspect-square rounded-md transition-all hover:scale-110 hover:z-10 hover:ring-2 hover:ring-[color:var(--accent)]/60 focus:outline-none focus:ring-2 focus:ring-[color:var(--accent)] overflow-visible"
                 style={{
                   background: STATUS_COLORS[status],
