@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useLearning } from "@/store/learning";
 import { UI_STRINGS } from "@/lib/i18n";
 import type { SurahMeta } from "@/lib/types";
+import { SURAH_MS_TRANSLATIONS } from "@/data/surahs";
 import { toArabicDigits } from "@/lib/format";
 
 export function SurahCard({ surah }: { surah: SurahMeta }) {
@@ -13,6 +14,10 @@ export function SurahCard({ surah }: { surah: SurahMeta }) {
   const typeLabel =
     surah.revelationType === "Meccan" ? t.surah_meccan : t.surah_medinan;
   const isMeccan = surah.revelationType === "Meccan";
+  const nameTranslation =
+    language === "ms"
+      ? (SURAH_MS_TRANSLATIONS[surah.number] ?? surah.englishNameTranslation)
+      : surah.englishNameTranslation;
 
   return (
     <Link
@@ -59,7 +64,7 @@ export function SurahCard({ surah }: { surah: SurahMeta }) {
           {surah.englishName}
         </h3>
         <p className="text-xs text-[color:var(--muted)] mt-0.5 truncate">
-          <span className="display-italic">{surah.englishNameTranslation}</span>
+          <span className="display-italic">{nameTranslation}</span>
           {" · "}
           {t.surah_revelation
             .replace("{type}", typeLabel)

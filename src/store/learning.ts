@@ -28,6 +28,7 @@ export interface SeenForm {
 interface LearningState {
   lemmas: Record<string, LemmaState>;
   language: Language;
+  hasChosenLanguage: boolean;
   introducedThroughRank: number;
   xp: number;
   lastSessionDate: string | null;
@@ -53,6 +54,7 @@ interface LearningState {
   introduceMany: (items: SeenForm[]) => void;
   advanceIntroducedTo: (rank: number) => void;
   setLanguage: (l: Language) => void;
+  setHasChosenLanguage: (v: boolean) => void;
   resetProgress: () => void;
   statusOf: (lemma: string) => WordStatus;
   recordSurahStar: (surahNumber: number, level: 1 | 2 | 3) => void;
@@ -62,6 +64,7 @@ interface LearningState {
 const DEFAULTS = {
   lemmas: {} as Record<string, LemmaState>,
   language: "en" as Language,
+  hasChosenLanguage: false,
   introducedThroughRank: 0,
   xp: 0,
   lastSessionDate: null as string | null,
@@ -154,7 +157,11 @@ export const useLearning = create<LearningState>()(
           settings.setTranslation("en.sahih");
         }
       },
-      resetProgress: () => set(DEFAULTS),
+      setHasChosenLanguage: (v) => set({ hasChosenLanguage: v }),
+      resetProgress: () => {
+        const cur = get();
+        set({ ...DEFAULTS, hasChosenLanguage: cur.hasChosenLanguage, language: cur.language });
+      },
       statusOf: (lemma) => statusOf(get().lemmas[lemma]),
       recordSurahStar: (surahNumber, level) => {
         const cur = get();
@@ -165,7 +172,7 @@ export const useLearning = create<LearningState>()(
     }),
     {
       name: "noor.learning.v2",
-      version: 2,
+      version: 3,
       migrate: (persisted: unknown, fromVersion: number) => {
         const state = persisted as Record<string, unknown>;
 
@@ -214,7 +221,8 @@ export const useLearning = create<LearningState>()(
           }
         }
 
-        return { ...state, surahStars, lemmas: migratedLemmas };
+        // Any user migrating from a prior version already chose a language implicitly.
+        return { ...state, surahStars, lemmas: migratedLemmas, hasChosenLanguage: true };
       },
       storage: createJSONStorage(() => localStorage),
     }

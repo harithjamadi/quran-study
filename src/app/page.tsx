@@ -6,6 +6,7 @@ import { useLearning } from "@/store/learning";
 import { useSettings } from "@/store/settings";
 import { UI_STRINGS } from "@/lib/i18n";
 import { LastReadCard } from "@/components/LastReadCard";
+import { LanguagePicker } from "@/components/LanguagePicker";
 import { SurahCard } from "@/components/SurahCard";
 import { SURAHS } from "@/data/surahs";
 import { useHydrated } from "@/lib/use-hydrated";
@@ -42,6 +43,7 @@ function useCountUp(target: number, durationMs = 1200) {
 
 export default function HomePage() {
   const language = useLearning((s) => s.language);
+  const hasChosenLanguage = useLearning((s) => s.hasChosenLanguage);
   const setTranslation = useSettings((s) => s.setTranslation);
   const translationId = useSettings((s) => s.translationId);
 
@@ -61,6 +63,7 @@ export default function HomePage() {
   const short = SURAHS.filter((s) => SHORT_IDS.includes(s.number));
 
   if (!hydrated) return null;
+  if (!hasChosenLanguage) return <LanguagePicker />;
 
   return (
     <div className="space-y-20 sm:space-y-28">
