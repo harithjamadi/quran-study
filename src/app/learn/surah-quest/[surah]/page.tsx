@@ -18,6 +18,7 @@ interface Params {
 async function loadSurahQuestData(surahNumber: number): Promise<{
   surahName: string;
   lemmas: LemmaMeta[];
+  ayahWords: Record<string, string[]>;
 } | null> {
   const meta = getSurah(surahNumber);
   if (!meta) return null;
@@ -65,7 +66,16 @@ async function loadSurahQuestData(surahNumber: number): Promise<{
     }
     if (ranked.length < 4) return null;
 
-    return { surahName: meta.englishName, lemmas: ranked };
+    // Collect word arrays only for the ayahs the quest lemmas reference.
+    const neededAyahs = new Set(ranked.map((l) => String(l.sampleAyah)));
+    const ayahWords: Record<string, string[]> = {};
+    for (const ayahKey of neededAyahs) {
+      if (wordsBySurah[ayahKey]) {
+        ayahWords[ayahKey] = wordsBySurah[ayahKey].map((w) => w.text);
+      }
+    }
+
+    return { surahName: meta.englishName, lemmas: ranked, ayahWords };
   } catch (err) {
     console.error("[quest/surah] failed to load:", err);
     return null;
@@ -85,6 +95,7 @@ export default async function SurahQuestPage({ params }: Params) {
       surahNumber={surahNumber}
       surahName={data.surahName}
       lemmas={data.lemmas}
+      ayahWords={data.ayahWords}
     />
   );
 }
