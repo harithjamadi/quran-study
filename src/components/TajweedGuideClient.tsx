@@ -221,24 +221,30 @@ function WaqfSection({ language }: { language: Language }) {
 }
 
 function WaqfCard({ sign, language, className = "" }: { sign: WaqfSign; language: Language; className?: string }) {
-  // For Mu'anaqah (ۛ) — a combining mark with no visible glyph on its own —
-  // pair it with the dotted circle ◌ (U+25CC). That's the Unicode-standard
-  // way to display isolated combining marks and gives the three dots a
-  // visible base so they don't float at the top of an empty em-box.
-  const iconChar = sign.char === "ۛ" ? "◌ۛ" : sign.char;
+  // Mu'anaqah (ۛ) is a combining mark with no glyph of its own. Pairing it
+  // with the dotted circle ◌ (U+25CC) tilts the result because ◌ falls back
+  // to a non-Arabic font while ۛ comes from Amiri Quran — their metrics
+  // don't align. Instead, attach ۛ to a non-breaking space (same font, same
+  // metrics) and oversize it so the three dots read clearly inside the badge.
+  const isMuanaqah = sign.char === "ۛ";
+  const iconChar = isMuanaqah ? " ۛ" : sign.char;
 
   return (
     <article className={`card p-5 border-t-2 border-t-[color:var(--gold)] ${className}`}>
       <div className="flex items-start gap-4">
         <div
-          className="shrink-0 w-16 h-16 rounded-full bg-[color:var(--gold)]/10 border border-[color:var(--gold)]/30 grid place-items-center"
+          className="shrink-0 w-16 h-16 rounded-full bg-[color:var(--gold)]/10 border border-[color:var(--gold)]/30 grid place-items-center overflow-hidden"
           aria-hidden
         >
           <span
-            className="text-2xl text-[color:var(--gold-strong)] dark:text-[color:var(--gold)] select-none"
-            style={{ 
+            className="text-[color:var(--gold-strong)] dark:text-[color:var(--gold)] select-none"
+            style={{
               fontFamily: 'var(--font-arabic-family)',
-              lineHeight: 0.85,
+              fontSize: isMuanaqah ? '4.5rem' : '1.5rem',
+              lineHeight: isMuanaqah ? 1.4 : 0.85,
+              display: isMuanaqah ? 'inline-block' : undefined,
+              transform: isMuanaqah ? 'translate(0.5rem, -1rem) rotate(20deg)' : undefined,
+              transformOrigin: 'center',
             }}
             lang="ar"
             dir="rtl"

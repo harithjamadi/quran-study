@@ -121,7 +121,7 @@ export function TajweedText({
             const waqf = findWaqf(seg.text);
             if (waqf) {
               // Mu'anaqah (ۛ U+06DB, three small high dots) is uniquely hard
-              // to spot at normal Arabic font size — bump each ۛ to 1.3em in
+              // to spot at normal Arabic font size — bump each ۛ to 1.2em in
               // gold so the pair stands out. Other marks stay at natural size.
               const hasMuanaqah = seg.text.includes("ۛ");
               return (
@@ -138,11 +138,11 @@ export function TajweedText({
                   {hasMuanaqah
                     ? seg.text.split("ۛ").map((part, i, arr) => (
                         <Fragment key={i}>
-                          {part}
+                          {part.trimEnd()}
                           {i < arr.length - 1 && (
                             <span
                               className="text-[color:var(--gold-strong)] dark:text-[color:var(--gold)]"
-                              style={{ fontSize: "1.6em", lineHeight: 1, verticalAlign: "-0.1em" }}
+                              style={{ fontSize: "1.2em" }}
                               aria-hidden
                             >
                               ۛ
