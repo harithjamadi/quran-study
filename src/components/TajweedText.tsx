@@ -142,7 +142,7 @@ export function TajweedText({
                           {i < arr.length - 1 && (
                             <span
                               className="text-[color:var(--gold-strong)] dark:text-[color:var(--gold)]"
-                              style={{ fontSize: "1.3em", lineHeight: 1, verticalAlign: "-0.05em" }}
+                              style={{ fontSize: "1.6em", lineHeight: 1, verticalAlign: "-0.1em" }}
                               aria-hidden
                             >
                               ۛ

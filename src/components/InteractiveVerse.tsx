@@ -20,6 +20,32 @@ interface Selection {
   rect: DOMRect;
 }
 
+/**
+ * Render a word's Arabic text, but if it contains the Mu'anaqah mark
+ * (ۛ U+06DB, three small high dots), bump that glyph to 1.6em in gold so
+ * the triangle pattern is actually legible. The mark is encoded as a
+ * superscript whose visible glyph is only ~0.4em of the font height —
+ * at natural size it disappears against surrounding Arabic.
+ */
+function renderWordWithMuanaqah(text: string) {
+  if (!text.includes("ۛ")) return text;
+  const parts = text.split("ۛ");
+  return parts.map((part, i) => (
+    <Fragment key={i}>
+      {part}
+      {i < parts.length - 1 && (
+        <span
+          className="text-[color:var(--gold-strong)] dark:text-[color:var(--gold)]"
+          style={{ fontSize: "1.6em", lineHeight: 1, verticalAlign: "-0.1em" }}
+          aria-hidden
+        >
+          ۛ
+        </span>
+      )}
+    </Fragment>
+  ));
+}
+
 export function InteractiveVerse({
   surahNumber,
   ayahNumber,
@@ -83,7 +109,7 @@ export function InteractiveVerse({
                 w.gloss ? `${w.text} — ${w.gloss}` : `Study word ${w.text}`
               }
             >
-              {w.text}
+              {renderWordWithMuanaqah(w.text)}
             </button>
             {idx < words.length - 1 ? " " : null}
           </Fragment>
