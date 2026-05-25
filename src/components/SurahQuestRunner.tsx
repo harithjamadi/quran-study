@@ -14,6 +14,8 @@ interface Props {
   lemmas: LemmaMeta[];
   /** Word texts per ayah (keyed by ayah number string) for the BuildTranslation stage. */
   ayahWords: Record<string, string[]>;
+  /** 1 = Easy, 2 = Medium, 3 = Hard */
+  difficulty: 1 | 2 | 3;
 }
 
 type Stage =
@@ -54,9 +56,9 @@ function playWordAudio(card: LemmaMeta) {
   } catch {}
 }
 
-export function SurahQuestRunner({ surahNumber, surahName, lemmas, ayahWords }: Props) {
+export function SurahQuestRunner({ surahNumber, surahName, lemmas, ayahWords, difficulty }: Props) {
   const language = useLearning((s) => s.language);
-  const recordSurahPerfect = useLearning((s) => s.recordSurahPerfect);
+  const recordSurahStar = useLearning((s) => s.recordSurahStar);
   const t = UI_STRINGS[language];
 
   const stages = useMemo<Stage[]>(() => {
@@ -108,10 +110,10 @@ export function SurahQuestRunner({ surahNumber, surahName, lemmas, ayahWords }: 
   const totalQuestions = stages.filter((s) => s.kind !== "memorize" && s.kind !== "complete").length;
 
   useEffect(() => {
-    if (stage.kind === "complete" && stats.correct === totalQuestions && totalQuestions > 0) {
-      recordSurahPerfect(surahNumber);
+    if (stage.kind === "complete") {
+      recordSurahStar(surahNumber, difficulty);
     }
-  }, [stage.kind, stats.correct, totalQuestions, surahNumber, recordSurahPerfect]);
+  }, [stage.kind, surahNumber, difficulty, recordSurahStar]);
 
   const answered =
     stageIdx === 0

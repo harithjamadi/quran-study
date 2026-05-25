@@ -7,6 +7,7 @@ import type { LemmaMeta } from "@/lib/learning";
 
 interface Params {
   params: Promise<{ surah: string }>;
+  searchParams: Promise<{ d?: string }>;
 }
 
 /**
@@ -100,10 +101,12 @@ async function loadSurahQuestData(surahNumber: number): Promise<{
   }
 }
 
-export default async function SurahQuestPage({ params }: Params) {
-  const { surah: surahStr } = await params;
+export default async function SurahQuestPage({ params, searchParams }: Params) {
+  const [{ surah: surahStr }, { d }] = await Promise.all([params, searchParams]);
   const surahNumber = Number(surahStr);
   if (!Number.isFinite(surahNumber) || surahNumber < 1 || surahNumber > 114) notFound();
+
+  const difficulty = (Math.max(1, Math.min(3, Number(d) || 1))) as 1 | 2 | 3;
 
   const data = await loadSurahQuestData(surahNumber);
   if (!data) notFound();
@@ -114,6 +117,7 @@ export default async function SurahQuestPage({ params }: Params) {
       surahName={data.surahName}
       lemmas={data.lemmas}
       ayahWords={data.ayahWords}
+      difficulty={difficulty}
     />
   );
 }
