@@ -10,10 +10,12 @@ interface Params {
 }
 
 /**
- * For a surah, pick the highest-frequency unique lemmas (by their global
- * count) that actually appear in that surah. Returns LemmaMeta entries
- * keyed against the surah's first occurrence of each lemma so the
- * sampleText we show comes from THIS surah's verses.
+ * For a surah, pick lemmas that are most *exclusive* to that surah.
+ * Exclusivity score = (occurrences in this surah) / (total Quran occurrences).
+ * A score of 1.0 means the word appears ONLY in this surah; a score near 0
+ * means it's a common word shared across hundreds of surahs.
+ * This ensures each quest teaches vocabulary that is characteristic of the
+ * specific surah rather than generic high-frequency Arabic words.
  */
 async function loadSurahQuestData(surahNumber: number): Promise<{
   surahName: string;
@@ -34,36 +36,52 @@ async function loadSurahQuestData(surahNumber: number): Promise<{
     >;
     const freq = JSON.parse(freqRaw) as LemmaMeta[];
 
-    // Map of every unique lemma in this surah → its first occurrence.
+    // First pass: track each lemma's first occurrence and count how many
+    // times it appears in THIS surah.
     const firstByLemma = new Map<
       string,
       { ayah: number; word: { i: number; text: string; translit: string | null } }
     >();
+    const surahCount = new Map<string, number>();
     for (const ayahKey of Object.keys(wordsBySurah)) {
       const ayah = Number(ayahKey);
       for (const w of wordsBySurah[ayahKey]) {
         if (!w.lemma) continue;
-        if (firstByLemma.has(w.lemma)) continue;
-        firstByLemma.set(w.lemma, { ayah, word: { i: w.i, text: w.text, translit: w.translit } });
+        surahCount.set(w.lemma, (surahCount.get(w.lemma) ?? 0) + 1);
+        if (!firstByLemma.has(w.lemma)) {
+          firstByLemma.set(w.lemma, { ayah, word: { i: w.i, text: w.text, translit: w.translit } });
+        }
       }
     }
 
-    // Sort by global frequency, take top 5 that have a Malay or English gloss.
-    const ranked: LemmaMeta[] = [];
-    for (const meta of freq) {
-      const first = firstByLemma.get(meta.lemma);
-      if (!first) continue;
-      if (!meta.en && !meta.ms) continue;
-      ranked.push({
-        ...meta,
-        sampleSurah: surahNumber,
-        sampleAyah: first.ayah,
-        sampleWord: first.word.i,
-        sampleText: first.word.text,
-        translit: first.word.translit ?? meta.translit,
-      });
-      if (ranked.length >= 5) break;
+    // Build a fast lemma → meta lookup from the global frequency list.
+    const freqByLemma = new Map<string, LemmaMeta>();
+    for (const m of freq) freqByLemma.set(m.lemma, m);
+
+    // Score each lemma by exclusivity = surahOccurrences / globalOccurrences.
+    // High score → this word is characteristic of THIS surah.
+    type Candidate = { meta: LemmaMeta; first: NonNullable<ReturnType<typeof firstByLemma.get>>; score: number };
+    const candidates: Candidate[] = [];
+    for (const [lemma, sc] of surahCount) {
+      const m = freqByLemma.get(lemma);
+      const first = firstByLemma.get(lemma);
+      if (!m || !first) continue;
+      if (!m.en && !m.ms) continue;
+      // Skip pure grammatical particles (prepositions, conjunctions, pronouns
+      // tagged P) — they have no stand-alone meaning worth memorising.
+      if (m.pos === "P") continue;
+      candidates.push({ meta: m, first, score: sc / m.count });
     }
+    candidates.sort((a, b) => b.score - a.score);
+
+    const ranked: LemmaMeta[] = candidates.slice(0, 5).map(({ meta: m, first }) => ({
+      ...m,
+      sampleSurah: surahNumber,
+      sampleAyah: first.ayah,
+      sampleWord: first.word.i,
+      sampleText: first.word.text,
+      translit: first.word.translit ?? m.translit,
+    }));
     if (ranked.length < 4) return null;
 
     // Collect word arrays only for the ayahs the quest lemmas reference.
