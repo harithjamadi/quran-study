@@ -101,7 +101,7 @@ export function SettingsPanel() {
 
       <Section title={language === "ms" ? "Warna Tajweed" : "Tajweed Colors"}>
         <Toggle
-          label={language === "ms" ? "Tunjukkan warna tajweed" : "Show tajweed colors"}
+          label={language === "ms" ? "Tunjukkan warna tajweed (WIP)" : "Show tajweed colors (WIP)"}
           value={s.tajweedMode}
           onChange={s.setTajweedMode}
         />

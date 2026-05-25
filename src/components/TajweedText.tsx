@@ -39,33 +39,12 @@ const WAQF_MAP = new Map<string, WaqfSign>(
   WAQF_SIGNS.flatMap((w) => w.mushafChars.map((c) => [c, w] as const))
 );
 
-interface PlainPart {
-  text: string;
-  waqf: WaqfSign | null;
-}
-
-/**
- * Split a plain text segment around every Mushaf waqf mark. Each mark
- * becomes its own part so it can be styled and made clickable, while the
- * surrounding text stays as-is.
- */
-function splitOnWaqf(text: string): PlainPart[] {
-  const out: PlainPart[] = [];
-  let buf = "";
+function findWaqf(text: string): WaqfSign | null {
   for (const ch of text) {
     const sign = WAQF_MAP.get(ch);
-    if (sign) {
-      if (buf) {
-        out.push({ text: buf, waqf: null });
-        buf = "";
-      }
-      out.push({ text: ch, waqf: sign });
-    } else {
-      buf += ch;
-    }
+    if (sign) return sign;
   }
-  if (buf) out.push({ text: buf, waqf: null });
-  return out.length ? out : [{ text, waqf: null }];
+  return null;
 }
 
 /* ── Main component ─────────────────────────────────────────────────────────── */
@@ -137,40 +116,26 @@ export function TajweedText({
         dir="rtl"
       >
         {segments.map((seg, idx) => {
-          // Plain text — may contain embedded Mushaf waqf marks (small high
-          // marks in U+06D6–U+06DC and U+06E9). Render each mark as its own
-          // visually distinct, clickable span so it actually catches the eye
-          // against the surrounding Arabic. The ZWNJ that precedes most marks
-          // in the Uthmani data already prevents glyph joining, so splitting
-          // here doesn't break Arabic shaping.
+          // Check for embedded waqf characters within plain text
           if (!seg.code) {
-            const parts = splitOnWaqf(seg.text);
-            if (parts.length === 1 && !parts[0].waqf) {
-              return <Fragment key={idx}>{parts[0].text}</Fragment>;
+            const waqf = findWaqf(seg.text);
+            if (waqf) {
+              return (
+                // span keeps Arabic text in one inline run so letters stay connected
+                <span
+                  key={idx}
+                  role="button"
+                  tabIndex={0}
+                  onClick={(e) => handleWaqfClick(waqf, seg.text, e)}
+                  onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") handleWaqfClick(waqf, seg.text, e as unknown as React.MouseEvent<HTMLElement>); }}
+                  className="cursor-pointer hover:opacity-70 transition-opacity underline decoration-dotted decoration-[color:var(--gold)]"
+                  title={waqf.name[language]}
+                >
+                  {seg.text}
+                </span>
+              );
             }
-            return (
-              <Fragment key={idx}>
-                {parts.map((p, i) =>
-                  p.waqf ? (
-                    <span
-                      key={i}
-                      role="button"
-                      tabIndex={0}
-                      onClick={(e) => handleWaqfClick(p.waqf!, p.text, e)}
-                      onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") handleWaqfClick(p.waqf!, p.text, e as unknown as React.MouseEvent<HTMLElement>); }}
-                      className="cursor-pointer text-[color:var(--gold-strong)] dark:text-[color:var(--gold)] hover:opacity-70 transition-opacity mx-1 font-bold"
-                      style={{ fontSize: "1.9em", lineHeight: 1, verticalAlign: "-0.15em" }}
-                      title={p.waqf.name[language]}
-                      aria-label={p.waqf.name[language]}
-                    >
-                      {p.text}
-                    </span>
-                  ) : (
-                    <Fragment key={i}>{p.text}</Fragment>
-                  )
-                )}
-              </Fragment>
-            );
+            return <Fragment key={idx}>{seg.text}</Fragment>;
           }
 
           const rule = getTajweedRule(seg.code);
