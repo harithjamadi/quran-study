@@ -170,6 +170,7 @@ export function SurahQuestRunner({ surahNumber, surahName, lemmas }: Props) {
 
       {stage.kind === "memorize" && (
         <MemorizeStage
+          key={stageIdx}
           lemmas={lemmas}
           surahName={surahName}
           onStart={() => setStageIdx(1)}
@@ -179,6 +180,7 @@ export function SurahQuestRunner({ surahNumber, surahName, lemmas }: Props) {
 
       {stage.kind === "match-ar-to-gloss" && (
         <MatchArabicToGlossStage
+          key={stageIdx}
           target={stage.target}
           options={stage.options}
           language={language}
@@ -188,6 +190,7 @@ export function SurahQuestRunner({ surahNumber, surahName, lemmas }: Props) {
 
       {stage.kind === "match-gloss-to-ar" && (
         <MatchGlossToArabicStage
+          key={stageIdx}
           target={stage.target}
           options={stage.options}
           language={language}
@@ -197,6 +200,7 @@ export function SurahQuestRunner({ surahNumber, surahName, lemmas }: Props) {
 
       {stage.kind === "true-false" && (
         <TrueFalseStage
+          key={stageIdx}
           target={stage.target}
           pairedGloss={stage.pairedGloss}
           truthful={stage.truthful}
