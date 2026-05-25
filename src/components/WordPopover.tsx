@@ -10,6 +10,7 @@ import type { WordEntry } from "@/lib/words";
 import { loadRootIndex } from "@/lib/words";
 import { getSurah } from "@/data/surahs";
 import { posLabel, posBadgeClass, type PosTag } from "@/lib/pos-colors";
+import { getTadabbur } from "@/data/tadabbur";
 
 interface Props {
   word: WordEntry;
@@ -392,45 +393,74 @@ function ReflectionTab({
   word: WordEntry;
   language: "en" | "ms";
 }) {
-  // Tadabbur content will be data-driven in a future update.
-  // For now, surface the linguistic richness of the root as a reflection seed.
+  const entry = getTadabbur(word.root);
+
+  if (entry) {
+    return (
+      <div className="space-y-3">
+        <div className="rounded-xl border border-[color:var(--gold)]/30 bg-[color:var(--gold)]/5 p-4 space-y-3">
+          <div className="flex items-start justify-between gap-2">
+            <p className="text-[10px] uppercase tracking-widest text-[color:var(--gold-strong)] dark:text-[color:var(--gold)] font-bold">
+              {language === "ms" ? "Renungan (Tadabbur)" : "Reflection (Tadabbur)"}
+            </p>
+            <span className="text-[10px] font-mono text-[color:var(--muted)] italic">
+              {entry.translit}
+            </span>
+          </div>
+
+          <div>
+            <p className="text-[10px] uppercase tracking-wider text-[color:var(--muted)] font-bold mb-1">
+              {language === "ms" ? "Medan makna" : "Semantic field"}
+            </p>
+            <p className="text-sm text-[color:var(--foreground)] leading-relaxed">
+              {entry.semanticField[language]}
+            </p>
+          </div>
+
+          <div className="pt-2 border-t border-[color:var(--gold)]/20">
+            <p className="text-[10px] uppercase tracking-wider text-[color:var(--muted)] font-bold mb-1">
+              {language === "ms" ? "Renungan" : "Reflection"}
+            </p>
+            <p className="text-sm text-[color:var(--foreground)] leading-relaxed italic">
+              {entry.reflection[language]}
+            </p>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // Fallback when no curated Tadabbur entry exists for this root.
   return (
-    <div className="space-y-4">
+    <div className="space-y-3">
       <div className="rounded-xl border border-[color:var(--gold)]/30 bg-[color:var(--gold)]/5 p-4 space-y-2">
         <p className="text-[10px] uppercase tracking-widest text-[color:var(--gold-strong)] dark:text-[color:var(--gold)] font-bold">
           {language === "ms" ? "Renungan (Tadabbur)" : "Reflection (Tadabbur)"}
         </p>
         {word.root ? (
-          <>
-            <p className="text-sm text-[color:var(--foreground)] leading-relaxed">
-              {language === "ms"
-                ? `Perkataan "${word.text}" berasal dari akar `
-                : `The word "${word.text}" derives from the root `}
-              <span className="arabic text-base text-[color:var(--gold-strong)] dark:text-[color:var(--gold)]" lang="ar" dir="rtl">
-                {word.root}
-              </span>
-              {language === "ms"
-                ? `. Perhatikan bagaimana akar yang sama muncul dalam konteks yang berbeza di seluruh Al-Quran — setiap kemunculan mengadungi kedalaman makna yang dikongsi.`
-                : `. Notice how this same root appears in different contexts throughout the Quran — each occurrence carries shared depth of meaning.`}
-            </p>
-            <p className="text-xs text-[color:var(--muted)]">
-              {language === "ms"
-                ? "Klik «Lihat semua kemunculan» dalam tab Tatabahasa untuk menjelajah konteks lain."
-                : "Click «View all occurrences» in the Grammar tab to explore other contexts."}
-            </p>
-          </>
+          <p className="text-sm text-[color:var(--foreground)] leading-relaxed">
+            {language === "ms"
+              ? `Perkataan ini berasal dari akar `
+              : `This word comes from the root `}
+            <span className="arabic text-base text-[color:var(--gold-strong)] dark:text-[color:var(--gold)]" lang="ar" dir="rtl">
+              {word.root}
+            </span>
+            {language === "ms"
+              ? `. Akar yang sama muncul dalam konteks berbeza di seluruh Al-Quran — setiap kemunculan membawa kedalaman makna yang dikongsi.`
+              : `. The same root appears across the Quran in different contexts, each carrying a shared shade of meaning.`}
+          </p>
         ) : (
           <p className="text-sm text-[color:var(--muted)] leading-relaxed italic">
             {language === "ms"
-              ? "Kata tugas seperti ini memainkan peranan penting dalam menghubungkan ayat — walaupun kecil, ia membentuk aliran teks."
-              : "Particles like this play a vital connective role — small but structurally essential to the flow of the verse."}
+              ? "Kata tugas seperti ini kecil tetapi membentuk struktur ayat — perhatikan bagaimana ia menghubungkan idea."
+              : "Particles are small but structurally load-bearing — notice how this word connects ideas across the verse."}
           </p>
         )}
       </div>
-      <p className="text-[10px] text-[color:var(--muted)]">
+      <p className="text-[10px] text-[color:var(--muted)] italic">
         {language === "ms"
-          ? "Renungan mendalam akan ditambah secara berperingkat."
-          : "Deeper reflections will be added progressively."}
+          ? "Renungan terperinci untuk akar ini akan ditambah kelak."
+          : "Detailed reflection for this root is being curated."}
       </p>
     </div>
   );

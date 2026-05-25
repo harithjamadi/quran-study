@@ -1,0 +1,17 @@
+node_modules
+.next
+.git
+.gitignore
+.dockerignore
+Dockerfile
+docker-compose*.yml
+*.log
+*.md
+.env
+.env.*
+.vscode
+.idea
+coverage
+.DS_Store
+Thumbs.db
+.planning

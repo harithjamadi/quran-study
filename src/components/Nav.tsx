@@ -16,6 +16,7 @@ export function Nav() {
     { href: "/", label: t.nav_home },
     { href: "/learn", label: t.nav_learn },
     { href: "/surahs", label: t.nav_read },
+    { href: "/analytics", label: language === "ms" ? "Analitik" : "Stats" },
     { href: "/search", label: t.nav_search },
     { href: "/bookmarks", label: t.nav_bookmarks },
     { href: "/settings", label: t.nav_settings },

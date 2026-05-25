@@ -1,10 +1,11 @@
 "use client";
 
 import Link from "next/link";
-import { useMemo } from "react";
+import { useMemo, useState } from "react";
 import { useLearning } from "@/store/learning";
 import { statusOf, isDue, type LemmaMeta, type WordStatus } from "@/lib/learning";
 import { PieChart, Pie, Cell, BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer } from "recharts";
+import { WordDetailPanel, type VocabItem } from "@/components/WordDetailPanel";
 
 interface Props {
   freq: LemmaMeta[];
@@ -17,16 +18,30 @@ const STATUS_COLORS: Record<WordStatus, string> = {
   strong: "#22c55e",
 };
 
+const POS_LABELS: Record<string, { en: string; ms: string }> = {
+  V: { en: "Verbs", ms: "Kata Kerja" },
+  N: { en: "Nouns", ms: "Kata Nama" },
+  P: { en: "Particles", ms: "Kata Tugas" },
+};
+
 export function AnalyticsClient({ freq }: Props) {
   const lemmasState = useLearning((s) => s.lemmas);
   const language = useLearning((s) => s.language);
   const xp = useLearning((s) => s.xp);
   const dayStreak = useLearning((s) => s.dayStreak);
+  const [selected, setSelected] = useState<VocabItem | null>(null);
 
   const stats = useMemo(() => {
     const counts: Record<WordStatus, number> = { new: 0, weak: 0, good: 0, strong: 0 };
     let dueNow = 0;
     const weakWords: { lemma: LemmaMeta; lapses: number; reps: number }[] = [];
+
+    // POS × Status breakdown: how mastery is distributed across grammatical categories.
+    const byPos: Record<string, { total: number; mastered: number; weak: number }> = {
+      V: { total: 0, mastered: 0, weak: 0 },
+      N: { total: 0, mastered: 0, weak: 0 },
+      P: { total: 0, mastered: 0, weak: 0 },
+    };
 
     for (const item of freq) {
       const s = lemmasState[item.lemma];
@@ -35,6 +50,12 @@ export function AnalyticsClient({ freq }: Props) {
       if (s && isDue(s)) dueNow++;
       if (s && s.lapses > 0 && s.reps > 0) {
         weakWords.push({ lemma: item, lapses: s.lapses, reps: s.reps });
+      }
+      const pos = item.pos ?? "";
+      if (s && byPos[pos]) {
+        byPos[pos].total++;
+        if (status === "good" || status === "strong") byPos[pos].mastered++;
+        if (status === "weak") byPos[pos].weak++;
       }
     }
 
@@ -49,10 +70,15 @@ export function AnalyticsClient({ freq }: Props) {
     }
     const comprehension = totalTokens > 0 ? (covered / totalTokens) * 100 : 0;
 
-    // Learning velocity: words that reached Review state
     const reviewWords = Object.values(lemmasState).filter(s => s.state === 2).length;
 
-    return { counts, dueNow, introduced, comprehension, weakWords: weakWords.slice(0, 10), reviewWords };
+    // Top-100 frequency heatmap — the words that matter most.
+    const top100 = freq.slice(0, 100).map((item) => ({
+      item,
+      status: statusOf(lemmasState[item.lemma]),
+    }));
+
+    return { counts, dueNow, introduced, comprehension, weakWords: weakWords.slice(0, 10), reviewWords, byPos, top100 };
   }, [lemmasState, freq]);
 
   const pieData = (["strong", "good", "weak", "new"] as WordStatus[])
@@ -70,6 +96,14 @@ export function AnalyticsClient({ freq }: Props) {
 
   return (
     <div className="space-y-8 pb-12">
+      {selected && (
+        <WordDetailPanel
+          item={selected}
+          language={language}
+          freq={freq}
+          onClose={() => setSelected(null)}
+        />
+      )}
       <header className="flex items-center justify-between gap-4">
         <div>
           <h1 className="text-2xl font-bold tracking-tight">
@@ -143,6 +177,103 @@ export function AnalyticsClient({ freq }: Props) {
               </Bar>
             </BarChart>
           </ResponsiveContainer>
+        </div>
+      </div>
+
+      {/* Weakness heatmap — the top 100 most frequent words, colored by mastery */}
+      <div className="card p-5 space-y-3">
+        <div className="flex items-start justify-between gap-3 flex-wrap">
+          <div>
+            <p className="text-sm font-bold">
+              {ms ? "Peta Haba Penguasaan — 100 Kata Teratas" : "Mastery Heatmap — Top 100 Words"}
+            </p>
+            <p className="text-[11px] text-[color:var(--muted)] mt-0.5">
+              {ms
+                ? "Kata yang paling kerap muncul. Tekan untuk butiran."
+                : "The highest-frequency Quranic words. Tap any cell for details."}
+            </p>
+          </div>
+          <div className="flex items-center gap-2 text-[10px] text-[color:var(--muted)] flex-wrap">
+            {(["strong", "good", "weak", "new"] as WordStatus[]).map((s) => (
+              <span key={s} className="flex items-center gap-1">
+                <span className="w-2.5 h-2.5 rounded-sm" style={{ background: STATUS_COLORS[s] }} />
+                <span className="capitalize">{s}</span>
+              </span>
+            ))}
+          </div>
+        </div>
+        <div className="grid grid-cols-10 gap-1.5">
+          {stats.top100.map(({ item, status }, idx) => {
+            const state = lemmasState[item.lemma];
+            const isMastered = status === "good" || status === "strong";
+            return (
+              <button
+                key={item.lemma}
+                onClick={() => setSelected({ ...item, state, status })}
+                className="group relative aspect-square rounded-md transition-all hover:scale-110 hover:z-10 hover:ring-2 hover:ring-[color:var(--accent)]/50 focus:outline-none focus:ring-2 focus:ring-[color:var(--accent)]"
+                style={{
+                  background: STATUS_COLORS[status],
+                  opacity: status === "new" ? 0.35 : isMastered ? 0.95 : 0.85,
+                }}
+                aria-label={`${item.lemma} — ${status}`}
+              >
+                <span className="absolute inset-0 flex items-center justify-center text-[8px] sm:text-[9px] font-bold text-white/95 tabular-nums select-none">
+                  {idx + 1}
+                </span>
+                <span
+                  className="pointer-events-none absolute -top-1 left-1/2 -translate-x-1/2 -translate-y-full whitespace-nowrap rounded-md bg-black/90 px-2 py-1 text-[10px] font-medium text-white opacity-0 group-hover:opacity-100 transition-opacity z-20"
+                >
+                  <span className="arabic" lang="ar" dir="rtl">{item.lemma}</span>
+                  {" — "}
+                  {item.en ?? item.ms ?? "—"}
+                </span>
+              </button>
+            );
+          })}
+        </div>
+      </div>
+
+      {/* POS mastery breakdown */}
+      <div className="card p-5 space-y-4">
+        <div>
+          <p className="text-sm font-bold">
+            {ms ? "Penguasaan Mengikut Jenis Kata" : "Mastery by Part of Speech"}
+          </p>
+          <p className="text-[11px] text-[color:var(--muted)] mt-0.5">
+            {ms
+              ? "Bagaimana kemajuan anda terbahagi antara kata kerja, kata nama dan kata tugas."
+              : "How your progress splits across verbs, nouns, and particles."}
+          </p>
+        </div>
+        <div className="space-y-3">
+          {(["V", "N", "P"] as const).map((pos) => {
+            const row = stats.byPos[pos];
+            const label = POS_LABELS[pos][language];
+            const masteredPct = row.total > 0 ? (row.mastered / row.total) * 100 : 0;
+            const weakPct = row.total > 0 ? (row.weak / row.total) * 100 : 0;
+            const otherPct = Math.max(0, 100 - masteredPct - weakPct);
+            return (
+              <div key={pos} className="space-y-1">
+                <div className="flex items-center justify-between text-xs">
+                  <span className="font-bold">{label}</span>
+                  <span className="text-[color:var(--muted)] tabular-nums">
+                    {row.mastered} / {row.total} {ms ? "dikuasai" : "mastered"}
+                  </span>
+                </div>
+                <div className="flex h-3 rounded-full overflow-hidden bg-[color:var(--border)]">
+                  {masteredPct > 0 && (
+                    <div className="h-full" style={{ width: `${masteredPct}%`, background: STATUS_COLORS.good }} title={`${masteredPct.toFixed(0)}% mastered`} />
+                  )}
+                  {otherPct > 0 && (
+                    <div className="h-full" style={{ width: `${otherPct}%`, background: STATUS_COLORS.new, opacity: 0.5 }} title={`${otherPct.toFixed(0)}% learning`} />
+                  )}
+                  {weakPct > 0 && (
+                    <div className="h-full" style={{ width: `${weakPct}%`, background: STATUS_COLORS.weak }} title={`${weakPct.toFixed(0)}% weak`} />
+                  )}
+                </div>
+              </div>
+            );
+          })}
         </div>
       </div>
 

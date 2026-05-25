@@ -1,18 +1,48 @@
 {
-  "name": "Noor — Free Quran study",
-  "short_name": "Noor",
-  "description": "A free, distraction-free Quran study tool with translations, recitation, and bookmarks.",
+  "name": "Mubin — Making the Quran Clear",
+  "short_name": "Mubin",
+  "description": "Learn Quranic Arabic word by word. Active recall flashcards on the highest-frequency lemmas, plus a reader where every Arabic word reveals its meaning and root.",
   "start_url": "/",
+  "scope": "/",
   "display": "standalone",
-  "background_color": "#fbfaf5",
+  "display_override": ["standalone", "minimal-ui"],
+  "background_color": "#131210",
   "theme_color": "#5a7a4c",
   "orientation": "portrait-primary",
+  "categories": ["education", "books", "lifestyle"],
+  "lang": "en",
   "icons": [
     {
       "src": "/icon.svg",
       "sizes": "any",
       "type": "image/svg+xml",
-      "purpose": "any maskable"
+      "purpose": "any"
+    },
+    {
+      "src": "/icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "maskable"
+    }
+  ],
+  "shortcuts": [
+    {
+      "name": "Start a learning session",
+      "short_name": "Learn",
+      "url": "/learn/session",
+      "description": "Jump straight into your next flashcard session."
+    },
+    {
+      "name": "Read a surah",
+      "short_name": "Read",
+      "url": "/surahs",
+      "description": "Browse and read any of the 114 surahs."
+    },
+    {
+      "name": "Learning analytics",
+      "short_name": "Stats",
+      "url": "/analytics",
+      "description": "Inspect your progress and weak spots."
     }
   ]
 }

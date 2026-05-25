@@ -6,6 +6,7 @@ import { ThemeProvider } from "@/components/ThemeProvider";
 import { AudioProvider } from "@/components/AudioProvider";
 import { AudioBar } from "@/components/AudioBar";
 import { Footer } from "@/components/Footer";
+import { PWARegister } from "@/components/PWARegister";
 
 // Display: Fraunces — variable serif with optical sizing, soft characterful
 // italics. Used for headings, big stats, editorial moments.
@@ -41,6 +42,15 @@ export const metadata: Metadata = {
     type: "website",
   },
   manifest: "/manifest.webmanifest",
+  appleWebApp: {
+    capable: true,
+    title: "Mubin",
+    statusBarStyle: "default",
+  },
+  icons: {
+    icon: "/icon.svg",
+    apple: "/icon.svg",
+  },
 };
 
 export const viewport: Viewport = {
@@ -89,6 +99,7 @@ export default function RootLayout({
             </main>
             <AudioBar />
             <Footer />
+            <PWARegister />
           </AudioProvider>
         </ThemeProvider>
       </body>
