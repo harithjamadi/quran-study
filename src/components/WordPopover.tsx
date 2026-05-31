@@ -7,7 +7,7 @@ import { useLearning } from "@/store/learning";
 import { UI_STRINGS } from "@/lib/i18n";
 import { getAyahWbw } from "@/lib/api";
 import type { WordEntry } from "@/lib/words";
-import { loadRootIndex, loadLemmaFrequency } from "@/lib/words";
+import { loadRootIndex, loadLemmaMeta } from "@/lib/words";
 import { effectiveGloss } from "@/lib/learning";
 import { getSurah } from "@/data/surahs";
 import { posLabel, posBadgeClass, type PosTag } from "@/lib/pos-colors";
@@ -47,14 +47,13 @@ export function WordPopover({
 
   useEffect(() => {
     if (!word.lemma) return;
-    loadLemmaFrequency().then(list => {
-      if (!list) return;
-      const meta = list.find(m => m.lemma === word.lemma);
-      if (meta) {
-        const eg = effectiveGloss(meta, language);
-        if (eg) setCuratedGloss(eg.text);
-      }
+    let active = true;
+    loadLemmaMeta(word.lemma).then(meta => {
+      if (!active || !meta) return;
+      const eg = effectiveGloss(meta, language);
+      if (eg) setCuratedGloss(eg.text);
     });
+    return () => { active = false; };
   }, [word.lemma, language]);
 
   const layout = useMemo(() => {
