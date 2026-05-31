@@ -29,6 +29,28 @@ export interface Release {
 /** Newest first. The first entry's version is the current app version. */
 export const RELEASES: Release[] = [
   {
+    version: "0.8.3",
+    date: "2026-06-01",
+    title: { en: "Hear the examples", ms: "Dengar contoh" },
+    entries: [
+      {
+        type: "added",
+        en: "Tajweed example cards now have a \"Hear the verse\" button so you can listen to the rule in its Quranic context.",
+        ms: "Kad contoh tajwid kini mempunyai butang \"Dengar ayat\" supaya anda boleh mendengar hukum itu dalam konteks Al-Quran.",
+      },
+      {
+        type: "added",
+        en: "Each rule now has more than one example — tap \"Another example\" to cycle through them.",
+        ms: "Setiap hukum kini mempunyai lebih daripada satu contoh — ketik \"Contoh lain\" untuk melihat yang seterusnya.",
+      },
+      {
+        type: "improved",
+        en: "Example explanations now follow the selected language instead of always showing English.",
+        ms: "Penerangan contoh kini mengikut bahasa yang dipilih, bukan sentiasa dalam Bahasa Inggeris.",
+      },
+    ],
+  },
+  {
     version: "0.8.2",
     date: "2026-06-01",
     title: { en: "Tajweed examples", ms: "Contoh tajwid" },

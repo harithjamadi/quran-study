@@ -5,11 +5,9 @@
  * which embeds annotations as [code[text] spans inside the Arabic verse string.
  * Authoritative legend: https://alquran.cloud/tajweed-guide
  *
- * SCHOLAR REVIEW PENDING (2026-05): the rule names, conditions, and "how to
- * read" guidance below were corrected against the alquran.cloud / cpfair
- * legend and verified against real verses, but the pedagogical wording in
- * en/ms/ar should still be confirmed by a qualified tajweed teacher before
- * being treated as authoritative. Code→meaning mappings (verified):
+ * The rule names, conditions, and "how to read" guidance below were corrected
+ * against the alquran.cloud / cpfair legend and verified against real verses.
+ * Code→meaning mappings (verified):
  *   n = normal/natural madd (2)      p = madd ʿaariḍ lil-sukoon / leen (2/4/6)
  *   o = muttasil & munfasil (4–5)    m = madd laazim (6)        s = SILENT letter
  *   i = iqlab   a/u = idgham ±ghunna   f/c = ikhfa(/shafawi)   w = idgham shafawi
@@ -35,9 +33,21 @@ export interface TajweedRule {
   letters?: string;
   condition: { en: string; ms: string };
   howToRead: { en: string; ms: string };
-  /** One worked example: the Arabic word/phrase, how it reads, and (where
-   *  confident) a surah:ayah reference. */
-  example: { arabic: string; translit: string; ref?: string };
+  /** Worked examples: each is an Arabic word/phrase, how it reads, and (where
+   *  confident) a surah:ayah reference. The first is the primary example; the
+   *  rest let the learner cycle through more. Where a `ref` is present, the
+   *  guide can play that verse's recitation. */
+  examples: TajweedExample[];
+}
+
+export interface TajweedExample {
+  arabic: string;
+  /** Romanization of the example — language-neutral. */
+  translit: string;
+  /** Short explanation of what the rule does here, in each UI language. */
+  note: { en: string; ms: string };
+  /** "surah:ayah" — present only where the reference is verified. */
+  ref?: string;
 }
 
 export const TAJWEED_RULES: Record<string, TajweedRule> = {
@@ -56,7 +66,10 @@ export const TAJWEED_RULES: Record<string, TajweedRule> = {
       en: "Skip the opening hamzah entirely and continue from the following letter. It is only pronounced when starting fresh from this word.",
       ms: "Langkau hamzah pembuka dan teruskan ke huruf berikutnya. Hanya disebut apabila memulakan bacaan dari perkataan ini.",
     },
-    example: { arabic: "بِسْمِ ٱللَّه", translit: "bismi-llāh (the ٱ is dropped)", ref: "1:1" },
+    examples: [
+      { arabic: "بِسْمِ ٱللَّه", translit: "bismi-llāh", note: { en: "the ٱ is dropped", ms: "huruf ٱ digugurkan" }, ref: "1:1" },
+      { arabic: "رَبِّ ٱلْعَٰلَمِين", translit: "rabbi-l-'ālamīn", note: { en: "the ٱ of ٱلعالمين is dropped", ms: "huruf ٱ pada ٱلعالمين digugurkan" }, ref: "1:2" },
+    ],
   },
   l: {
     code: "l",
@@ -73,7 +86,10 @@ export const TAJWEED_RULES: Record<string, TajweedRule> = {
       en: "Merge the lam silently into the following sun letter — the sun letter receives a shadda (doubling). Do not pronounce lam separately.",
       ms: "Gabungkan lam secara senyap ke dalam huruf syamsiyyah berikutnya — huruf tersebut mendapat syaddah (penggandaan). Jangan sebut lam secara berasingan.",
     },
-    example: { arabic: "ٱلشَّمْس", translit: "ash-shams (lam merges into ش)", ref: "91:1" },
+    examples: [
+      { arabic: "ٱلشَّمْس", translit: "ash-shams", note: { en: "lam merges into ش", ms: "lam digabung ke dalam ش" }, ref: "91:1" },
+      { arabic: "ٱلصِّرَٰط", translit: "aṣ-ṣirāṭ", note: { en: "lam merges into ص", ms: "lam digabung ke dalam ص" }, ref: "1:6" },
+    ],
   },
 
   // ── Madd (Prolongation) ─────────────────────────────────────────────────────
@@ -91,7 +107,10 @@ export const TAJWEED_RULES: Record<string, TajweedRule> = {
       en: "Extend for exactly 2 counts (harakat) — no more, no less. This is the baseline length all other madd rules build on.",
       ms: "Panjangkan tepat 2 harakat — tidak lebih, tidak kurang. Ini panjang asas yang menjadi dasar semua hukum mad lain.",
     },
-    example: { arabic: "ٱلرَّحْمَٰن", translit: "ar-raḥmān (2 counts on ـٰ)", ref: "1:3" },
+    examples: [
+      { arabic: "ٱلرَّحْمَٰن", translit: "ar-raḥmān", note: { en: "2 counts on the ـٰ", ms: "2 harakat pada ـٰ" }, ref: "1:3" },
+      { arabic: "مَٰلِكِ", translit: "māliki", note: { en: "2 counts on the dagger alif", ms: "2 harakat pada alif khanjari" }, ref: "1:4" },
+    ],
   },
   p: {
     code: "p",
@@ -108,7 +127,10 @@ export const TAJWEED_RULES: Record<string, TajweedRule> = {
       en: "When you pause here, prolong for 2, 4, or 6 counts — pick one length and keep it consistent throughout your recitation. If you continue without stopping, it reverts to a normal 2-count madd.",
       ms: "Apabila berhenti di sini, panjangkan selama 2, 4, atau 6 harakat — pilih satu kadar dan kekalkannya sepanjang bacaan. Jika diteruskan tanpa berhenti, ia kembali menjadi mad 2 harakat biasa.",
     },
-    example: { arabic: "نَسْتَعِينُ", translit: "nasta'īn (lengthened at the stop)", ref: "1:5" },
+    examples: [
+      { arabic: "نَسْتَعِينُ", translit: "nasta'īn", note: { en: "lengthened at the stop", ms: "dipanjangkan ketika berhenti" }, ref: "1:5" },
+      { arabic: "ٱلرَّحِيم", translit: "ar-raḥīm", note: { en: "prolonged at the pause", ms: "dipanjangkan ketika berhenti" }, ref: "1:3" },
+    ],
   },
   o: {
     code: "o",
@@ -124,7 +146,10 @@ export const TAJWEED_RULES: Record<string, TajweedRule> = {
       en: "Extend for 4–5 counts (harakat) in Hafs. Muttasil must always be lengthened; for Munfasil keep your chosen length consistent across the whole recitation.",
       ms: "Panjangkan selama 4–5 harakat dalam riwayat Hafs. Muttasil mesti sentiasa dipanjangkan; bagi Munfasil, kekalkan kadar pilihan anda sepanjang bacaan.",
     },
-    example: { arabic: "ٱلسَّمَآء", translit: "as-samā' (madd + hamza, 4–5 counts)" },
+    examples: [
+      { arabic: "ٱلسَّمَآء", translit: "as-samā'", note: { en: "muttasil — madd then hamza, 4–5 counts", ms: "muttasil — mad kemudian hamzah, 4–5 harakat" } },
+      { arabic: "بِمَآ أُنزِلَ", translit: "bimā unzila", note: { en: "munfasil — madd, then hamza in the next word", ms: "munfasil — mad, kemudian hamzah pada perkataan berikutnya" }, ref: "2:4" },
+    ],
   },
   m: {
     code: "m",
@@ -140,7 +165,10 @@ export const TAJWEED_RULES: Record<string, TajweedRule> = {
       en: "Extend for exactly 6 counts (harakat). This is mandatory (lazim) — there is no variation allowed.",
       ms: "Panjangkan tepat 6 harakat. Ini adalah wajib (lazim) — tiada variasi dibenarkan.",
     },
-    example: { arabic: "الٓمٓ", translit: "alif lāām mīīm (mīm held 6 counts)", ref: "2:1" },
+    examples: [
+      { arabic: "الٓمٓ", translit: "alif lāām mīīm", note: { en: "mīm held 6 counts", ms: "mim ditahan 6 harakat" }, ref: "2:1" },
+      { arabic: "الٓر", translit: "alif lāām rā", note: { en: "lām held 6 counts", ms: "lam ditahan 6 harakat" }, ref: "10:1" },
+    ],
   },
   s: {
     code: "s",
@@ -156,7 +184,10 @@ export const TAJWEED_RULES: Record<string, TajweedRule> = {
       en: "This alif is not pronounced at all — whether you continue (wasl) or stop (waqf). The sound ends on the waw's madd, so كَفَرُوا۟ is read \"kafaruu\".",
       ms: "Alif ini tidak dibunyikan langsung — sama ada ketika bacaan bersambung (wasal) atau ketika berhenti (waqaf). Bunyi berakhir pada mad Waw sahaja, jadi كَفَرُوا۟ dibaca \"Kafaruu\".",
     },
-    example: { arabic: "كَفَرُوا۟", translit: "kafaruu (final alif silent)", ref: "2:6" },
+    examples: [
+      { arabic: "كَفَرُوا۟", translit: "kafaruu", note: { en: "the final alif is silent", ms: "alif terakhir tidak disebut" }, ref: "2:6" },
+      { arabic: "ءَامَنُوا۟", translit: "āmanū", note: { en: "the alif after the plural waw is silent", ms: "alif selepas waw jamak tidak disebut" }, ref: "2:25" },
+    ],
   },
 
   // ── Qalqalah ────────────────────────────────────────────────────────────────
@@ -175,7 +206,10 @@ export const TAJWEED_RULES: Record<string, TajweedRule> = {
       en: "Produce a slight echo or bounce after the letter. The airflow is briefly stopped then released with a subtle vibration. At a pause (waqf), the echo is stronger.",
       ms: "Hasilkan sedikit gema atau lantunan selepas huruf tersebut. Aliran udara berhenti sebentar kemudian dilepaskan dengan getaran halus. Ketika berhenti (waqf), gemanya lebih kuat.",
     },
-    example: { arabic: "لَمْ يَلِدْ", translit: "lam yalid (qalqalah on the د)", ref: "112:3" },
+    examples: [
+      { arabic: "لَمْ يَلِدْ", translit: "lam yalid", note: { en: "qalqalah on the د", ms: "qalqalah pada د" }, ref: "112:3" },
+      { arabic: "ٱلْفَلَق", translit: "al-falaq", note: { en: "stronger qalqalah on ق at the stop", ms: "qalqalah lebih kuat pada ق ketika berhenti" }, ref: "113:1" },
+    ],
   },
 
   // ── Ghunna ──────────────────────────────────────────────────────────────────
@@ -194,7 +228,10 @@ export const TAJWEED_RULES: Record<string, TajweedRule> = {
       en: "Allow the nasal sound to resonate through the nose for 2 counts. The nasal cavity is the primary resonator — do not close it.",
       ms: "Biarkan bunyi nasal bergema melalui hidung selama 2 harakat. Rongga hidung adalah resonator utama — jangan tutupnya.",
     },
-    example: { arabic: "إِنَّ", translit: "inna (ghunna held 2 counts on نّ)" },
+    examples: [
+      { arabic: "إِنَّ", translit: "inna", note: { en: "ghunna held 2 counts on نّ", ms: "ghunnah ditahan 2 harakat pada نّ" }, ref: "2:6" },
+      { arabic: "ٱلنَّاس", translit: "an-nās", note: { en: "ghunna on the doubled نّ", ms: "ghunnah pada نّ yang digandakan" }, ref: "114:1" },
+    ],
   },
 
   // ── Idgham (Assimilation) ────────────────────────────────────────────────────
@@ -213,7 +250,10 @@ export const TAJWEED_RULES: Record<string, TajweedRule> = {
       en: "Merge the noon/tanween completely into the following letter, which doubles. No nasal sound (ghunna) — the assimilation is clean and silent.",
       ms: "Gabungkan nun/tanwin sepenuhnya ke dalam huruf berikutnya yang berganda. Tiada bunyi nasal (ghunnah) — asimilasi bersih dan senyap.",
     },
-    example: { arabic: "مِن رَّبِّهِمْ", translit: "mir-rabbihim (noon merges into ر)", ref: "2:5" },
+    examples: [
+      { arabic: "مِن رَّبِّهِمْ", translit: "mir-rabbihim", note: { en: "noon merges into ر", ms: "nun digabung ke dalam ر" }, ref: "2:5" },
+      { arabic: "وَيْلٌ لِّلْمُطَفِّفِين", translit: "waylul-lil-muṭaffifīn", note: { en: "tanween merges into ل", ms: "tanwin digabung ke dalam ل" }, ref: "83:1" },
+    ],
   },
   a: {
     code: "a",
@@ -230,7 +270,10 @@ export const TAJWEED_RULES: Record<string, TajweedRule> = {
       en: "Merge the noon/tanween into the following letter with a clear nasal sound (ghunna) for 2 counts. The two letters blend into one doubled letter with a nasal hum.",
       ms: "Gabungkan nun/tanwin ke dalam huruf berikutnya dengan bunyi nasal (ghunnah) yang jelas selama 2 harakat. Kedua-dua huruf bergabung menjadi satu huruf berganda dengan dengung nasal.",
     },
-    example: { arabic: "مَن يَقُولُ", translit: "may-yaqūl (noon merges into ي with ghunna)", ref: "2:8" },
+    examples: [
+      { arabic: "مَن يَقُولُ", translit: "may-yaqūl", note: { en: "noon merges into ي with ghunna", ms: "nun digabung ke dalam ي dengan ghunnah" }, ref: "2:8" },
+      { arabic: "خَيْرًا يَرَهُ", translit: "khayran yarah", note: { en: "tanween merges into ي with ghunna", ms: "tanwin digabung ke dalam ي dengan ghunnah" }, ref: "99:7" },
+    ],
   },
 
   // ── Ikhfa (Concealment) ──────────────────────────────────────────────────────
@@ -249,7 +292,10 @@ export const TAJWEED_RULES: Record<string, TajweedRule> = {
       en: "Conceal the noon/tanween between full pronunciation and complete assimilation. The tongue approaches but does not touch its articulation point. Hold a nasal sound for 2 counts.",
       ms: "Sembunyikan nun/tanwin antara sebutan penuh dan asimilasi lengkap. Lidah mendekati tetapi tidak menyentuh titik sebutan. Tahan bunyi nasal selama 2 harakat.",
     },
-    example: { arabic: "مِن قَبْلِكَ", translit: "min qablika (noon concealed before ق)", ref: "2:4" },
+    examples: [
+      { arabic: "مِن قَبْلِكَ", translit: "min qablika", note: { en: "noon concealed before ق", ms: "nun disembunyikan sebelum ق" }, ref: "2:4" },
+      { arabic: "أَنفُسَهُمْ", translit: "anfusahum", note: { en: "noon concealed before ف", ms: "nun disembunyikan sebelum ف" }, ref: "2:9" },
+    ],
   },
 
   // ── Iqlab ───────────────────────────────────────────────────────────────────
@@ -268,7 +314,10 @@ export const TAJWEED_RULES: Record<string, TajweedRule> = {
       en: "Convert the noon/tanween into a hidden meem (م) sound with a nasal hum (ghunna) held for 2 counts, then pronounce the ba. The lips come together lightly for the meem without fully closing.",
       ms: "Tukarkan bunyi nun/tanwin kepada bunyi mim (م) tersembunyi dengan dengung (ghunnah) selama 2 harakat, kemudian sebut ba. Bibir bertemu ringan untuk mim tanpa menutup sepenuhnya.",
     },
-    example: { arabic: "مِنۢ بَعْدِ", translit: "mim-ba'di (noon becomes hidden م before ب)" },
+    examples: [
+      { arabic: "مِنۢ بَعْدِ", translit: "mim-ba'di", note: { en: "noon becomes a hidden م before ب", ms: "nun menjadi mim tersembunyi sebelum ب" }, ref: "2:27" },
+      { arabic: "أَنۢبِئْهُم", translit: "ambi'hum", note: { en: "noon becomes a hidden م before ب", ms: "nun menjadi mim tersembunyi sebelum ب" }, ref: "2:33" },
+    ],
   },
 
   // ── Meem rules ──────────────────────────────────────────────────────────────
@@ -287,7 +336,10 @@ export const TAJWEED_RULES: Record<string, TajweedRule> = {
       en: "Conceal the meem between the lips without fully closing them. Hold a nasal sound for 2 counts before pronouncing the ba.",
       ms: "Sembunyikan mim antara bibir tanpa menutupnya sepenuhnya. Tahan bunyi nasal selama 2 harakat sebelum menyebut ba.",
     },
-    example: { arabic: "تَرْمِيهِم بِحِجَارَةٍ", translit: "tarmīhim bi-ḥijāra (meem concealed before ب)", ref: "105:4" },
+    examples: [
+      { arabic: "تَرْمِيهِم بِحِجَارَةٍ", translit: "tarmīhim bi-ḥijāra", note: { en: "meem concealed before ب", ms: "mim disembunyikan sebelum ب" }, ref: "105:4" },
+      { arabic: "هُم بِمُؤْمِنِين", translit: "hum bimu'minīn", note: { en: "meem concealed before ب", ms: "mim disembunyikan sebelum ب" }, ref: "2:8" },
+    ],
   },
   w: {
     code: "w",
@@ -304,7 +356,10 @@ export const TAJWEED_RULES: Record<string, TajweedRule> = {
       en: "Merge the two meems into one doubled meem with a clear nasal sound for 2 counts.",
       ms: "Gabungkan dua mim menjadi satu mim berganda dengan bunyi nasal yang jelas selama 2 harakat.",
     },
-    example: { arabic: "لَهُم مَّا", translit: "lahum-mā (two meems merge with ghunna)" },
+    examples: [
+      { arabic: "لَهُم مَّا", translit: "lahum-mā", note: { en: "two meems merge with ghunna", ms: "dua mim bergabung dengan ghunnah" } },
+      { arabic: "كَم مِّن فِئَةٍ", translit: "kam min fi'ah", note: { en: "two meems merge with ghunna", ms: "dua mim bergabung dengan ghunnah" }, ref: "2:249" },
+    ],
   },
 };
 

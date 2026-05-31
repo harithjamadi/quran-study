@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { useState } from "react";
 import { useLearning } from "@/store/learning";
 import {
   TAJWEED_RULES,
@@ -10,6 +11,7 @@ import {
   type TajweedRule,
   type WaqfSign,
 } from "@/lib/tajweed";
+import { toggleVerseAudio, useVerseAudioState } from "@/lib/verse-audio";
 import type { Language } from "@/lib/i18n";
 
 const CATEGORY_ORDER: TajweedCategory[] = [
@@ -288,23 +290,117 @@ function RuleCard({
         <p className="text-sm text-[color:var(--foreground)] leading-relaxed">{rule.howToRead[language]}</p>
       </div>
 
-      <div>
-        <p className="text-[10px] uppercase tracking-widest text-[color:var(--muted)] font-bold mb-1">
+      <ExampleBlock rule={rule} language={language} />
+    </article>
+  );
+}
+
+function ExampleBlock({ rule, language }: { rule: TajweedRule; language: Language }) {
+  const [idx, setIdx] = useState(0);
+  const examples = rule.examples;
+  const example = examples[idx] ?? examples[0];
+  const total = examples.length;
+
+  return (
+    <div>
+      <div className="flex items-center justify-between gap-2 mb-1">
+        <p className="text-[10px] uppercase tracking-widest text-[color:var(--muted)] font-bold">
           {language === "ms" ? "Contoh" : "Example"}
-        </p>
-        <div className="flex items-baseline justify-between gap-3 flex-wrap">
-          <p className="arabic text-2xl leading-loose" lang="ar" dir="rtl" style={{ color: rule.color }}>
-            {rule.example.arabic}
-          </p>
-          {rule.example.ref && (
-            <span className="font-mono text-xs text-[color:var(--muted)] tabular-nums shrink-0">
-              {rule.example.ref}
+          {total > 1 && (
+            <span className="ml-1.5 font-mono normal-case tracking-normal text-[color:var(--muted)]">
+              {idx + 1}/{total}
             </span>
           )}
-        </div>
-        <p className="text-xs text-[color:var(--muted)] italic mt-0.5">{rule.example.translit}</p>
+        </p>
+        {total > 1 && (
+          <button
+            type="button"
+            onClick={() => setIdx((i) => (i + 1) % total)}
+            className="inline-flex items-center gap-1 rounded-full border border-[color:var(--border)] px-2.5 py-1 text-[11px] font-semibold text-[color:var(--muted)] hover:border-[color:var(--accent)] hover:text-[color:var(--accent)] transition-colors"
+          >
+            {language === "ms" ? "Contoh lain" : "Another example"}
+            <svg viewBox="0 0 24 24" width="11" height="11" fill="currentColor" aria-hidden>
+              <path d="M12 4V1L8 5l4 4V6a6 6 0 11-6 6H4a8 8 0 108-8z" />
+            </svg>
+          </button>
+        )}
       </div>
-    </article>
+      <div className="flex items-baseline justify-between gap-3 flex-wrap">
+        <p className="arabic text-2xl leading-loose" lang="ar" dir="rtl" style={{ color: rule.color }}>
+          {example.arabic}
+        </p>
+        {example.ref && (
+          <span className="font-mono text-xs text-[color:var(--muted)] tabular-nums shrink-0">
+            {example.ref}
+          </span>
+        )}
+      </div>
+      <p className="text-xs text-[color:var(--muted)] mt-0.5">
+        <span className="italic">{example.translit}</span>
+        <span className="mx-1.5 opacity-50">·</span>
+        <span>{example.note[language]}</span>
+      </p>
+      {example.ref && <ExampleAudio refStr={example.ref} color={rule.color} language={language} />}
+    </div>
+  );
+}
+
+/** Plays the full verse the example is drawn from (the only recitation we have
+ *  is verse-level), so the learner can hear the rule in its Quranic context. */
+function ExampleAudio({
+  refStr,
+  color,
+  language,
+}: {
+  refStr: string;
+  color: string;
+  language: Language;
+}) {
+  const [surahStr, ayahStr] = refStr.split(":");
+  const surah = Number(surahStr);
+  const ayah = Number(ayahStr);
+  const { playing, progress } = useVerseAudioState(surah, ayah);
+  if (!surah || !ayah) return null;
+
+  return (
+    <div className="mt-2">
+      <button
+        type="button"
+        onClick={() => toggleVerseAudio(surah, ayah)}
+        className="inline-flex items-center gap-2 rounded-full border px-3 py-1 text-[11px] font-semibold transition-colors"
+        style={
+          playing
+            ? { backgroundColor: color, borderColor: color, color: "#fff" }
+            : { borderColor: "var(--border-strong)" }
+        }
+        aria-pressed={playing}
+      >
+        {playing ? (
+          <svg viewBox="0 0 24 24" width="11" height="11" fill="currentColor" aria-hidden>
+            <rect x="6" y="5" width="4" height="14" rx="1" />
+            <rect x="14" y="5" width="4" height="14" rx="1" />
+          </svg>
+        ) : (
+          <svg viewBox="0 0 24 24" width="11" height="11" fill="currentColor" aria-hidden>
+            <path d="M8 5l12 7-12 7z" />
+          </svg>
+        )}
+        {playing
+          ? language === "ms"
+            ? "Henti ayat"
+            : "Stop verse"
+          : language === "ms"
+            ? "Dengar ayat"
+            : "Hear the verse"}
+      </button>
+      {/* RTL progress — Arabic reads right→left, so the bar fills from the right. */}
+      <div className="relative mt-1.5 h-1 w-full max-w-[12rem] overflow-hidden rounded-full bg-[color:var(--border)]">
+        <div
+          className="absolute inset-y-0 right-0 rounded-full transition-[width] duration-150"
+          style={{ width: `${Math.round(progress * 100)}%`, backgroundColor: color }}
+        />
+      </div>
+    </div>
   );
 }
 

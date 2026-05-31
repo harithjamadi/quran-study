@@ -8,6 +8,19 @@ The user-facing version of this list lives in `src/lib/changelog.ts` and is
 shown in-app at `/changelog` (linked from the footer and the mobile "More"
 menu). Keep the two in sync when cutting a release.
 
+## [0.8.3] — 2026-06-01
+
+### Added
+- Tajweed example cards now have a **Hear the verse** button that plays the
+  recitation of the verse the example is drawn from, so you can hear the rule
+  in context.
+- Each rule now carries **multiple examples** — tap **Another example** to cycle
+  through them.
+
+### Changed
+- Example explanations are now bilingual and follow the selected language
+  (English / Malay) instead of always showing English.
+
 ## [0.8.2] — 2026-06-01
 
 ### Added
