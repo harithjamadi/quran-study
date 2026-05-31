@@ -287,6 +287,23 @@ function RuleCard({
         </p>
         <p className="text-sm text-[color:var(--foreground)] leading-relaxed">{rule.howToRead[language]}</p>
       </div>
+
+      <div>
+        <p className="text-[10px] uppercase tracking-widest text-[color:var(--muted)] font-bold mb-1">
+          {language === "ms" ? "Contoh" : "Example"}
+        </p>
+        <div className="flex items-baseline justify-between gap-3 flex-wrap">
+          <p className="arabic text-2xl leading-loose" lang="ar" dir="rtl" style={{ color: rule.color }}>
+            {rule.example.arabic}
+          </p>
+          {rule.example.ref && (
+            <span className="font-mono text-xs text-[color:var(--muted)] tabular-nums shrink-0">
+              {rule.example.ref}
+            </span>
+          )}
+        </div>
+        <p className="text-xs text-[color:var(--muted)] italic mt-0.5">{rule.example.translit}</p>
+      </div>
     </article>
   );
 }

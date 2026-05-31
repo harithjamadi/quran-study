@@ -29,6 +29,23 @@ export interface Release {
 /** Newest first. The first entry's version is the current app version. */
 export const RELEASES: Release[] = [
   {
+    version: "0.8.2",
+    date: "2026-06-01",
+    title: { en: "Tajweed examples", ms: "Contoh tajwid" },
+    entries: [
+      {
+        type: "added",
+        en: "Every tajweed rule in the guide now shows a worked example from the Quran (e.g. مِن رَّبِّهِمْ → \"mir-rabbihim\").",
+        ms: "Setiap hukum tajwid dalam panduan kini menunjukkan contoh daripada Al-Quran (cth. مِن رَّبِّهِمْ → \"mir-rabbihim\").",
+      },
+      {
+        type: "improved",
+        en: "Clearer Malay wording for the silent Alif al-Fāriqah.",
+        ms: "Penerangan Bahasa Melayu yang lebih jelas untuk Alif al-Fariqah yang senyap.",
+      },
+    ],
+  },
+  {
     version: "0.8.1",
     date: "2026-06-01",
     title: { en: "Tajweed wording", ms: "Penerangan tajwid" },

@@ -35,6 +35,9 @@ export interface TajweedRule {
   letters?: string;
   condition: { en: string; ms: string };
   howToRead: { en: string; ms: string };
+  /** One worked example: the Arabic word/phrase, how it reads, and (where
+   *  confident) a surah:ayah reference. */
+  example: { arabic: string; translit: string; ref?: string };
 }
 
 export const TAJWEED_RULES: Record<string, TajweedRule> = {
@@ -53,6 +56,7 @@ export const TAJWEED_RULES: Record<string, TajweedRule> = {
       en: "Skip the opening hamzah entirely and continue from the following letter. It is only pronounced when starting fresh from this word.",
       ms: "Langkau hamzah pembuka dan teruskan ke huruf berikutnya. Hanya disebut apabila memulakan bacaan dari perkataan ini.",
     },
+    example: { arabic: "بِسْمِ ٱللَّه", translit: "bismi-llāh (the ٱ is dropped)", ref: "1:1" },
   },
   l: {
     code: "l",
@@ -69,6 +73,7 @@ export const TAJWEED_RULES: Record<string, TajweedRule> = {
       en: "Merge the lam silently into the following sun letter — the sun letter receives a shadda (doubling). Do not pronounce lam separately.",
       ms: "Gabungkan lam secara senyap ke dalam huruf syamsiyyah berikutnya — huruf tersebut mendapat syaddah (penggandaan). Jangan sebut lam secara berasingan.",
     },
+    example: { arabic: "ٱلشَّمْس", translit: "ash-shams (lam merges into ش)", ref: "91:1" },
   },
 
   // ── Madd (Prolongation) ─────────────────────────────────────────────────────
@@ -86,6 +91,7 @@ export const TAJWEED_RULES: Record<string, TajweedRule> = {
       en: "Extend for exactly 2 counts (harakat) — no more, no less. This is the baseline length all other madd rules build on.",
       ms: "Panjangkan tepat 2 harakat — tidak lebih, tidak kurang. Ini panjang asas yang menjadi dasar semua hukum mad lain.",
     },
+    example: { arabic: "ٱلرَّحْمَٰن", translit: "ar-raḥmān (2 counts on ـٰ)", ref: "1:3" },
   },
   p: {
     code: "p",
@@ -102,6 +108,7 @@ export const TAJWEED_RULES: Record<string, TajweedRule> = {
       en: "When you pause here, prolong for 2, 4, or 6 counts — pick one length and keep it consistent throughout your recitation. If you continue without stopping, it reverts to a normal 2-count madd.",
       ms: "Apabila berhenti di sini, panjangkan selama 2, 4, atau 6 harakat — pilih satu kadar dan kekalkannya sepanjang bacaan. Jika diteruskan tanpa berhenti, ia kembali menjadi mad 2 harakat biasa.",
     },
+    example: { arabic: "نَسْتَعِينُ", translit: "nasta'īn (lengthened at the stop)", ref: "1:5" },
   },
   o: {
     code: "o",
@@ -117,6 +124,7 @@ export const TAJWEED_RULES: Record<string, TajweedRule> = {
       en: "Extend for 4–5 counts (harakat) in Hafs. Muttasil must always be lengthened; for Munfasil keep your chosen length consistent across the whole recitation.",
       ms: "Panjangkan selama 4–5 harakat dalam riwayat Hafs. Muttasil mesti sentiasa dipanjangkan; bagi Munfasil, kekalkan kadar pilihan anda sepanjang bacaan.",
     },
+    example: { arabic: "ٱلسَّمَآء", translit: "as-samā' (madd + hamza, 4–5 counts)" },
   },
   m: {
     code: "m",
@@ -132,6 +140,7 @@ export const TAJWEED_RULES: Record<string, TajweedRule> = {
       en: "Extend for exactly 6 counts (harakat). This is mandatory (lazim) — there is no variation allowed.",
       ms: "Panjangkan tepat 6 harakat. Ini adalah wajib (lazim) — tiada variasi dibenarkan.",
     },
+    example: { arabic: "الٓمٓ", translit: "alif lāām mīīm (mīm held 6 counts)", ref: "2:1" },
   },
   s: {
     code: "s",
@@ -144,9 +153,10 @@ export const TAJWEED_RULES: Record<string, TajweedRule> = {
       ms: "Huruf Alif yang terletak selepas Waw Jamak (waw yang menunjukkan maksud \"mereka/ramai\"), seperti dalam كَفَرُوا۟. Dalam mushaf al-Quran hari ini, alif ini ditandakan dengan bulatan kecil di atasnya (sifir mustadir: ۟). Layanan senyap yang sama turut berlaku pada huruf lain yang ditulis tetapi tidak disebut.",
     },
     howToRead: {
-      en: "This alif is completely silent — whether you continue (wasl) or stop (waqf). The final sound rests on the waw's madd only, so كَفَرُوا۟ is read \"kafaruu\".",
-      ms: "Alif ini senyap total sama ada ketika bacaan bersambung (wasal) atau ketika berhenti (waqaf). Bunyi terakhir berhenti pada mad Waw sahaja, jadi كَفَرُوا۟ dibaca \"Kafaruu\".",
+      en: "This alif is not pronounced at all — whether you continue (wasl) or stop (waqf). The sound ends on the waw's madd, so كَفَرُوا۟ is read \"kafaruu\".",
+      ms: "Alif ini tidak dibunyikan langsung — sama ada ketika bacaan bersambung (wasal) atau ketika berhenti (waqaf). Bunyi berakhir pada mad Waw sahaja, jadi كَفَرُوا۟ dibaca \"Kafaruu\".",
     },
+    example: { arabic: "كَفَرُوا۟", translit: "kafaruu (final alif silent)", ref: "2:6" },
   },
 
   // ── Qalqalah ────────────────────────────────────────────────────────────────
@@ -165,6 +175,7 @@ export const TAJWEED_RULES: Record<string, TajweedRule> = {
       en: "Produce a slight echo or bounce after the letter. The airflow is briefly stopped then released with a subtle vibration. At a pause (waqf), the echo is stronger.",
       ms: "Hasilkan sedikit gema atau lantunan selepas huruf tersebut. Aliran udara berhenti sebentar kemudian dilepaskan dengan getaran halus. Ketika berhenti (waqf), gemanya lebih kuat.",
     },
+    example: { arabic: "لَمْ يَلِدْ", translit: "lam yalid (qalqalah on the د)", ref: "112:3" },
   },
 
   // ── Ghunna ──────────────────────────────────────────────────────────────────
@@ -183,6 +194,7 @@ export const TAJWEED_RULES: Record<string, TajweedRule> = {
       en: "Allow the nasal sound to resonate through the nose for 2 counts. The nasal cavity is the primary resonator — do not close it.",
       ms: "Biarkan bunyi nasal bergema melalui hidung selama 2 harakat. Rongga hidung adalah resonator utama — jangan tutupnya.",
     },
+    example: { arabic: "إِنَّ", translit: "inna (ghunna held 2 counts on نّ)" },
   },
 
   // ── Idgham (Assimilation) ────────────────────────────────────────────────────
@@ -201,6 +213,7 @@ export const TAJWEED_RULES: Record<string, TajweedRule> = {
       en: "Merge the noon/tanween completely into the following letter, which doubles. No nasal sound (ghunna) — the assimilation is clean and silent.",
       ms: "Gabungkan nun/tanwin sepenuhnya ke dalam huruf berikutnya yang berganda. Tiada bunyi nasal (ghunnah) — asimilasi bersih dan senyap.",
     },
+    example: { arabic: "مِن رَّبِّهِمْ", translit: "mir-rabbihim (noon merges into ر)", ref: "2:5" },
   },
   a: {
     code: "a",
@@ -217,6 +230,7 @@ export const TAJWEED_RULES: Record<string, TajweedRule> = {
       en: "Merge the noon/tanween into the following letter with a clear nasal sound (ghunna) for 2 counts. The two letters blend into one doubled letter with a nasal hum.",
       ms: "Gabungkan nun/tanwin ke dalam huruf berikutnya dengan bunyi nasal (ghunnah) yang jelas selama 2 harakat. Kedua-dua huruf bergabung menjadi satu huruf berganda dengan dengung nasal.",
     },
+    example: { arabic: "مَن يَقُولُ", translit: "may-yaqūl (noon merges into ي with ghunna)", ref: "2:8" },
   },
 
   // ── Ikhfa (Concealment) ──────────────────────────────────────────────────────
@@ -235,6 +249,7 @@ export const TAJWEED_RULES: Record<string, TajweedRule> = {
       en: "Conceal the noon/tanween between full pronunciation and complete assimilation. The tongue approaches but does not touch its articulation point. Hold a nasal sound for 2 counts.",
       ms: "Sembunyikan nun/tanwin antara sebutan penuh dan asimilasi lengkap. Lidah mendekati tetapi tidak menyentuh titik sebutan. Tahan bunyi nasal selama 2 harakat.",
     },
+    example: { arabic: "مِن قَبْلِكَ", translit: "min qablika (noon concealed before ق)", ref: "2:4" },
   },
 
   // ── Iqlab ───────────────────────────────────────────────────────────────────
@@ -253,6 +268,7 @@ export const TAJWEED_RULES: Record<string, TajweedRule> = {
       en: "Convert the noon/tanween into a hidden meem (م) sound with a nasal hum (ghunna) held for 2 counts, then pronounce the ba. The lips come together lightly for the meem without fully closing.",
       ms: "Tukarkan bunyi nun/tanwin kepada bunyi mim (م) tersembunyi dengan dengung (ghunnah) selama 2 harakat, kemudian sebut ba. Bibir bertemu ringan untuk mim tanpa menutup sepenuhnya.",
     },
+    example: { arabic: "مِنۢ بَعْدِ", translit: "mim-ba'di (noon becomes hidden م before ب)" },
   },
 
   // ── Meem rules ──────────────────────────────────────────────────────────────
@@ -271,6 +287,7 @@ export const TAJWEED_RULES: Record<string, TajweedRule> = {
       en: "Conceal the meem between the lips without fully closing them. Hold a nasal sound for 2 counts before pronouncing the ba.",
       ms: "Sembunyikan mim antara bibir tanpa menutupnya sepenuhnya. Tahan bunyi nasal selama 2 harakat sebelum menyebut ba.",
     },
+    example: { arabic: "تَرْمِيهِم بِحِجَارَةٍ", translit: "tarmīhim bi-ḥijāra (meem concealed before ب)", ref: "105:4" },
   },
   w: {
     code: "w",
@@ -287,6 +304,7 @@ export const TAJWEED_RULES: Record<string, TajweedRule> = {
       en: "Merge the two meems into one doubled meem with a clear nasal sound for 2 counts.",
       ms: "Gabungkan dua mim menjadi satu mim berganda dengan bunyi nasal yang jelas selama 2 harakat.",
     },
+    example: { arabic: "لَهُم مَّا", translit: "lahum-mā (two meems merge with ghunna)" },
   },
 };
 

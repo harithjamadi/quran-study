@@ -8,6 +8,16 @@ The user-facing version of this list lives in `src/lib/changelog.ts` and is
 shown in-app at `/changelog` (linked from the footer and the mobile "More"
 menu). Keep the two in sync when cutting a release.
 
+## [0.8.2] — 2026-06-01
+
+### Added
+- Every tajweed rule in the guide now shows a worked example from the Quran
+  (e.g. مِن رَّبِّهِمْ → "mir-rabbihim").
+
+### Changed
+- Clearer Malay wording for the silent **Alif al-Fāriqah** ("tidak dibunyikan
+  langsung" instead of "senyap total").
+
 ## [0.8.1] — 2026-06-01
 
 ### Fixed
