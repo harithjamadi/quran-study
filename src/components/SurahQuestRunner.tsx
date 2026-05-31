@@ -7,6 +7,7 @@ import { UI_STRINGS } from "@/lib/i18n";
 import { effectiveGloss, type LemmaMeta } from "@/lib/learning";
 import { lemmaAudioUrl } from "@/lib/frequency";
 import { classNames } from "@/lib/format";
+import { ConfettiBurst } from "@/components/ConfettiBurst";
 
 interface Props {
   surahNumber: number;
@@ -56,6 +57,11 @@ function shuffleSeeded<T>(arr: T[], rng: () => number): T[] {
   return out;
 }
 
+// Module-level counter incremented once per mount; salts the seed so retries
+// see a different question variant. Stable on first render (SSR + first
+// client paint both produce 1).
+let mountCounter = 0;
+
 function playWordAudio(card: LemmaMeta) {
   if (typeof Audio === "undefined") return;
   try {
@@ -70,8 +76,10 @@ export function SurahQuestRunner({ surahNumber, surahName, lemmas, ayahWords, di
   const introduceMany = useLearning((s) => s.introduceMany);
   const t = UI_STRINGS[language];
 
+  const [mountId] = useState(() => ++mountCounter);
+
   const stages = useMemo<Stage[]>(() => {
-    const rng = seededRng(`quest-${surahNumber}-d${difficulty}`);
+    const rng = seededRng(`quest-${surahNumber}-d${difficulty}-m${mountId}`);
     const list: Stage[] = [{ kind: "memorize" }];
     const optionsFor = (target: LemmaMeta) => {
       const others = lemmas.filter((l) => l.lemma !== target.lemma);
@@ -148,7 +156,7 @@ export function SurahQuestRunner({ surahNumber, surahName, lemmas, ayahWords, di
 
     list.push({ kind: "complete" });
     return list;
-  }, [surahNumber, lemmas, ayahWords, difficulty]);
+  }, [surahNumber, lemmas, ayahWords, difficulty, mountId]);
 
   const [stageIdx, setStageIdx] = useState(0);
   const [stats, setStats] = useState({ correct: 0, wrong: 0 });
@@ -156,13 +164,16 @@ export function SurahQuestRunner({ surahNumber, surahName, lemmas, ayahWords, di
 
   const stage = stages[stageIdx];
   const totalQuestions = stages.filter((s) => s.kind !== "memorize" && s.kind !== "complete").length;
+  // Mirror the Tajweed track: a star is mastery, not attendance. ≥80% required.
+  const passedThreshold =
+    totalQuestions > 0 && stats.correct / totalQuestions >= 0.8;
 
   useEffect(() => {
     if (stage.kind === "complete") {
-      recordSurahStar(surahNumber, difficulty);
+      if (passedThreshold) recordSurahStar(surahNumber, difficulty);
       introduceMany(lemmas.map((l) => ({ lemma: l.lemma, text: l.sampleText })));
     }
-  }, [stage.kind, surahNumber, difficulty, recordSurahStar, introduceMany, lemmas]);
+  }, [stage.kind, passedThreshold, surahNumber, difficulty, recordSurahStar, introduceMany, lemmas]);
 
   const answered =
     stageIdx === 0
@@ -346,6 +357,7 @@ export function SurahQuestRunner({ surahNumber, surahName, lemmas, ayahWords, di
           difficulty={difficulty}
           correct={stats.correct}
           total={totalQuestions}
+          starAwarded={passedThreshold}
           language={language}
         />
       )}
@@ -1460,6 +1472,7 @@ function CompleteStage({
   difficulty,
   correct,
   total,
+  starAwarded,
   language,
 }: {
   surahName: string;
@@ -1467,6 +1480,7 @@ function CompleteStage({
   difficulty: 1 | 2 | 3;
   correct: number;
   total: number;
+  starAwarded: boolean;
   language: "en" | "ms";
 }) {
   const pct = total > 0 ? Math.round((correct / total) * 100) : 0;
@@ -1477,9 +1491,17 @@ function CompleteStage({
         aria-hidden
         className="absolute -top-24 left-1/2 -translate-x-1/2 h-64 w-64 rounded-full bg-[color:var(--gold)]/20 blur-3xl"
       />
+      {isPerfect && <ConfettiBurst />}
       <div className="relative">
-        <div className="inline-flex items-center justify-center h-24 w-24 rounded-full bg-gradient-to-br from-[color:var(--gold)] to-[color:var(--accent)] text-white text-4xl mb-5 shadow-[var(--shadow-glow)] animate-pop">
-          {isPerfect ? "✦" : "✓"}
+        <div
+          className={classNames(
+            "inline-flex items-center justify-center h-24 w-24 rounded-full text-white text-4xl mb-5 shadow-[var(--shadow-glow)] animate-pop",
+            starAwarded
+              ? "bg-gradient-to-br from-[color:var(--gold)] to-[color:var(--accent)]"
+              : "bg-gradient-to-br from-[color:var(--muted)] to-[color:var(--border-strong)]"
+          )}
+        >
+          {isPerfect ? "✦" : starAwarded ? "✓" : "↻"}
         </div>
         <p className="eyebrow text-[color:var(--gold-strong)] dark:text-[color:var(--gold)] mb-2">
           {language === "ms" ? "Cabaran selesai" : "Quest complete"}
@@ -1497,21 +1519,28 @@ function CompleteStage({
         <p className="text-sm text-[color:var(--muted)] mb-3">
           {pct}% {language === "ms" ? "tepat" : "correct"}
         </p>
-        {difficulty === 3 && isPerfect && (
+        {!starAwarded && (
+          <div className="rounded-2xl border border-[color:var(--gold)]/40 bg-[color:var(--gold)]/5 px-4 py-3 mb-5 text-xs text-[color:var(--foreground)] leading-relaxed">
+            {language === "ms"
+              ? "Bintang ini memerlukan 80% jawapan tepat. Cuba sekali lagi untuk membukanya."
+              : "This star unlocks at 80% accuracy. Replay to earn it."}
+          </div>
+        )}
+        {starAwarded && difficulty === 3 && isPerfect && (
           <p className="text-sm font-bold text-[color:var(--gold-strong)] dark:text-[color:var(--gold)] mb-6">
             {language === "ms"
               ? "🌟 Sempurna! Anda telah menguasai surah ini."
               : "🌟 Flawless! You have mastered this surah."}
           </p>
         )}
-        {difficulty === 3 && !isPerfect && (
+        {starAwarded && difficulty === 3 && !isPerfect && (
           <p className="text-sm font-bold text-[color:var(--accent)] mb-6">
             {language === "ms"
               ? "Tahap pakar selesai — cuba sempurna untuk lencana cemerlang."
               : "Master tier complete — aim for perfection to earn the flawless badge."}
           </p>
         )}
-        {difficulty < 3 && (
+        {starAwarded && difficulty < 3 && (
           <p className="text-sm font-bold text-[color:var(--accent)] mb-6">
             {isPerfect
               ? language === "ms"

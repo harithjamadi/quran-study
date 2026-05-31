@@ -9,6 +9,9 @@ export const UI_STRINGS = {
     nav_search: "Search",
     nav_bookmarks: "Bookmarks",
     nav_settings: "Settings",
+    nav_stats: "Stats",
+    nav_more: "More",
+    nav_more_title: "More",
 
     // Home
     home_hero_title: "Understand the Quran, one word at a time",
@@ -209,6 +212,9 @@ export const UI_STRINGS = {
     nav_search: "Cari",
     nav_bookmarks: "Penanda",
     nav_settings: "Tetapan",
+    nav_stats: "Statistik",
+    nav_more: "Lagi",
+    nav_more_title: "Lagi",
 
     // Home
     home_hero_title: "Fahami Al-Quran, kata demi kata",

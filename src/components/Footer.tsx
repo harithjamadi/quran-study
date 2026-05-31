@@ -11,7 +11,7 @@ export function Footer() {
 
   return (
     <footer className="border-t border-[color:var(--border)] mt-12">
-      <div className="max-w-5xl mx-auto px-4 sm:px-6 py-6 text-xs text-[color:var(--muted)] flex flex-wrap gap-4 justify-between">
+      <div className="max-w-5xl mx-auto px-4 sm:px-6 pt-6 pb-[calc(4.5rem+env(safe-area-inset-bottom))] md:pb-6 text-xs text-[color:var(--muted)] flex flex-wrap gap-4 justify-between">
         <p>
           {language === "ms" ? (
             <>

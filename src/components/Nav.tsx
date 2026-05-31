@@ -44,7 +44,7 @@ export function Nav() {
           </span>
         </Link>
 
-        <ul className="ml-auto flex items-center gap-0.5 sm:gap-1 text-[13px] sm:text-sm overflow-x-auto overflow-y-hidden scrollbar-hide -mx-1 px-1">
+        <ul className="ml-auto hidden md:flex items-center gap-0.5 sm:gap-1 text-[13px] sm:text-sm">
           {items.map((it) => {
             const active =
               it.href === "/"

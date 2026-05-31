@@ -27,7 +27,7 @@ export function AudioBar() {
   const pct = duration > 0 ? (position / duration) * 100 : 0;
 
   return (
-    <div className="fixed inset-x-0 bottom-0 z-50">
+    <div className="fixed inset-x-0 bottom-[calc(3.75rem+env(safe-area-inset-bottom))] md:bottom-0 z-50">
       <div className="max-w-5xl mx-auto px-3 sm:px-6 pb-3">
         <div className="card shadow-lg p-3 flex items-center gap-3">
           <div className="flex items-center gap-2">

@@ -64,7 +64,21 @@ function groupByCategory(): Record<TajweedCategory, TajweedRule[]> {
 
 export function TajweedGuideClient() {
   const language = useLearning((s) => s.language);
+  const ruleMastery = useLearning((s) => s.ruleMastery ?? {});
   const groups = groupByCategory();
+
+  // Surface the rule the user is weakest at (min 3 attempts so the data is meaningful).
+  const weakestRule = (() => {
+    const candidates = Object.entries(ruleMastery)
+      .filter(([code, m]) => m.attempts >= 3 && TAJWEED_RULES[code])
+      .map(([code, m]) => ({
+        rule: TAJWEED_RULES[code],
+        acc: m.correct / m.attempts,
+        attempts: m.attempts,
+      }))
+      .sort((a, b) => a.acc - b.acc);
+    return candidates[0] && candidates[0].acc < 0.8 ? candidates[0] : null;
+  })();
 
   return (
     <div className="space-y-10">
@@ -101,6 +115,44 @@ export function TajweedGuideClient() {
         </div>
       </section>
 
+      {/* Weak-rule callout — only when the user has practiced enough to give signal */}
+      {weakestRule && (
+        <section
+          className="card p-5 border-l-4 flex items-start gap-4"
+          style={{ borderLeftColor: weakestRule.rule.color }}
+        >
+          <span
+            className="w-10 h-10 rounded-full shrink-0 grid place-items-center text-white text-lg font-black"
+            style={{ backgroundColor: weakestRule.rule.color }}
+            aria-hidden
+          >
+            !
+          </span>
+          <div className="flex-1 min-w-0">
+            <p className="text-[10px] uppercase tracking-widest text-[color:var(--muted)] font-bold">
+              {language === "ms" ? "Tumpukan latihan di sini" : "Focus your practice here"}
+            </p>
+            <p className="text-sm font-bold mt-1">
+              {language === "ms"
+                ? `Anda menjawab ${weakestRule.rule.name[language]} dengan betul `
+                : `You're getting ${weakestRule.rule.name[language]} right `}
+              <span className="text-[color:var(--accent)]">
+                {Math.round(weakestRule.acc * 100)}%
+              </span>
+              {language === "ms"
+                ? ` daripada masa (${weakestRule.attempts} cubaan)`
+                : ` of the time (${weakestRule.attempts} attempts)`}
+            </p>
+            <a
+              href={`#cat-${weakestRule.rule.category}`}
+              className="inline-block text-xs text-[color:var(--accent-strong)] hover:underline mt-1 font-semibold"
+            >
+              {language === "ms" ? "Baca peraturan →" : "Review the rule →"}
+            </a>
+          </div>
+        </section>
+      )}
+
       {/* Color legend */}
       <section className="card p-5">
         <h2 className="text-sm font-semibold uppercase tracking-wider text-[color:var(--muted)] mb-4">
@@ -134,7 +186,12 @@ export function TajweedGuideClient() {
             ) : (
               <div className="grid gap-4 sm:grid-cols-2">
                 {(rules ?? []).map((rule) => (
-                  <RuleCard key={rule.code} rule={rule} language={language} />
+                  <RuleCard
+                    key={rule.code}
+                    rule={rule}
+                    mastery={ruleMastery[rule.code]}
+                    language={language}
+                  />
                 ))}
               </div>
             )}
@@ -161,7 +218,18 @@ export function TajweedGuideClient() {
   );
 }
 
-function RuleCard({ rule, language }: { rule: TajweedRule; language: Language }) {
+function RuleCard({
+  rule,
+  mastery,
+  language,
+}: {
+  rule: TajweedRule;
+  mastery?: { attempts: number; correct: number };
+  language: Language;
+}) {
+  const acc = mastery && mastery.attempts > 0 ? mastery.correct / mastery.attempts : null;
+  const attempts = mastery?.attempts ?? 0;
+
   return (
     <article className="card p-5 space-y-3 border-t-2" style={{ borderTopColor: rule.color }}>
       <div className="flex items-start gap-3 justify-between">
@@ -176,6 +244,24 @@ function RuleCard({ rule, language }: { rule: TajweedRule; language: Language })
           {rule.code}
         </span>
       </div>
+
+      {/* Mastery bar — only when there's signal */}
+      {acc !== null && (
+        <div>
+          <div className="flex items-center justify-between text-[10px] uppercase tracking-widest text-[color:var(--muted)] font-bold mb-1">
+            <span>{language === "ms" ? "Penguasaan" : "Mastery"}</span>
+            <span className="tabular-nums" style={{ color: rule.color }}>
+              {Math.round(acc * 100)}% · {attempts}
+            </span>
+          </div>
+          <div className="relative h-1.5 rounded-full bg-[color:var(--border)] overflow-hidden">
+            <div
+              className="absolute inset-y-0 left-0 rounded-full transition-[width] duration-500"
+              style={{ width: `${Math.round(acc * 100)}%`, backgroundColor: rule.color }}
+            />
+          </div>
+        </div>
+      )}
 
       {rule.letters && (
         <div className="flex items-center gap-2">

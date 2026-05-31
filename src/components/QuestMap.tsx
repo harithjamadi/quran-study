@@ -109,6 +109,7 @@ function NodeConnector({ completed }: { completed: boolean }) {
 
 /* ── Types ────────────────────────────────────────────────────────────────── */
 
+type Track = "vocab" | "tajweed";
 type PickerTarget = SurahDef & { prevName?: string };
 type LockedTarget = SurahDef & { reason: string };
 
@@ -116,10 +117,15 @@ type LockedTarget = SurahDef & { reason: string };
 
 export function QuestMap() {
   const language = useLearning((s) => s.language);
-  const surahStars = useLearning((s) => s.surahStars ?? {});
+  const vocabStars = useLearning((s) => s.surahStars ?? {});
+  const tajweedStars = useLearning((s) => s.tajweedStars ?? {});
 
+  const [track, setTrack] = useState<Track>("vocab");
   const [picker, setPicker] = useState<PickerTarget | null>(null);
   const [lockedMsg, setLockedMsg] = useState<LockedTarget | null>(null);
+
+  const surahStars = track === "vocab" ? vocabStars : tajweedStars;
+  const routePrefix = track === "vocab" ? "surah-quest" : "tajweed-quest";
 
   const totalStars = Object.values(surahStars).reduce((a, b) => a + b, 0);
 
@@ -143,6 +149,8 @@ export function QuestMap() {
         <DifficultyPicker
           item={picker}
           surahStars={surahStars}
+          routePrefix={routePrefix}
+          track={track}
           language={language}
           onClose={() => setPicker(null)}
         />
@@ -157,6 +165,7 @@ export function QuestMap() {
 
       <div className="relative py-8 pl-4 pr-3 max-h-[70vh] overflow-y-auto overscroll-contain scrollbar-thin scroll-fade-y bg-gradient-to-b from-[color:var(--surface)]/40 to-[color:var(--background)] rounded-[inherit]">
         <div className="max-w-sm mx-auto space-y-10">
+          <TrackToggle track={track} setTrack={setTrack} language={language} />
           {PHASES.map((phase, phaseIdx) => {
             const isPhaseUnlocked = totalStars >= phase.gateStars;
             const prevPhase = phaseIdx > 0 ? PHASES[phaseIdx - 1] : null;
@@ -405,11 +414,15 @@ function PhaseGate({
 function DifficultyPicker({
   item,
   surahStars,
+  routePrefix,
+  track,
   language,
   onClose,
 }: {
   item: PickerTarget;
   surahStars: Record<number, number>;
+  routePrefix: string;
+  track: Track;
   language: "en" | "ms";
   onClose: () => void;
 }) {
@@ -417,34 +430,36 @@ function DifficultyPicker({
   const earned = surahStars[item.num] ?? 0;
   const labels = DIFFICULTY_LABELS[language];
 
+  const vocabDescs = {
+    en: [
+      "Recognize — spot in verse, multiple choice",
+      "Produce — Arabic from meaning, build the translation",
+      "Apply — listen, fill the blank, reorder the verse",
+    ],
+    ms: [
+      "Kenali — cari dalam ayat, pilihan jawapan",
+      "Hasilkan — Arab dari maksud, bina terjemahan",
+      "Aplikasi — dengar, isi tempat kosong, susun ayat",
+    ],
+  };
+  const tajweedDescs = {
+    en: [
+      "Recognize — pick the rule, match colors, identify letters",
+      "Understand — match conditions, monochrome challenge, sort by category",
+      "Apply — find the mistake, count rules, audio identification",
+    ],
+    ms: [
+      "Kenali — pilih peraturan, padan warna, kenali huruf",
+      "Faham — padan syarat, cabaran tanpa warna, susun mengikut kategori",
+      "Aplikasi — cari kesilapan, kira peraturan, kenal pasti dari audio",
+    ],
+  };
+  const descs = track === "vocab" ? vocabDescs[language] : tajweedDescs[language];
+
   const difficulties = [
-    {
-      level: 1 as const,
-      label: labels[0],
-      desc:
-        language === "ms"
-          ? "Kenali — cari dalam ayat, pilihan jawapan"
-          : "Recognize — spot in verse, multiple choice",
-      locked: false,
-    },
-    {
-      level: 2 as const,
-      label: labels[1],
-      desc:
-        language === "ms"
-          ? "Hasilkan — Arab dari maksud, bina terjemahan"
-          : "Produce — Arabic from meaning, build the translation",
-      locked: earned < 1,
-    },
-    {
-      level: 3 as const,
-      label: labels[2],
-      desc:
-        language === "ms"
-          ? "Aplikasi — dengar, isi tempat kosong, susun ayat"
-          : "Apply — listen, fill the blank, reorder the verse",
-      locked: earned < 2,
-    },
+    { level: 1 as const, label: labels[0], desc: descs[0], locked: false },
+    { level: 2 as const, label: labels[1], desc: descs[1], locked: earned < 1 },
+    { level: 3 as const, label: labels[2], desc: descs[2], locked: earned < 2 },
   ];
 
   return (
@@ -492,7 +507,7 @@ function DifficultyPicker({
                   </div>
                 ) : (
                   <Link
-                    href={`/learn/surah-quest/${item.num}?d=${d.level}`}
+                    href={`/learn/${routePrefix}/${item.num}?d=${d.level}`}
                     onClick={onClose}
                     className="flex items-center gap-3 rounded-2xl border-2 px-4 py-3 transition-all hover:scale-[1.02] active:scale-[0.98]"
                     style={isEarned
@@ -571,6 +586,59 @@ function LockedModal({
             OK
           </button>
         </div>
+      </div>
+    </div>
+  );
+}
+
+/* ── Track Toggle ─────────────────────────────────────────────────────────── */
+
+function TrackToggle({
+  track,
+  setTrack,
+  language,
+}: {
+  track: Track;
+  setTrack: (t: Track) => void;
+  language: "en" | "ms";
+}) {
+  const opts: { id: Track; label: string; sub: string }[] = [
+    {
+      id: "vocab",
+      label: language === "ms" ? "Perbendaharaan" : "Vocabulary",
+      sub: language === "ms" ? "Makna kata" : "Word meanings",
+    },
+    {
+      id: "tajweed",
+      label: language === "ms" ? "Tajweed" : "Tajweed",
+      sub: language === "ms" ? "Peraturan bacaan" : "Recitation rules",
+    },
+  ];
+  return (
+    <div className="flex justify-center -mt-2">
+      <div className="inline-flex p-1 rounded-2xl bg-[color:var(--surface)] border border-[color:var(--border)] shadow-sm">
+        {opts.map((o) => {
+          const active = track === o.id;
+          return (
+            <button
+              key={o.id}
+              type="button"
+              onClick={() => setTrack(o.id)}
+              className={[
+                "px-4 py-2 rounded-xl text-xs font-bold uppercase tracking-widest transition-all min-w-[110px]",
+                active
+                  ? "bg-[color:var(--accent)] text-white shadow"
+                  : "text-[color:var(--muted)] hover:text-[color:var(--foreground)]",
+              ].join(" ")}
+              aria-pressed={active}
+            >
+              <span className="block leading-none">{o.label}</span>
+              <span className="block text-[9px] opacity-75 mt-1 font-normal normal-case tracking-normal">
+                {o.sub}
+              </span>
+            </button>
+          );
+        })}
       </div>
     </div>
   );

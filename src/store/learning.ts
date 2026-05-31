@@ -25,6 +25,12 @@ export interface SeenForm {
   text: string;
 }
 
+/** Per-rule mastery accumulated across all Tajweed quests. */
+export interface TajweedRuleMastery {
+  attempts: number;
+  correct: number;
+}
+
 interface LearningState {
   lemmas: Record<string, LemmaState>;
   language: Language;
@@ -39,6 +45,18 @@ interface LearningState {
    *   1 = Easy completed, 2 = Medium completed, 3 = Hard completed.
    */
   surahStars: Record<number, number>;
+
+  /**
+   * Tajweed-track stars per surah, mirroring `surahStars` but tracking
+   * progress on the parallel Tajweed Quest track.
+   */
+  tajweedStars: Record<number, number>;
+
+  /**
+   * Lifetime mastery counters per Tajweed rule code (e.g. "q" → Qalqalah).
+   * Drives the "you struggle with Ikhfa" feedback in the dashboard later.
+   */
+  ruleMastery: Record<string, TajweedRuleMastery>;
 
   /**
    * Surface forms (with diacritics) the user has been exposed to during learning.
@@ -58,6 +76,8 @@ interface LearningState {
   resetProgress: () => void;
   statusOf: (lemma: string) => WordStatus;
   recordSurahStar: (surahNumber: number, level: 1 | 2 | 3) => void;
+  recordTajweedStar: (surahNumber: number, level: 1 | 2 | 3) => void;
+  recordTajweedAnswer: (ruleCode: string, correct: boolean) => void;
   markFormSeen: (surfaceText: string) => void;
 }
 
@@ -71,6 +91,8 @@ const DEFAULTS = {
   dayStreak: 0,
   reviewedToday: 0,
   surahStars: {} as Record<number, number>,
+  tajweedStars: {} as Record<number, number>,
+  ruleMastery: {} as Record<string, TajweedRuleMastery>,
   seenForms: {} as Record<string, true>,
 };
 
@@ -169,19 +191,44 @@ export const useLearning = create<LearningState>()(
         if (level <= existing) return;
         set({ surahStars: { ...cur.surahStars, [surahNumber]: level } });
       },
+      recordTajweedStar: (surahNumber, level) => {
+        const cur = get();
+        const existing = cur.tajweedStars[surahNumber] ?? 0;
+        if (level <= existing) return;
+        set({ tajweedStars: { ...cur.tajweedStars, [surahNumber]: level } });
+      },
+      recordTajweedAnswer: (ruleCode, correct) => {
+        if (!ruleCode) return;
+        const cur = get();
+        const prev = cur.ruleMastery[ruleCode] ?? { attempts: 0, correct: 0 };
+        set({
+          ruleMastery: {
+            ...cur.ruleMastery,
+            [ruleCode]: {
+              attempts: prev.attempts + 1,
+              correct: prev.correct + (correct ? 1 : 0),
+            },
+          },
+        });
+      },
     }),
     {
       name: "noor.learning.v2",
-      version: 3,
+      version: 4,
       migrate: (persisted: unknown, fromVersion: number) => {
         const state = persisted as Record<string, unknown>;
 
         // v0 → v1: perfectSurahs[] → surahStars map
-        let surahStars = (state.surahStars as Record<number, number> | undefined) ?? {};
+        const surahStars = (state.surahStars as Record<number, number> | undefined) ?? {};
         if (fromVersion === 0) {
           const perfectSurahs = (state.perfectSurahs as number[] | undefined) ?? [];
           for (const n of perfectSurahs) surahStars[n] = 1;
         }
+
+        // v3 → v4: introduce Tajweed-track maps. Default to empty.
+        const tajweedStars = (state.tajweedStars as Record<number, number> | undefined) ?? {};
+        const ruleMastery =
+          (state.ruleMastery as Record<string, TajweedRuleMastery> | undefined) ?? {};
 
         // v1 → v2: SM-2 LemmaState → FSRS LemmaState
         const rawLemmas = (state.lemmas as Record<string, Record<string, unknown>>) ?? {};
@@ -222,7 +269,14 @@ export const useLearning = create<LearningState>()(
         }
 
         // Any user migrating from a prior version already chose a language implicitly.
-        return { ...state, surahStars, lemmas: migratedLemmas, hasChosenLanguage: true };
+        return {
+          ...state,
+          surahStars,
+          tajweedStars,
+          ruleMastery,
+          lemmas: migratedLemmas,
+          hasChosenLanguage: true,
+        };
       },
       storage: createJSONStorage(() => localStorage),
     }
