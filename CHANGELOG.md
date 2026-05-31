@@ -8,6 +8,15 @@ The user-facing version of this list lives in `src/lib/changelog.ts` and is
 shown in-app at `/changelog` (linked from the footer and the mobile "More"
 menu). Keep the two in sync when cutting a release.
 
+## [0.8.1] — 2026-06-01
+
+### Fixed
+- The silent-letter rule is now explained as **Alif al-Fāriqah** — the alif
+  after a plural waw (e.g. كَفَرُوا۟, read "kafaruu"), marked with the round
+  zero (sifir mustadir).
+- Waqf stop-signs now use their proper names: **Al-Waqf al-Awla**,
+  **Al-Wasl al-Awla**, and **Lā Taqif**.
+
 ## [0.8.0] — 2026-06-01
 
 ### Added

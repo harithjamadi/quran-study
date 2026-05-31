@@ -135,17 +135,17 @@ export const TAJWEED_RULES: Record<string, TajweedRule> = {
   },
   s: {
     code: "s",
-    name: { ar: "حرف لا يُنطق", en: "Silent", ms: "Huruf Senyap" },
+    name: { ar: "ألف فارقة", en: "Silent Alif (Alif al-Fāriqah)", ms: "Alif Senyap (Alif Al-Fariqah)" },
     color: "#9CA3AF",
     colorDark: "#6B7280",
     category: "hamza_lam",
     condition: {
-      en: "A letter written in the Uthmani script but not pronounced — e.g. the waw in ٱلصَّلَوٰة, or the silent alif after the plural waw in كَفَرُوا۟ / أُو۟لَٰٓئِك.",
-      ms: "Huruf yang ditulis dalam skrip Uthmani tetapi tidak disebut — contohnya waw dalam ٱلصَّلَوٰة, atau alif senyap selepas waw jamak dalam كَفَرُوا۟ / أُو۟لَٰٓئِك.",
+      en: "An alif that comes after the plural waw (the waw meaning \"they / many\"), as in كَفَرُوا۟. In today's Mushaf it is marked with a small circle above it (the round zero, sifir mustadir: ۟). The same silent treatment applies to other written-but-unpronounced letters.",
+      ms: "Huruf Alif yang terletak selepas Waw Jamak (waw yang menunjukkan maksud \"mereka/ramai\"), seperti dalam كَفَرُوا۟. Dalam mushaf al-Quran hari ini, alif ini ditandakan dengan bulatan kecil di atasnya (sifir mustadir: ۟). Layanan senyap yang sama turut berlaku pada huruf lain yang ditulis tetapi tidak disebut.",
     },
     howToRead: {
-      en: "Do not pronounce this letter at all. Skip over it and continue straight to the next sound — it is part of the script only, not the recitation.",
-      ms: "Jangan sebut huruf ini langsung. Langkau ia dan teruskan terus ke bunyi berikutnya — ia sebahagian daripada tulisan sahaja, bukan bacaan.",
+      en: "This alif is completely silent — whether you continue (wasl) or stop (waqf). The final sound rests on the waw's madd only, so كَفَرُوا۟ is read \"kafaruu\".",
+      ms: "Alif ini senyap total sama ada ketika bacaan bersambung (wasal) atau ketika berhenti (waqaf). Bunyi terakhir berhenti pada mad Waw sahaja, jadi كَفَرُوا۟ dibaca \"Kafaruu\".",
     },
   },
 
@@ -357,28 +357,28 @@ export const WAQF_SIGNS: WaqfSign[] = [
   {
     char: "قلی",
     mushafChars: ["ۗ"], // ۗ ARABIC SMALL HIGH LIGATURE QAF WITH LAM WITH ALEF MAKSURA
-    name: { ar: "الوقف أولى", en: "Stop Preferred", ms: "Berhenti Lebih Utama" },
+    name: { ar: "الوقف أولى", en: "Al-Waqf al-Awla (Stop Preferred)", ms: "Berhenti Lebih Utama (Al-Waqf Awla)" },
     instruction: {
-      en: "Stopping is preferred (al-waqf awla).",
-      ms: "Berhenti lebih diutamakan (al-waqf awla).",
+      en: "Stopping is preferred over continuing.",
+      ms: "Berhenti lebih diutamakan daripada meneruskan.",
     },
   },
   {
     char: "صلی",
     mushafChars: ["ۖ"], // ۖ ARABIC SMALL HIGH LIGATURE SAD WITH LAM WITH ALEF MAKSURA
-    name: { ar: "الوصل أولى", en: "Continue Preferred", ms: "Teruskan Lebih Utama" },
+    name: { ar: "الوصل أولى", en: "Al-Wasl al-Awla (Continue Preferred)", ms: "Teruskan Lebih Utama (Al-Wasl Awla)" },
     instruction: {
-      en: "Continuing without stopping is preferred (al-wasl awla).",
-      ms: "Meneruskan tanpa berhenti lebih diutamakan (al-wasl awla).",
+      en: "Continuing without stopping is preferred.",
+      ms: "Meneruskan tanpa berhenti lebih diutamakan.",
     },
   },
   {
     char: "لا",
     mushafChars: ["ۙ"], // ۙ ARABIC SMALL HIGH LAM ALEF
-    name: { ar: "لا تقف", en: "No Stop", ms: "Jangan Berhenti" },
+    name: { ar: "لا تقف", en: "Lā Taqif (Do Not Stop)", ms: "Jangan Berhenti (La Taqif / Waqf Mamnu')" },
     instruction: {
-      en: "Do not stop here. Stopping would distort the meaning.",
-      ms: "Jangan berhenti di sini. Berhenti akan memesongkan makna.",
+      en: "Do not stop here. Stopping will distort the meaning of the verse.",
+      ms: "Jangan berhenti di sini. Berhenti akan memesongkan makna ayat.",
     },
   },
   {

@@ -29,6 +29,23 @@ export interface Release {
 /** Newest first. The first entry's version is the current app version. */
 export const RELEASES: Release[] = [
   {
+    version: "0.8.1",
+    date: "2026-06-01",
+    title: { en: "Tajweed wording", ms: "Penerangan tajwid" },
+    entries: [
+      {
+        type: "fixed",
+        en: "The silent alif is now explained as Alif al-Fāriqah — the alif after a plural waw (كَفَرُوا۟ is read \"kafaruu\").",
+        ms: "Alif senyap kini dijelaskan sebagai Alif Al-Fariqah — alif selepas waw jamak (كَفَرُوا۟ dibaca \"kafaruu\").",
+      },
+      {
+        type: "fixed",
+        en: "Waqf stop-signs now use their proper names: Al-Waqf al-Awla, Al-Wasl al-Awla, and Lā Taqif.",
+        ms: "Tanda waqaf kini menggunakan nama sebenar: Al-Waqf Awla, Al-Wasl Awla, dan La Taqif.",
+      },
+    ],
+  },
+  {
     version: "0.8.0",
     date: "2026-06-01",
     title: { en: "Accuracy & polish", ms: "Ketepatan & kemasan" },
