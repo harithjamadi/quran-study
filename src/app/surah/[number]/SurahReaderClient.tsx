@@ -14,14 +14,31 @@ interface Props {
   surahNumber: number;
   meta: SurahMeta;
   translationParam?: string;
+  initialArabic?: SurahEdition | null;
+  initialTrans?: SurahEdition | null;
+  initialTranslationId?: string;
 }
 
-export function SurahReaderClient({ surahNumber, meta, translationParam }: Props) {
+export function SurahReaderClient({
+  surahNumber,
+  meta,
+  translationParam,
+  initialArabic,
+  initialTrans,
+  initialTranslationId,
+}: Props) {
   const hydrated = useHydrated();
   const language = useLearning((s) => s.language);
   const persistedTranslationId = useSettings((s) => s.translationId);
   const setTranslation = useSettings((s) => s.setTranslation);
-  const [data, setData] = useState<{ arabic: SurahEdition; trans?: SurahEdition } | null>(null);
+  const [data, setData] = useState<{ arabic: SurahEdition; trans?: SurahEdition } | null>(
+    initialArabic ? { arabic: initialArabic, trans: initialTrans ?? undefined } : null
+  );
+  // Which translation the held `data` was loaded for — lets us skip a redundant
+  // client fetch when the server already prefetched the right edition.
+  const loadedTranslationId = useRef<string | null>(
+    initialArabic ? initialTranslationId ?? null : null
+  );
   const [error, setError] = useState(false);
 
   const lastSyncedLanguage = useRef<string | null>(null);
@@ -40,17 +57,23 @@ export function SurahReaderClient({ surahNumber, meta, translationParam }: Props
   const translationId = translationParam || persistedTranslationId || (language === "ms" ? "ms.basmeih" : "en.sahih");
 
   useEffect(() => {
+    // Server already prefetched this exact translation — no round-trip needed.
+    if (loadedTranslationId.current === translationId) return;
+
     let active = true;
     getSurahWithEditions(surahNumber, [ARABIC_EDITION, translationId])
       .then((editions) => {
         if (!active) return;
         const arabic = editions.find((e) => e.edition?.identifier === ARABIC_EDITION) ?? editions[0];
         const trans = editions.find((e) => e.edition?.identifier === translationId);
+        loadedTranslationId.current = translationId;
         setData({ arabic, trans });
       })
       .catch(() => {
         if (!active) return;
-        setError(true);
+        // Only surface a hard error when we have nothing to show; a failed
+        // translation swap shouldn't blank out already-rendered verses.
+        if (loadedTranslationId.current === null) setError(true);
       });
     return () => { active = false; };
   }, [surahNumber, translationId]);

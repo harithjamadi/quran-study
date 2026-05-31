@@ -9,6 +9,25 @@ export const UI_STRINGS = {
     nav_search: "Search",
     nav_bookmarks: "Bookmarks",
     nav_settings: "Settings",
+    nav_stats: "Stats",
+    nav_more: "More",
+    nav_more_title: "More",
+
+    // Tutorial / onboarding
+    tut_replay: "How it works",
+    tut_skip: "Skip",
+    tut_back: "Back",
+    tut_next: "Next",
+    tut_done: "Get started",
+    tut_step: "{n} of {total}",
+    tut_welcome_title: "Welcome to Mubin",
+    tut_welcome_body: "Understand the Quran one word at a time. Here's a 20-second tour of how everything works.",
+    tut_learn_title: "Learn the words",
+    tut_learn_body: "Just 500 Arabic words cover 80% of the Quran. Open the Learn tab to memorise them with short flashcard sessions — about 15 minutes a day.",
+    tut_read_title: "Read & tap any word",
+    tut_read_body: "Open any surah from the Read tab. Tap any Arabic word to reveal its meaning, root, and every other verse it appears in.",
+    tut_nav_title: "Find your way",
+    tut_nav_body: "Use the bar along the bottom to move around: Home, Learn, Read, Search — and More for your bookmarks, stats, and settings.",
 
     // Home
     home_hero_title: "Understand the Quran, one word at a time",
@@ -200,6 +219,15 @@ export const UI_STRINGS = {
     sess_accuracy: "Accuracy",
     sess_perfect: "Perfect session — mastery increased.",
     sess_lapse_msg: "{count} word(s) still need practice.",
+
+    // Changelog / What's New
+    nav_changelog: "What's New",
+    cl_title: "What's New",
+    cl_desc: "Every update to Mubin, newest first.",
+    cl_current: "Current",
+    cl_type_added: "New",
+    cl_type_improved: "Improved",
+    cl_type_fixed: "Fixed",
   },
   ms: {
     // Nav
@@ -209,6 +237,25 @@ export const UI_STRINGS = {
     nav_search: "Cari",
     nav_bookmarks: "Penanda",
     nav_settings: "Tetapan",
+    nav_stats: "Statistik",
+    nav_more: "Lagi",
+    nav_more_title: "Lagi",
+
+    // Tutorial / onboarding
+    tut_replay: "Cara guna",
+    tut_skip: "Langkau",
+    tut_back: "Kembali",
+    tut_next: "Seterusnya",
+    tut_done: "Mula sekarang",
+    tut_step: "{n} drpd {total}",
+    tut_welcome_title: "Selamat datang ke Mubin",
+    tut_welcome_body: "Fahami Al-Quran kata demi kata. Ini panduan ringkas 20 saat tentang cara semuanya berfungsi.",
+    tut_learn_title: "Belajar perkataan",
+    tut_learn_body: "Hanya 500 perkataan Arab meliputi 80% Al-Quran. Buka tab Belajar untuk hafal melalui sesi flashcard ringkas — kira-kira 15 minit sehari.",
+    tut_read_title: "Baca & tekan kata",
+    tut_read_body: "Buka mana-mana surah dari tab Baca. Tekan mana-mana kata Arab untuk lihat maksud, akar, dan setiap ayat lain yang menggunakannya.",
+    tut_nav_title: "Cari arah anda",
+    tut_nav_body: "Guna bar di bahagian bawah untuk bergerak: Utama, Belajar, Baca, Cari — dan Lagi untuk penanda, statistik, dan tetapan.",
 
     // Home
     home_hero_title: "Fahami Al-Quran, kata demi kata",
@@ -400,5 +447,14 @@ export const UI_STRINGS = {
     sess_accuracy: "Ketepatan",
     sess_perfect: "Sesi sempurna — penguasaan meningkat.",
     sess_lapse_msg: "{count} perkataan masih perlu diasah.",
+
+    // Changelog / What's New
+    nav_changelog: "Apa yang Baharu",
+    cl_title: "Apa yang Baharu",
+    cl_desc: "Setiap kemas kini Mubin, terbaharu dahulu.",
+    cl_current: "Semasa",
+    cl_type_added: "Baharu",
+    cl_type_improved: "Diperbaik",
+    cl_type_fixed: "Dibaiki",
   },
 };

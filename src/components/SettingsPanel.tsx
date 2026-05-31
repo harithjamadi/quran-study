@@ -101,14 +101,14 @@ export function SettingsPanel() {
 
       <Section title={language === "ms" ? "Warna Tajweed" : "Tajweed Colors"}>
         <Toggle
-          label={language === "ms" ? "Tunjukkan warna tajweed (WIP)" : "Show tajweed colors (WIP)"}
+          label={language === "ms" ? "Tunjukkan warna tajweed" : "Show tajweed colors"}
           value={s.tajweedMode}
           onChange={s.setTajweedMode}
         />
         <p className="text-xs text-[color:var(--muted)]">
           {language === "ms"
-            ? "Apabila aktif, setiap huruf dipaparkan mengikut peraturan tajweed yang dilakarkan. Tap huruf berwarna untuk baca penerangannya. (Tersedia untuk Surah 1–81)"
-            : "When on, each letter is color-coded by its tajweed rule. Tap any colored letter to read its description and how to pronounce it. (Available for Surahs 1–81)"}
+            ? "Apabila aktif, setiap huruf dipaparkan mengikut peraturan tajweed yang dilakarkan. Tap huruf berwarna untuk baca penerangannya. Tersedia untuk semua 114 Surah."
+            : "When on, each letter is color-coded by its tajweed rule. Tap any colored letter to read its description and how to pronounce it. Available for all 114 Surahs."}
         </p>
         <a
           href="/learn/tajweed"

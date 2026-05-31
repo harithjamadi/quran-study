@@ -96,6 +96,22 @@ export function loadLemmaFrequency(): Promise<LemmaMeta[] | null> {
   return frequencyPromise;
 }
 
+const lemmaMetaCache = new Map<string, Promise<LemmaMeta | null>>();
+
+/**
+ * Fetch a single lemma's metadata via the API route. Far cheaper than
+ * `loadLemmaFrequency` (which pulls the full ~1.1 MB dataset) when all the
+ * caller needs is one entry — e.g. the word popover's fallback gloss.
+ */
+export function loadLemmaMeta(lemma: string): Promise<LemmaMeta | null> {
+  let p = lemmaMetaCache.get(lemma);
+  if (!p) {
+    p = fetchJson<LemmaMeta>(`/api/lemma/${encodeURIComponent(lemma)}`);
+    lemmaMetaCache.set(lemma, p);
+  }
+  return p;
+}
+
 /**
  * Scan early surahs for all occurrences of a specific lemma.
  * Used for particles (pos=P) that have no trilateral root file.

@@ -27,10 +27,18 @@ function isAlreadyInstalled(): boolean {
   return false;
 }
 
+function dismissedRecently(): boolean {
+  if (typeof window === "undefined") return false;
+  const dismissedAt = Number(localStorage.getItem(DISMISSED_KEY) || 0);
+  return Date.now() - dismissedAt < 7 * 24 * 60 * 60 * 1000;
+}
+
 export function PWARegister() {
   const [chromePrompt, setChromePrompt] = useState<BeforeInstallPromptEvent | null>(null);
   const [showIOSHint, setShowIOSHint] = useState(false);
-  const [hidden, setHidden] = useState(false);
+  // Dismissed state is safe to compute as lazy initial state: when true the
+  // component renders null on both server and client, so no hydration mismatch.
+  const [hidden, setHidden] = useState(dismissedRecently);
 
   useEffect(() => {
     if (typeof window === "undefined") return;
@@ -39,22 +47,19 @@ export function PWARegister() {
       navigator.serviceWorker.register("/sw.js").catch(() => undefined);
     }
 
-    const dismissedAt = Number(localStorage.getItem(DISMISSED_KEY) || 0);
-    const sevenDays = 7 * 24 * 60 * 60 * 1000;
-    if (Date.now() - dismissedAt < sevenDays) {
-      setHidden(true);
-      return;
-    }
-
-    if (isAlreadyInstalled()) return;
+    if (dismissedRecently() || isAlreadyInstalled()) return;
 
     // Show iOS-specific "Add to Home Screen" guide for Safari users.
     // Apple never fires beforeinstallprompt, so we need our own nudge.
+    // This must be a post-mount setState (not lazy initial state): the server
+    // can't detect iOS Safari, so rendering it during SSR would mismatch on hydration.
     if (isIOSSafari()) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setShowIOSHint(true);
       return;
     }
 
+    // Capture Chrome/Android's install prompt so we can trigger it from our own UI.
     const onPrompt = (e: Event) => {
       e.preventDefault();
       setChromePrompt(e as BeforeInstallPromptEvent);

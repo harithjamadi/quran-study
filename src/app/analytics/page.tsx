@@ -4,13 +4,13 @@ import { AnalyticsClient } from "@/components/AnalyticsClient";
 import type { LemmaMeta } from "@/lib/learning";
 
 export default async function AnalyticsPage() {
+  let freq: LemmaMeta[];
   try {
     const raw = await fs.readFile(
       path.join(process.cwd(), "public", "data", "lemma-frequency.json"),
       "utf-8"
     );
-    const freq = JSON.parse(raw) as LemmaMeta[];
-    return <AnalyticsClient freq={freq} />;
+    freq = JSON.parse(raw) as LemmaMeta[];
   } catch {
     return (
       <div className="card p-8 text-center">
@@ -20,4 +20,6 @@ export default async function AnalyticsPage() {
       </div>
     );
   }
+
+  return <AnalyticsClient freq={freq} />;
 }

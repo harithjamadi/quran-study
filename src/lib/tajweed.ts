@@ -3,6 +3,16 @@
  *
  * Codes come from the quran-tajweed edition served by alquran.cloud,
  * which embeds annotations as [code[text] spans inside the Arabic verse string.
+ * Authoritative legend: https://alquran.cloud/tajweed-guide
+ *
+ * SCHOLAR REVIEW PENDING (2026-05): the rule names, conditions, and "how to
+ * read" guidance below were corrected against the alquran.cloud / cpfair
+ * legend and verified against real verses, but the pedagogical wording in
+ * en/ms/ar should still be confirmed by a qualified tajweed teacher before
+ * being treated as authoritative. Code→meaning mappings (verified):
+ *   n = normal/natural madd (2)      p = madd ʿaariḍ lil-sukoon / leen (2/4/6)
+ *   o = muttasil & munfasil (4–5)    m = madd laazim (6)        s = SILENT letter
+ *   i = iqlab   a/u = idgham ±ghunna   f/c = ikhfa(/shafawi)   w = idgham shafawi
  */
 
 export type TajweedCategory =
@@ -64,48 +74,48 @@ export const TAJWEED_RULES: Record<string, TajweedRule> = {
   // ── Madd (Prolongation) ─────────────────────────────────────────────────────
   n: {
     code: "n",
-    name: { ar: "المد", en: "Madd (Superscript Alif)", ms: "Mad (Alif Berdiri)" },
+    name: { ar: "المد الطبيعي", en: "Madd Tabee'i (Natural)", ms: "Mad Tabii (Asli)" },
     color: "#60A5FA",
     colorDark: "#93C5FD",
     category: "madd",
     condition: {
-      en: "A superscript alif (ـٰ or ٰ) indicates a prolonged alif sound that is written above the letter rather than after it.",
-      ms: "Alif berdiri (ـٰ atau ٰ) menunjukkan bunyi alif yang dipanjangkan yang ditulis di atas huruf.",
+      en: "The basic natural prolongation — a long vowel with no hamzah or sukun causing extra length. Includes the superscript/dagger alif (ـٰ) and the small connecting waw/ya (madd silah sughra), e.g. رَّحْمَٰن, لَهُۥ.",
+      ms: "Pemanjangan asli yang asas — bunyi vokal panjang tanpa hamzah atau sukun yang menambah panjang. Termasuk alif berdiri (ـٰ) dan waw/ya penghubung kecil (mad silah sughra), contohnya رَّحْمَٰن, لَهُۥ.",
     },
     howToRead: {
-      en: "Extend the vowel sound for 2 counts (harakat). The superscript alif is a writing convention — pronounce it as a full long alif.",
-      ms: "Panjangkan bunyi vokal selama 2 harakat. Alif berdiri adalah konvensyen penulisan — sebut sebagai alif panjang penuh.",
+      en: "Extend for exactly 2 counts (harakat) — no more, no less. This is the baseline length all other madd rules build on.",
+      ms: "Panjangkan tepat 2 harakat — tidak lebih, tidak kurang. Ini panjang asas yang menjadi dasar semua hukum mad lain.",
     },
   },
   p: {
     code: "p",
-    name: { ar: "المد الطبيعي", en: "Madd Tabee'i", ms: "Mad Tabii" },
+    name: { ar: "المد العارض للسكون", en: "Madd 'Aarid lil-Sukoon", ms: "Mad 'Aridh lis-Sukun" },
     color: "#38BDF8",
     colorDark: "#7DD3FC",
     category: "madd",
     letters: "ا و ي",
     condition: {
-      en: "A natural (tabee'i) madd occurs when a madd letter (ا و ي) follows its matching vowel: alif after fatha, waw after damma, ya after kasra — with no hamza or sukun following.",
-      ms: "Mad tabii berlaku apabila huruf mad (ا و ي) mengikuti vokal sepadan: alif selepas fathah, waw selepas dhammah, ya selepas kasrah — tanpa hamzah atau sukun berikutnya.",
+      en: "A natural madd letter (ا و ي) followed by a letter that becomes silent only because of stopping (waqf) — typically the last word before a pause or verse-end. Also covers the leen madd (و / ي after a fatha at a stop, e.g. خَوْف).",
+      ms: "Huruf mad asli (ا و ي) diikuti oleh huruf yang menjadi sakin hanya kerana berhenti (waqf) — biasanya perkataan terakhir sebelum berhenti atau hujung ayat. Turut merangkumi mad leen (و / ي selepas fathah ketika berhenti, contohnya خَوْف).",
     },
     howToRead: {
-      en: "Extend the sound for exactly 2 counts (harakat). This is the baseline madd — no more, no less.",
-      ms: "Panjangkan bunyi tepat 2 harakat. Ini adalah mad asas — tidak lebih, tidak kurang.",
+      en: "When you pause here, prolong for 2, 4, or 6 counts — pick one length and keep it consistent throughout your recitation. If you continue without stopping, it reverts to a normal 2-count madd.",
+      ms: "Apabila berhenti di sini, panjangkan selama 2, 4, atau 6 harakat — pilih satu kadar dan kekalkannya sepanjang bacaan. Jika diteruskan tanpa berhenti, ia kembali menjadi mad 2 harakat biasa.",
     },
   },
   o: {
     code: "o",
-    name: { ar: "المد المنفصل", en: "Madd Munfasil", ms: "Mad Munfasil" },
+    name: { ar: "المد المتصل والمنفصل", en: "Madd Muttasil / Munfasil", ms: "Mad Muttasil / Munfasil" },
     color: "#3B82F6",
     colorDark: "#60A5FA",
     category: "madd",
     condition: {
-      en: "A separated madd occurs when a madd letter at the end of one word is followed by a hamzah at the start of the next word.",
-      ms: "Mad munfasil berlaku apabila huruf mad di akhir sesuatu perkataan diikuti oleh hamzah di awal perkataan berikutnya.",
+      en: "A madd letter followed by a hamzah (ء). If the hamzah is in the same word it is Muttasil (مُتَّصِل, obligatory) — e.g. سَوَآء, أُو۟لَٰٓئِك; if it begins the next word it is Munfasil (مُنْفَصِل) — e.g. بِمَآ أُنزِل, وَمَآ.",
+      ms: "Huruf mad diikuti oleh hamzah (ء). Jika hamzah dalam perkataan yang sama, ia Muttasil (مُتَّصِل, wajib) — contohnya سَوَآء, أُو۟لَٰٓئِك; jika ia memulakan perkataan berikutnya, ia Munfasil (مُنْفَصِل) — contohnya بِمَآ أُنزِل, وَمَآ.",
     },
     howToRead: {
-      en: "Extend for 4–5 counts (harakat). The exact count depends on the recitation style (Hafs: typically 4 or 5).",
-      ms: "Panjangkan selama 4–5 harakat. Bilangan tepat bergantung pada gaya bacaan (Hafs: lazimnya 4 atau 5).",
+      en: "Extend for 4–5 counts (harakat) in Hafs. Muttasil must always be lengthened; for Munfasil keep your chosen length consistent across the whole recitation.",
+      ms: "Panjangkan selama 4–5 harakat dalam riwayat Hafs. Muttasil mesti sentiasa dipanjangkan; bagi Munfasil, kekalkan kadar pilihan anda sepanjang bacaan.",
     },
   },
   m: {
@@ -125,17 +135,17 @@ export const TAJWEED_RULES: Record<string, TajweedRule> = {
   },
   s: {
     code: "s",
-    name: { ar: "المد الصلة", en: "Madd Silah", ms: "Mad Silah" },
-    color: "#7DD3FC",
-    colorDark: "#BAE6FD",
-    category: "madd",
+    name: { ar: "حرف لا يُنطق", en: "Silent", ms: "Huruf Senyap" },
+    color: "#9CA3AF",
+    colorDark: "#6B7280",
+    category: "hamza_lam",
     condition: {
-      en: "A connection madd that appears in certain written letters (like the waw in الصلاة) that have a prolonged sound in Uthmani script convention.",
-      ms: "Mad silah yang muncul pada huruf tertentu (seperti waw dalam الصلاة) yang mempunyai bunyi panjang dalam konvensyen skrip Uthmani.",
+      en: "A letter written in the Uthmani script but not pronounced — e.g. the waw in ٱلصَّلَوٰة, or the silent alif after the plural waw in كَفَرُوا۟ / أُو۟لَٰٓئِك.",
+      ms: "Huruf yang ditulis dalam skrip Uthmani tetapi tidak disebut — contohnya waw dalam ٱلصَّلَوٰة, atau alif senyap selepas waw jamak dalam كَفَرُوا۟ / أُو۟لَٰٓئِك.",
     },
     howToRead: {
-      en: "Extend lightly for 2 counts, connecting the sound smoothly to the next syllable.",
-      ms: "Panjangkan ringan selama 2 harakat, menghubungkan bunyi dengan lancar ke suku kata berikutnya.",
+      en: "Do not pronounce this letter at all. Skip over it and continue straight to the next sound — it is part of the script only, not the recitation.",
+      ms: "Jangan sebut huruf ini langsung. Langkau ia dan teruskan terus ke bunyi berikutnya — ia sebahagian daripada tulisan sahaja, bukan bacaan.",
     },
   },
 
@@ -224,6 +234,24 @@ export const TAJWEED_RULES: Record<string, TajweedRule> = {
     howToRead: {
       en: "Conceal the noon/tanween between full pronunciation and complete assimilation. The tongue approaches but does not touch its articulation point. Hold a nasal sound for 2 counts.",
       ms: "Sembunyikan nun/tanwin antara sebutan penuh dan asimilasi lengkap. Lidah mendekati tetapi tidak menyentuh titik sebutan. Tahan bunyi nasal selama 2 harakat.",
+    },
+  },
+
+  // ── Iqlab ───────────────────────────────────────────────────────────────────
+  i: {
+    code: "i",
+    name: { ar: "الإقلاب", en: "Iqlab", ms: "Iqlab" },
+    color: "#06B6D4",
+    colorDark: "#67E8F9",
+    category: "noon_tanween",
+    letters: "ب",
+    condition: {
+      en: "Occurs when a noon saakin (نْ) or tanween is followed by the single letter ba (ب) — e.g. مِنۢ بَعْد, أَلِيمٌۢ بِ. A small meem (ۢ) is written above to mark it.",
+      ms: "Berlaku apabila nun sakin (نْ) atau tanwin diikuti oleh satu huruf sahaja, iaitu ba (ب) — contohnya مِنۢ بَعْد, أَلِيمٌۢ بِ. Mim kecil (ۢ) ditulis di atas sebagai tanda.",
+    },
+    howToRead: {
+      en: "Convert the noon/tanween into a hidden meem (م) sound with a nasal hum (ghunna) held for 2 counts, then pronounce the ba. The lips come together lightly for the meem without fully closing.",
+      ms: "Tukarkan bunyi nun/tanwin kepada bunyi mim (م) tersembunyi dengan dengung (ghunnah) selama 2 harakat, kemudian sebut ba. Bibir bertemu ringan untuk mim tanpa menutup sepenuhnya.",
     },
   },
 
