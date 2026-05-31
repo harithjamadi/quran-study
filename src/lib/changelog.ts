@@ -29,6 +29,18 @@ export interface Release {
 /** Newest first. The first entry's version is the current app version. */
 export const RELEASES: Release[] = [
   {
+    version: "0.8.4",
+    date: "2026-06-01",
+    title: { en: "Sharper example audio", ms: "Audio contoh lebih tepat" },
+    entries: [
+      {
+        type: "improved",
+        en: "The example audio now plays just the highlighted word or phrase instead of the whole verse — so you hear exactly the part the rule applies to.",
+        ms: "Audio contoh kini memainkan hanya perkataan atau frasa yang diserlahkan, bukan seluruh ayat — jadi anda mendengar tepat bahagian yang dikenakan hukum itu.",
+      },
+    ],
+  },
+  {
     version: "0.8.3",
     date: "2026-06-01",
     title: { en: "Hear the examples", ms: "Dengar contoh" },

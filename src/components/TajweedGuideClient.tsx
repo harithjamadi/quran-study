@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useLearning } from "@/store/learning";
 import {
   TAJWEED_RULES,
@@ -11,7 +11,11 @@ import {
   type TajweedRule,
   type WaqfSign,
 } from "@/lib/tajweed";
-import { toggleVerseAudio, useVerseAudioState } from "@/lib/verse-audio";
+import {
+  toggleExampleClip,
+  useExampleClipState,
+  stopAllExampleClips,
+} from "@/lib/example-audio";
 import type { Language } from "@/lib/i18n";
 
 const CATEGORY_ORDER: TajweedCategory[] = [
@@ -301,6 +305,9 @@ function ExampleBlock({ rule, language }: { rule: TajweedRule; language: Languag
   const example = examples[idx] ?? examples[0];
   const total = examples.length;
 
+  // Stop any playing clip when this guide unmounts (route change).
+  useEffect(() => () => stopAllExampleClips(), []);
+
   return (
     <div>
       <div className="flex items-center justify-between gap-2 mb-1">
@@ -340,33 +347,45 @@ function ExampleBlock({ rule, language }: { rule: TajweedRule; language: Languag
         <span className="mx-1.5 opacity-50">·</span>
         <span>{example.note[language]}</span>
       </p>
-      {example.ref && <ExampleAudio refStr={example.ref} color={rule.color} language={language} />}
+      {example.ref && example.clip && (
+        <ExampleAudio
+          id={`${rule.code}-${idx}`}
+          refStr={example.ref}
+          clip={example.clip}
+          color={rule.color}
+          language={language}
+        />
+      )}
     </div>
   );
 }
 
-/** Plays the full verse the example is drawn from (the only recitation we have
- *  is verse-level), so the learner can hear the rule in its Quranic context. */
+/** Plays just the example's slice of the verse (not the whole ayah), so the
+ *  learner hears exactly the word/phrase the rule applies to. */
 function ExampleAudio({
+  id,
   refStr,
+  clip,
   color,
   language,
 }: {
+  id: string;
   refStr: string;
+  clip: [number, number];
   color: string;
   language: Language;
 }) {
   const [surahStr, ayahStr] = refStr.split(":");
   const surah = Number(surahStr);
   const ayah = Number(ayahStr);
-  const { playing, progress } = useVerseAudioState(surah, ayah);
+  const { playing, progress } = useExampleClipState(id);
   if (!surah || !ayah) return null;
 
   return (
     <div className="mt-2">
       <button
         type="button"
-        onClick={() => toggleVerseAudio(surah, ayah)}
+        onClick={() => toggleExampleClip(id, surah, ayah, clip)}
         className="inline-flex items-center gap-2 rounded-full border px-3 py-1 text-[11px] font-semibold transition-colors"
         style={
           playing
@@ -387,11 +406,11 @@ function ExampleAudio({
         )}
         {playing
           ? language === "ms"
-            ? "Henti ayat"
-            : "Stop verse"
+            ? "Henti"
+            : "Stop"
           : language === "ms"
-            ? "Dengar ayat"
-            : "Hear the verse"}
+            ? "Dengar contoh"
+            : "Hear it"}
       </button>
       {/* RTL progress — Arabic reads right→left, so the bar fills from the right. */}
       <div className="relative mt-1.5 h-1 w-full max-w-[12rem] overflow-hidden rounded-full bg-[color:var(--border)]">

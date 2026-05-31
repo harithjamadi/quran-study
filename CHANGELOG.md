@@ -8,6 +8,15 @@ The user-facing version of this list lives in `src/lib/changelog.ts` and is
 shown in-app at `/changelog` (linked from the footer and the mobile "More"
 menu). Keep the two in sync when cutting a release.
 
+## [0.8.4] — 2026-06-01
+
+### Changed
+- The example audio now plays **just the highlighted word or phrase** instead of
+  the whole verse. Each example is clipped to its exact word range using
+  Quran.com's per-word timings for Shaikh Mishary Alafasy, so you hear precisely
+  the part the rule applies to (the clip keeps the words connected, so cross-word
+  rules like idgham/iqlab/ikhfa stay audible).
+
 ## [0.8.3] — 2026-06-01
 
 ### Added
