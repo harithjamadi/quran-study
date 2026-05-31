@@ -168,14 +168,12 @@ export function QuestMap() {
           <TrackToggle track={track} setTrack={setTrack} language={language} />
           {PHASES.map((phase, phaseIdx) => {
             const isPhaseUnlocked = totalStars >= phase.gateStars;
-            const prevPhase = phaseIdx > 0 ? PHASES[phaseIdx - 1] : null;
 
             return (
               <div key={phase.id}>
                 {phaseIdx > 0 && (
                   <PhaseGate
                     phase={phase}
-                    prevPhase={prevPhase!}
                     totalStars={totalStars}
                     needed={phase.gateStars}
                     unlocked={isPhaseUnlocked}
@@ -348,14 +346,12 @@ export function QuestMap() {
 
 function PhaseGate({
   phase,
-  prevPhase,
   totalStars,
   needed,
   unlocked,
   language,
 }: {
   phase: (typeof PHASES)[0];
-  prevPhase: (typeof PHASES)[0];
   totalStars: number;
   needed: number;
   unlocked: boolean;

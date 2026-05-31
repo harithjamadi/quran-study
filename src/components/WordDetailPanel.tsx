@@ -62,7 +62,10 @@ function singleLangGloss(meta: { en: string | null; ms: string | null }, languag
 export function WordDetailPanel({ item, language, freq, onClose }: Props) {
   const [tab, setTab] = useState<Tab>("overview");
   const [lemmaOccurrences, setLemmaOccurrences] = useState<RootOccurrence[] | null>(null);
-  const [loading, setLoading] = useState(false);
+
+  // Derived: we're loading whenever the Combinations tab is open but its data
+  // hasn't arrived yet. Avoids a redundant loading flag set inside an effect.
+  const loading = tab === "combinations" && lemmaOccurrences === null;
 
   const lemmasState = useLearning((s) => s.lemmas);
   const seenForms = useLearning((s) => s.seenForms);
@@ -92,18 +95,15 @@ export function WordDetailPanel({ item, language, freq, onClose }: Props) {
   useEffect(() => {
     if (tab !== "combinations") return;
     if (lemmaOccurrences !== null) return;
-    setLoading(true);
 
     if (item.root) {
       loadRootOccurrences(item.root).then((occs) => {
         const filtered = (occs ?? []).filter((o) => o.lemma === item.lemma);
         setLemmaOccurrences(filtered);
-        setLoading(false);
       });
     } else {
       loadLemmaExamples(item.lemma).then((occs) => {
         setLemmaOccurrences(occs);
-        setLoading(false);
       });
     }
   }, [tab, item.root, item.lemma, lemmaOccurrences]);
@@ -388,9 +388,9 @@ function CombinationsTab({
   seenForms: Record<string, true>;
   freq: LemmaMeta[];
 }) {
-  if (loading) return <LoadingState />;
-
   const freqMap = useMemo(() => new Map(freq.map(f => [f.lemma, f])), [freq]);
+
+  if (loading) return <LoadingState />;
 
   const discoveredCount = combinations.filter((c) => seenForms[c.text]).length;
   const discoveredPct = combinations.length === 0 ? 0 : Math.round((discoveredCount / combinations.length) * 100);

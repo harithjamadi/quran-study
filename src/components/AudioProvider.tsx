@@ -129,7 +129,7 @@ export function AudioProvider({ children }: { children: React.ReactNode }) {
         });
       }
     },
-    [reciterId]
+    [reciterId, setLastRead]
   );
 
   const toggle = useCallback(() => {
