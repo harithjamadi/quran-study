@@ -29,6 +29,23 @@ export interface Release {
 /** Newest first. The first entry's version is the current app version. */
 export const RELEASES: Release[] = [
   {
+    version: "0.8.5",
+    date: "2026-06-01",
+    title: { en: "Examples in full context", ms: "Contoh dalam konteks penuh" },
+    entries: [
+      {
+        type: "improved",
+        en: "Each tajweed example now shows the whole verse with the relevant word(s) coloured, so you can see the rule in context.",
+        ms: "Setiap contoh tajwid kini memaparkan seluruh ayat dengan perkataan berkaitan diwarnakan, supaya anda nampak hukum itu dalam konteks.",
+      },
+      {
+        type: "improved",
+        en: "The example audio plays the whole verse and now has a draggable progress bar with a time readout — scrub forward or back as you listen.",
+        ms: "Audio contoh memainkan seluruh ayat dan kini mempunyai bar kemajuan yang boleh diseret dengan paparan masa — laju ke depan atau ke belakang semasa mendengar.",
+      },
+    ],
+  },
+  {
     version: "0.8.4",
     date: "2026-06-01",
     title: { en: "Sharper example audio", ms: "Audio contoh lebih tepat" },

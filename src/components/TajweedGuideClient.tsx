@@ -6,15 +6,17 @@ import { useLearning } from "@/store/learning";
 import {
   TAJWEED_RULES,
   WAQF_SIGNS,
+  EXAMPLE_VERSES,
   categoryLabel,
   type TajweedCategory,
   type TajweedRule,
   type WaqfSign,
 } from "@/lib/tajweed";
 import {
-  toggleExampleClip,
-  useExampleClipState,
-  stopAllExampleClips,
+  toggleExampleVerse,
+  seekExampleVerse,
+  useExampleVerseState,
+  stopAllExampleVerses,
 } from "@/lib/example-audio";
 import type { Language } from "@/lib/i18n";
 
@@ -305,12 +307,22 @@ function ExampleBlock({ rule, language }: { rule: TajweedRule; language: Languag
   const example = examples[idx] ?? examples[0];
   const total = examples.length;
 
-  // Stop any playing clip when this guide unmounts (route change).
-  useEffect(() => () => stopAllExampleClips(), []);
+  // Stop audio when the guide unmounts (route change) or when the user cycles
+  // to a different example (so the previous verse doesn't keep playing).
+  useEffect(() => () => stopAllExampleVerses(), []);
+  useEffect(() => {
+    stopAllExampleVerses();
+  }, [idx]);
+
+  const verse = example.ref ? EXAMPLE_VERSES[example.ref] : undefined;
+  const hasVerse = Boolean(verse && example.highlight);
+  const [surahStr, ayahStr] = (example.ref ?? "").split(":");
+  const surah = Number(surahStr);
+  const ayah = Number(ayahStr);
 
   return (
     <div>
-      <div className="flex items-center justify-between gap-2 mb-1">
+      <div className="flex items-center justify-between gap-2 mb-1.5">
         <p className="text-[10px] uppercase tracking-widest text-[color:var(--muted)] font-bold">
           {language === "ms" ? "Contoh" : "Example"}
           {total > 1 && (
@@ -332,26 +344,38 @@ function ExampleBlock({ rule, language }: { rule: TajweedRule; language: Languag
           </button>
         )}
       </div>
-      <div className="flex items-baseline justify-between gap-3 flex-wrap">
-        <p className="arabic text-2xl leading-loose" lang="ar" dir="rtl" style={{ color: rule.color }}>
-          {example.arabic}
-        </p>
-        {example.ref && (
-          <span className="font-mono text-xs text-[color:var(--muted)] tabular-nums shrink-0">
-            {example.ref}
-          </span>
-        )}
-      </div>
-      <p className="text-xs text-[color:var(--muted)] mt-0.5">
+
+      {hasVerse ? (
+        <ExampleVerse
+          verse={verse!}
+          highlight={example.highlight!}
+          color={rule.color}
+          refStr={example.ref!}
+        />
+      ) : (
+        <div className="flex items-baseline justify-between gap-3 flex-wrap">
+          <p className="arabic text-2xl leading-loose" lang="ar" dir="rtl" style={{ color: rule.color }}>
+            {example.arabic}
+          </p>
+          {example.ref && (
+            <span className="font-mono text-xs text-[color:var(--muted)] tabular-nums shrink-0">
+              {example.ref}
+            </span>
+          )}
+        </div>
+      )}
+
+      <p className="text-xs text-[color:var(--muted)] mt-1.5">
         <span className="italic">{example.translit}</span>
         <span className="mx-1.5 opacity-50">·</span>
         <span>{example.note[language]}</span>
       </p>
-      {example.ref && example.clip && (
-        <ExampleAudio
+
+      {hasVerse && surah > 0 && ayah > 0 && (
+        <VersePlayer
           id={`${rule.code}-${idx}`}
-          refStr={example.ref}
-          clip={example.clip}
+          surah={surah}
+          ayah={ayah}
           color={rule.color}
           language={language}
         />
@@ -360,65 +384,119 @@ function ExampleBlock({ rule, language }: { rule: TajweedRule; language: Languag
   );
 }
 
-/** Plays just the example's slice of the verse (not the whole ayah), so the
- *  learner hears exactly the word/phrase the rule applies to. */
-function ExampleAudio({
-  id,
+/** Renders the whole verse, colouring the word(s) the example highlights. */
+function ExampleVerse({
+  verse,
+  highlight,
+  color,
   refStr,
-  clip,
+}: {
+  verse: string[];
+  highlight: [number, number];
+  color: string;
+  refStr: string;
+}) {
+  const [from, to] = highlight;
+  return (
+    <div className="flex items-start justify-between gap-3">
+      <p className="arabic text-2xl leading-[2.15]" lang="ar" dir="rtl">
+        {verse.map((word, i) => {
+          const hot = i + 1 >= from && i + 1 <= to;
+          return (
+            <span key={i}>
+              <span
+                className={hot ? "font-bold rounded px-0.5" : undefined}
+                style={hot ? { color, backgroundColor: `${color}22` } : undefined}
+              >
+                {word}
+              </span>
+              {i < verse.length - 1 ? " " : ""}
+            </span>
+          );
+        })}
+      </p>
+      <span className="font-mono text-xs text-[color:var(--muted)] tabular-nums shrink-0 mt-1">
+        {refStr}
+      </span>
+    </div>
+  );
+}
+
+function formatTime(seconds: number): string {
+  if (!Number.isFinite(seconds) || seconds <= 0) return "0:00";
+  const m = Math.floor(seconds / 60);
+  const s = Math.floor(seconds % 60);
+  return `${m}:${String(s).padStart(2, "0")}`;
+}
+
+/** Whole-verse player with a play/pause control, a draggable scrubber, and a
+ *  current-time / duration readout. */
+function VersePlayer({
+  id,
+  surah,
+  ayah,
   color,
   language,
 }: {
   id: string;
-  refStr: string;
-  clip: [number, number];
+  surah: number;
+  ayah: number;
   color: string;
   language: Language;
 }) {
-  const [surahStr, ayahStr] = refStr.split(":");
-  const surah = Number(surahStr);
-  const ayah = Number(ayahStr);
-  const { playing, progress } = useExampleClipState(id);
-  if (!surah || !ayah) return null;
+  const { playing, currentTime, duration } = useExampleVerseState(id);
+  const max = duration || 0;
 
   return (
-    <div className="mt-2">
+    <div className="mt-3 flex items-center gap-3">
       <button
         type="button"
-        onClick={() => toggleExampleClip(id, surah, ayah, clip)}
-        className="inline-flex items-center gap-2 rounded-full border px-3 py-1 text-[11px] font-semibold transition-colors"
+        onClick={() => toggleExampleVerse(id, surah, ayah)}
+        className="grid h-9 w-9 shrink-0 place-items-center rounded-full border transition-colors"
         style={
           playing
             ? { backgroundColor: color, borderColor: color, color: "#fff" }
-            : { borderColor: "var(--border-strong)" }
+            : { borderColor: "var(--border-strong)", color: "var(--foreground)" }
         }
         aria-pressed={playing}
+        aria-label={
+          playing
+            ? language === "ms"
+              ? "Henti"
+              : "Pause"
+            : language === "ms"
+              ? "Mainkan ayat"
+              : "Play verse"
+        }
       >
         {playing ? (
-          <svg viewBox="0 0 24 24" width="11" height="11" fill="currentColor" aria-hidden>
+          <svg viewBox="0 0 24 24" width="14" height="14" fill="currentColor" aria-hidden>
             <rect x="6" y="5" width="4" height="14" rx="1" />
             <rect x="14" y="5" width="4" height="14" rx="1" />
           </svg>
         ) : (
-          <svg viewBox="0 0 24 24" width="11" height="11" fill="currentColor" aria-hidden>
+          <svg viewBox="0 0 24 24" width="14" height="14" fill="currentColor" aria-hidden>
             <path d="M8 5l12 7-12 7z" />
           </svg>
         )}
-        {playing
-          ? language === "ms"
-            ? "Henti"
-            : "Stop"
-          : language === "ms"
-            ? "Dengar contoh"
-            : "Hear it"}
       </button>
-      {/* RTL progress — Arabic reads right→left, so the bar fills from the right. */}
-      <div className="relative mt-1.5 h-1 w-full max-w-[12rem] overflow-hidden rounded-full bg-[color:var(--border)]">
-        <div
-          className="absolute inset-y-0 right-0 rounded-full transition-[width] duration-150"
-          style={{ width: `${Math.round(progress * 100)}%`, backgroundColor: color }}
-        />
-      </div>
+
+      <input
+        type="range"
+        min={0}
+        max={max}
+        step={0.05}
+        value={Math.min(currentTime, max)}
+        disabled={max === 0}
+        onChange={(e) => seekExampleVerse(id, Number(e.target.value))}
+        className="h-1 min-w-0 flex-1 cursor-pointer disabled:cursor-default disabled:opacity-50"
+        style={{ accentColor: color }}
+        aria-label={language === "ms" ? "Cari kedudukan audio" : "Seek audio position"}
+      />
+
+      <span className="w-[68px] shrink-0 text-right font-mono text-[10px] tabular-nums text-[color:var(--muted)]">
+        {formatTime(currentTime)} / {formatTime(duration)}
+      </span>
     </div>
   );
 }

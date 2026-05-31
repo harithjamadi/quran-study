@@ -8,6 +8,15 @@ The user-facing version of this list lives in `src/lib/changelog.ts` and is
 shown in-app at `/changelog` (linked from the footer and the mobile "More"
 menu). Keep the two in sync when cutting a release.
 
+## [0.8.5] — 2026-06-01
+
+### Changed
+- Tajweed examples now show the **whole verse with the relevant word(s)
+  coloured** (instead of the word alone), so the rule is seen in context.
+- The example audio plays the **whole verse** with an **interactive scrubber** —
+  a draggable progress bar plus a current-time / duration readout, so you can
+  seek forward and back while listening.
+
 ## [0.8.4] — 2026-06-01
 
 ### Changed
