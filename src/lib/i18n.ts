@@ -219,6 +219,15 @@ export const UI_STRINGS = {
     sess_accuracy: "Accuracy",
     sess_perfect: "Perfect session — mastery increased.",
     sess_lapse_msg: "{count} word(s) still need practice.",
+
+    // Changelog / What's New
+    nav_changelog: "What's New",
+    cl_title: "What's New",
+    cl_desc: "Every update to Mubin, newest first.",
+    cl_current: "Current",
+    cl_type_added: "New",
+    cl_type_improved: "Improved",
+    cl_type_fixed: "Fixed",
   },
   ms: {
     // Nav
@@ -438,5 +447,14 @@ export const UI_STRINGS = {
     sess_accuracy: "Ketepatan",
     sess_perfect: "Sesi sempurna — penguasaan meningkat.",
     sess_lapse_msg: "{count} perkataan masih perlu diasah.",
+
+    // Changelog / What's New
+    nav_changelog: "Apa yang Baharu",
+    cl_title: "Apa yang Baharu",
+    cl_desc: "Setiap kemas kini Mubin, terbaharu dahulu.",
+    cl_current: "Semasa",
+    cl_type_added: "Baharu",
+    cl_type_improved: "Diperbaik",
+    cl_type_fixed: "Dibaiki",
   },
 };

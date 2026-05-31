@@ -6,6 +6,7 @@ import { useEffect, useState } from "react";
 import { classNames } from "@/lib/format";
 import { UI_STRINGS } from "@/lib/i18n";
 import { useLearning } from "@/store/learning";
+import { useVersion, hasUnseenRelease } from "@/store/version";
 import { useHydrated } from "@/lib/use-hydrated";
 
 /**
@@ -18,7 +19,9 @@ export function BottomNav() {
   const pathname = usePathname();
   const language = useLearning((s) => s.language);
   const setHasSeenTutorial = useLearning((s) => s.setHasSeenTutorial);
+  const lastSeenVersion = useVersion((s) => s.lastSeenVersion);
   const hydrated = useHydrated();
+  const showUpdateDot = hasUnseenRelease(lastSeenVersion);
   const [moreOpen, setMoreOpen] = useState(false);
   const t = UI_STRINGS[language];
 
@@ -50,9 +53,15 @@ export function BottomNav() {
     { href: "/search", label: t.nav_search, icon: IconSearch, match: (p) => p.startsWith("/search") },
   ];
 
-  const moreItems = [
+  const moreItems: {
+    href: string;
+    label: string;
+    icon: (p: { active: boolean }) => React.ReactElement;
+    dot?: boolean;
+  }[] = [
     { href: "/analytics", label: t.nav_stats, icon: IconChart },
     { href: "/bookmarks", label: t.nav_bookmarks, icon: IconBookmark },
+    { href: "/changelog", label: t.nav_changelog, icon: IconSparkle, dot: showUpdateDot },
     { href: "/settings", label: t.nav_settings, icon: IconGear },
   ];
   const moreActive = moreItems.some((it) => pathname.startsWith(it.href));
@@ -95,6 +104,12 @@ export function BottomNav() {
                         <Icon active={active} />
                       </span>
                       <span className="text-[15px] font-medium">{it.label}</span>
+                      {it.dot && (
+                        <span
+                          className="h-2 w-2 rounded-full bg-[color:var(--accent)]"
+                          aria-label="update available"
+                        />
+                      )}
                       <span aria-hidden className="ml-auto text-[color:var(--muted)]">›</span>
                     </Link>
                   </li>
@@ -168,11 +183,17 @@ export function BottomNav() {
             >
               <span
                 className={classNames(
-                  "flex items-center justify-center rounded-full px-4 py-0.5 transition-colors",
+                  "relative flex items-center justify-center rounded-full px-4 py-0.5 transition-colors",
                   moreActive || moreOpen ? "bg-[color:var(--accent-soft)]" : ""
                 )}
               >
                 <IconMore active={moreActive || moreOpen} />
+                {showUpdateDot && !moreOpen && (
+                  <span
+                    aria-hidden
+                    className="absolute right-2.5 top-0 h-2 w-2 rounded-full bg-[color:var(--accent)] ring-2 ring-[color:var(--background)]"
+                  />
+                )}
               </span>
               <span className={classNames("text-[10.5px] leading-none tracking-wide", moreActive ? "font-bold" : "font-medium")}>
                 {t.nav_more}
@@ -260,6 +281,15 @@ function IconHelp() {
       <circle cx="12" cy="12" r="9" />
       <path d="M9.2 9.2a2.8 2.8 0 0 1 5.4 1c0 1.8-2.6 2.2-2.6 4" />
       <path d="M12 17.5h.01" />
+    </svg>
+  );
+}
+
+function IconSparkle({ active }: { active: boolean }) {
+  return (
+    <svg viewBox="0 0 24 24" width="19" height="19" fill={active ? "currentColor" : "none"} stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
+      <path d="M12 3l1.9 4.8L18.7 9.7 14 11.6 12 16.5 10 11.6 5.3 9.7 10.1 7.8 12 3Z" fillOpacity={active ? 0.16 : 1} />
+      <path d="M18.5 14.5l.7 1.8 1.8.7-1.8.7-.7 1.8-.7-1.8-1.8-.7 1.8-.7.7-1.8Z" />
     </svg>
   );
 }
