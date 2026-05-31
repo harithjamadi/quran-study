@@ -10,6 +10,7 @@ import { useLearning } from "@/store/learning";
 export function Nav() {
   const pathname = usePathname();
   const language = useLearning((s) => s.language);
+  const setHasSeenTutorial = useLearning((s) => s.setHasSeenTutorial);
   const t = UI_STRINGS[language];
 
   const items = [
@@ -73,6 +74,20 @@ export function Nav() {
             );
           })}
         </ul>
+
+        <button
+          type="button"
+          onClick={() => setHasSeenTutorial(false)}
+          aria-label={t.tut_replay}
+          title={t.tut_replay}
+          className="hidden md:inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-full text-[color:var(--muted)] hover:text-[color:var(--foreground)] hover:bg-[color:var(--border)]/40 transition-colors"
+        >
+          <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
+            <circle cx="12" cy="12" r="9" />
+            <path d="M9.2 9.2a2.8 2.8 0 0 1 5.4 1c0 1.8-2.6 2.2-2.6 4" />
+            <path d="M12 17.5h.01" />
+          </svg>
+        </button>
       </nav>
     </header>
   );

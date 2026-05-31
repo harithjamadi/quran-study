@@ -13,6 +13,22 @@ export const UI_STRINGS = {
     nav_more: "More",
     nav_more_title: "More",
 
+    // Tutorial / onboarding
+    tut_replay: "How it works",
+    tut_skip: "Skip",
+    tut_back: "Back",
+    tut_next: "Next",
+    tut_done: "Get started",
+    tut_step: "{n} of {total}",
+    tut_welcome_title: "Welcome to Mubin",
+    tut_welcome_body: "Understand the Quran one word at a time. Here's a 20-second tour of how everything works.",
+    tut_learn_title: "Learn the words",
+    tut_learn_body: "Just 500 Arabic words cover 80% of the Quran. Open the Learn tab to memorise them with short flashcard sessions — about 15 minutes a day.",
+    tut_read_title: "Read & tap any word",
+    tut_read_body: "Open any surah from the Read tab. Tap any Arabic word to reveal its meaning, root, and every other verse it appears in.",
+    tut_nav_title: "Find your way",
+    tut_nav_body: "Use the bar along the bottom to move around: Home, Learn, Read, Search — and More for your bookmarks, stats, and settings.",
+
     // Home
     home_hero_title: "Understand the Quran, one word at a time",
     home_hero_desc: "Just 500 Arabic lemmas cover 80% of the Quran. Memorise them through 15-minute daily sessions, then read with every word annotated. Free, no account, no tracking.",
@@ -215,6 +231,22 @@ export const UI_STRINGS = {
     nav_stats: "Statistik",
     nav_more: "Lagi",
     nav_more_title: "Lagi",
+
+    // Tutorial / onboarding
+    tut_replay: "Cara guna",
+    tut_skip: "Langkau",
+    tut_back: "Kembali",
+    tut_next: "Seterusnya",
+    tut_done: "Mula sekarang",
+    tut_step: "{n} drpd {total}",
+    tut_welcome_title: "Selamat datang ke Mubin",
+    tut_welcome_body: "Fahami Al-Quran kata demi kata. Ini panduan ringkas 20 saat tentang cara semuanya berfungsi.",
+    tut_learn_title: "Belajar perkataan",
+    tut_learn_body: "Hanya 500 perkataan Arab meliputi 80% Al-Quran. Buka tab Belajar untuk hafal melalui sesi flashcard ringkas — kira-kira 15 minit sehari.",
+    tut_read_title: "Baca & tekan kata",
+    tut_read_body: "Buka mana-mana surah dari tab Baca. Tekan mana-mana kata Arab untuk lihat maksud, akar, dan setiap ayat lain yang menggunakannya.",
+    tut_nav_title: "Cari arah anda",
+    tut_nav_body: "Guna bar di bahagian bawah untuk bergerak: Utama, Belajar, Baca, Cari — dan Lagi untuk penanda, statistik, dan tetapan.",
 
     // Home
     home_hero_title: "Fahami Al-Quran, kata demi kata",

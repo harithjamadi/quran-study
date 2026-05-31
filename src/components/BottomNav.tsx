@@ -17,6 +17,7 @@ import { useHydrated } from "@/lib/use-hydrated";
 export function BottomNav() {
   const pathname = usePathname();
   const language = useLearning((s) => s.language);
+  const setHasSeenTutorial = useLearning((s) => s.setHasSeenTutorial);
   const hydrated = useHydrated();
   const [moreOpen, setMoreOpen] = useState(false);
   const t = UI_STRINGS[language];
@@ -100,6 +101,22 @@ export function BottomNav() {
                 );
               })}
             </ul>
+
+            <div className="mt-1 border-t border-[color:var(--border)] pt-1">
+              <button
+                type="button"
+                onClick={() => {
+                  setMoreOpen(false);
+                  setHasSeenTutorial(false);
+                }}
+                className="flex w-full items-center gap-3.5 rounded-[var(--radius)] px-3.5 py-3.5 text-[color:var(--foreground)] transition-colors hover:bg-[color:var(--border)]/40"
+              >
+                <span className="grid h-9 w-9 shrink-0 place-items-center rounded-xl bg-[color:var(--border)]/50 text-[color:var(--muted-strong)]">
+                  <IconHelp />
+                </span>
+                <span className="text-[15px] font-medium">{t.tut_replay}</span>
+              </button>
+            </div>
           </div>
         </div>
       )}
@@ -233,6 +250,16 @@ function IconBookmark({ active }: { active: boolean }) {
   return (
     <svg viewBox="0 0 24 24" width="19" height="19" fill={active ? "currentColor" : "none"} stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
       <path d="M6 3h12v18l-6-4.5L6 21V3Z" />
+    </svg>
+  );
+}
+
+function IconHelp() {
+  return (
+    <svg viewBox="0 0 24 24" width="19" height="19" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
+      <circle cx="12" cy="12" r="9" />
+      <path d="M9.2 9.2a2.8 2.8 0 0 1 5.4 1c0 1.8-2.6 2.2-2.6 4" />
+      <path d="M12 17.5h.01" />
     </svg>
   );
 }

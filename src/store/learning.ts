@@ -35,6 +35,7 @@ interface LearningState {
   lemmas: Record<string, LemmaState>;
   language: Language;
   hasChosenLanguage: boolean;
+  hasSeenTutorial: boolean;
   introducedThroughRank: number;
   xp: number;
   lastSessionDate: string | null;
@@ -73,6 +74,7 @@ interface LearningState {
   advanceIntroducedTo: (rank: number) => void;
   setLanguage: (l: Language) => void;
   setHasChosenLanguage: (v: boolean) => void;
+  setHasSeenTutorial: (v: boolean) => void;
   resetProgress: () => void;
   statusOf: (lemma: string) => WordStatus;
   recordSurahStar: (surahNumber: number, level: 1 | 2 | 3) => void;
@@ -85,6 +87,7 @@ const DEFAULTS = {
   lemmas: {} as Record<string, LemmaState>,
   language: "en" as Language,
   hasChosenLanguage: false,
+  hasSeenTutorial: false,
   introducedThroughRank: 0,
   xp: 0,
   lastSessionDate: null as string | null,
@@ -180,6 +183,7 @@ export const useLearning = create<LearningState>()(
         }
       },
       setHasChosenLanguage: (v) => set({ hasChosenLanguage: v }),
+      setHasSeenTutorial: (v) => set({ hasSeenTutorial: v }),
       resetProgress: () => {
         const cur = get();
         set({ ...DEFAULTS, hasChosenLanguage: cur.hasChosenLanguage, language: cur.language });

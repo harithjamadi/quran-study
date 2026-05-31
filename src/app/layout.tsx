@@ -3,6 +3,7 @@ import { Fraunces, Hanken_Grotesk, Amiri_Quran } from "next/font/google";
 import "./globals.css";
 import { Nav } from "@/components/Nav";
 import { BottomNav } from "@/components/BottomNav";
+import { Tutorial } from "@/components/Tutorial";
 import { ThemeProvider } from "@/components/ThemeProvider";
 import { AudioProvider } from "@/components/AudioProvider";
 import { AudioBar } from "@/components/AudioBar";
@@ -117,6 +118,7 @@ export default function RootLayout({
             <AudioBar />
             <Footer />
             <BottomNav />
+            <Tutorial />
             <PWARegister />
           </AudioProvider>
         </ThemeProvider>
