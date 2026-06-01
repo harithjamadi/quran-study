@@ -29,6 +29,23 @@ export interface Release {
 /** Newest first. The first entry's version is the current app version. */
 export const RELEASES: Release[] = [
   {
+    version: "0.8.8",
+    date: "2026-06-01",
+    title: { en: "Tajweed memory aids & reciter choice", ms: "Bantuan hafalan tajwid & pilihan qari" },
+    entries: [
+      {
+        type: "added",
+        en: "Tajweed rules with a classic mnemonic now show it — Qalqalah (قُطْبُ جَدٍّ), Idgham bil-Ghunna (يَنْمُو), and the Ikhfa couplet — so you can memorise the letters the traditional way.",
+        ms: "Hukum tajwid yang ada bait hafalan klasik kini memaparkannya — Qalqalah (قُطْبُ جَدٍّ), Idgham Bil-Ghunnah (يَنْمُو), dan bait Ikhfa — supaya anda boleh menghafal hurufnya cara tradisional.",
+      },
+      {
+        type: "added",
+        en: "You can now choose which reciter the tajweed examples use — pick a slower qari if it's easier to follow.",
+        ms: "Anda kini boleh memilih qari untuk contoh tajwid — pilih qari yang lebih perlahan jika lebih mudah diikuti.",
+      },
+    ],
+  },
+  {
     version: "0.8.7",
     date: "2026-06-01",
     title: { en: "Faster reading & smarter search", ms: "Bacaan lebih pantas & carian lebih pintar" },

@@ -123,6 +123,25 @@ export function getSurah(number: number): SurahMeta | undefined {
   return SURAHS.find((s) => s.number === number);
 }
 
+// Cumulative ayah count before each surah, so a "surah:ayah" reference can be
+// turned into the 1-based global ayah number (1–6236) the audio CDN keys on.
+const AYAH_OFFSETS: number[] = (() => {
+  const offsets: number[] = [];
+  let sum = 0;
+  for (const s of SURAHS) {
+    offsets[s.number - 1] = sum;
+    sum += s.numberOfAyahs;
+  }
+  return offsets;
+})();
+
+/** "surah:ayah" → global ayah number (1–6236). Returns 0 for out-of-range input. */
+export function globalAyahNumber(surah: number, ayah: number): number {
+  const base = AYAH_OFFSETS[surah - 1];
+  if (base === undefined || ayah < 1) return 0;
+  return base + ayah;
+}
+
 export const SURAH_MS_TRANSLATIONS: Record<number, string> = {
   1: "Pembukaan",
   2: "Lembu Betina",

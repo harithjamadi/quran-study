@@ -31,6 +31,14 @@ export interface TajweedRule {
   colorDark: string;
   category: TajweedCategory;
   letters?: string;
+  /** Traditional memory aid for this rule's letters, where a well-known one
+   *  exists. Either the first letter of each word, or the word's own letters,
+   *  spell out the rule's set of letters. */
+  acronym?: {
+    ar: string;
+    translit: string;
+    note: { en: string; ms: string };
+  };
   condition: { en: string; ms: string };
   howToRead: { en: string; ms: string };
   /** Worked examples: each is an Arabic word/phrase, how it reads, and (where
@@ -203,6 +211,14 @@ export const TAJWEED_RULES: Record<string, TajweedRule> = {
     colorDark: "#FCA5A5",
     category: "qalqalah",
     letters: "ق ط ب ج د",
+    acronym: {
+      ar: "قُطْبُ جَدٍّ",
+      translit: "quṭbu jadd",
+      note: {
+        en: "The five qalqalah letters are gathered in the phrase قُطْبُ جَدٍّ (quṭbu jadd).",
+        ms: "Lima huruf qalqalah terkumpul dalam frasa قُطْبُ جَدٍّ (qutbu jadd).",
+      },
+    },
     condition: {
       en: "Occurs on one of the five Qalqalah letters (ق ط ب ج د) when it carries a sukun (resting state) — either in the middle of a word or at a pause.",
       ms: "Berlaku pada salah satu daripada lima huruf Qalqalah (ق ط ب ج د) apabila ia membawa sukun — sama ada di tengah perkataan atau ketika berhenti.",
@@ -267,6 +283,14 @@ export const TAJWEED_RULES: Record<string, TajweedRule> = {
     colorDark: "#5EEAD4",
     category: "noon_tanween",
     letters: "ي ن م و",
+    acronym: {
+      ar: "يَنْمُو",
+      translit: "yanmū",
+      note: {
+        en: "The four letters spell the word يَنْمُو (yanmū, \"it grows\").",
+        ms: "Empat huruf membentuk perkataan يَنْمُو (yanmu, \"ia tumbuh\").",
+      },
+    },
     condition: {
       en: "Occurs when a noon saakin or tanween is followed by one of four letters: ya (ي), noon (ن), meem (م), or waw (و).",
       ms: "Berlaku apabila nun saakin atau tanwin diikuti oleh salah satu daripada empat huruf: ya (ي), nun (ن), mim (م), atau waw (و).",
@@ -289,6 +313,14 @@ export const TAJWEED_RULES: Record<string, TajweedRule> = {
     colorDark: "#FCD34D",
     category: "noon_tanween",
     letters: "ت ث ج د ذ ز س ش ص ض ط ظ ف ق ك",
+    acronym: {
+      ar: "صِفْ ذَا ثَنَا كَمْ جَادَ شَخْصٌ قَدْ سَمَا · دُمْ طَيِّبًا زِدْ فِي تُقًى ضَعْ ظَالِمَا",
+      translit: "ṣif dhā thanā kam jāda shakhṣun qad samā · dum ṭayyiban zid fī tuqan ḍaʿ ẓālimā",
+      note: {
+        en: "A classic couplet — the first letter of each of its 15 words is one of the ikhfa letters.",
+        ms: "Bait klasik — huruf pertama setiap 15 perkataannya ialah salah satu huruf ikhfa.",
+      },
+    },
     condition: {
       en: "Occurs when a noon saakin or tanween is followed by any of the 15 Ikhfa letters (all letters not covered by Izhar, Idgham, or Iqlab).",
       ms: "Berlaku apabila nun saakin atau tanwin diikuti oleh salah satu daripada 15 huruf Ikhfa (semua huruf yang tidak diliputi oleh Izhar, Idgham, atau Iqlab).",

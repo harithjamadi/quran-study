@@ -3,6 +3,8 @@
 import Link from "next/link";
 import { useEffect, useState } from "react";
 import { useLearning } from "@/store/learning";
+import { useSettings } from "@/store/settings";
+import { RECITERS } from "@/lib/editions";
 import {
   TAJWEED_RULES,
   WAQF_SIGNS,
@@ -80,6 +82,8 @@ function groupByCategory(): Record<TajweedCategory, TajweedRule[]> {
 export function TajweedGuideClient() {
   const language = useLearning((s) => s.language);
   const ruleMastery = useLearning((s) => s.ruleMastery ?? {});
+  const reciterId = useSettings((s) => s.reciterId);
+  const setReciter = useSettings((s) => s.setReciter);
   const groups = groupByCategory();
 
   // Surface the rule the user is weakest at (min 3 attempts so the data is meaningful).
@@ -187,6 +191,38 @@ export function TajweedGuideClient() {
         </div>
       </section>
 
+      {/* Example reciter — a slower qari can be easier for beginners to follow.
+          Bound to the shared setting, so every example below uses this voice. */}
+      <section className="card p-4 flex flex-wrap items-center justify-between gap-3">
+        <div className="min-w-0">
+          <p className="text-sm font-semibold">
+            {language === "ms" ? "Qari untuk contoh" : "Reciter for examples"}
+          </p>
+          <p className="text-xs text-[color:var(--muted)]">
+            {language === "ms"
+              ? "Pilih qari yang lebih perlahan jika lebih mudah diikuti."
+              : "Pick a slower reciter if it's easier to follow."}
+          </p>
+        </div>
+        <label className="inline-flex items-center gap-2 text-sm shrink-0">
+          <span className="sr-only">
+            {language === "ms" ? "Pilih qari" : "Choose reciter"}
+          </span>
+          <select
+            value={reciterId}
+            onChange={(e) => setReciter(e.target.value)}
+            className="rounded-full border border-[color:var(--border-strong)] bg-[color:var(--surface)] px-3 py-1.5 text-sm focus:outline-none focus:border-[color:var(--accent)]"
+            aria-label={language === "ms" ? "Pilih qari" : "Choose reciter"}
+          >
+            {RECITERS.map((r) => (
+              <option key={r.id} value={r.id}>
+                {r.name}
+              </option>
+            ))}
+          </select>
+        </label>
+      </section>
+
       {/* Categories */}
       {CATEGORY_ORDER.map((cat) => {
         const rules = groups[cat];
@@ -282,6 +318,22 @@ function RuleCard({
           </span>
           <p className="arabic text-lg leading-loose" lang="ar" dir="rtl" style={{ color: rule.color }}>
             {rule.letters}
+          </p>
+        </div>
+      )}
+
+      {rule.acronym && (
+        <div className="rounded-xl border border-dashed border-[color:var(--border-strong)] px-3 py-2.5">
+          <p className="text-[10px] uppercase tracking-widest text-[color:var(--muted)] font-bold mb-1">
+            {language === "ms" ? "Cara Hafal" : "Memory Aid"}
+          </p>
+          <p className="arabic text-xl leading-loose text-[color:var(--foreground)]" lang="ar" dir="rtl">
+            {rule.acronym.ar}
+          </p>
+          <p className="text-xs text-[color:var(--muted)] mt-1 leading-relaxed">
+            <span className="italic">{rule.acronym.translit}</span>
+            <span className="mx-1.5 opacity-50">·</span>
+            <span>{rule.acronym.note[language]}</span>
           </p>
         </div>
       )}
@@ -449,13 +501,14 @@ function VersePlayer({
   language: Language;
 }) {
   const { playing, currentTime, duration } = useExampleVerseState(id);
+  const reciterId = useSettings((s) => s.reciterId);
   const max = duration || 0;
 
   return (
     <div className="mt-3 flex items-center gap-3">
       <button
         type="button"
-        onClick={() => toggleExampleVerse(id, surah, ayah)}
+        onClick={() => toggleExampleVerse(id, surah, ayah, reciterId)}
         className="grid h-9 w-9 shrink-0 place-items-center rounded-full border transition-colors"
         style={
           playing

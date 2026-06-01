@@ -1,24 +1,23 @@
 /**
  * Singleton verse player for the tajweed guide's examples.
  *
- * Plays the whole verse an example is drawn from (Shaikh Mishary Alafasy) and
- * exposes a seekable timeline — current time, duration, and a seek action — so
- * the guide can render an interactive scrubber. Only one verse plays at a time
- * across the guide; every player subscribes to the same module-level state.
+ * Plays the whole verse an example is drawn from — in the reciter the learner
+ * picks (a slower qari can be easier to follow) — and exposes a seekable
+ * timeline (current time, duration, seek) so the guide can render an interactive
+ * scrubber. Only one verse plays at a time across the guide; every player
+ * subscribes to the same module-level state.
  */
 
 "use client";
 
 import { useSyncExternalStore } from "react";
+import { audioUrlForAyah } from "@/lib/api";
+import { globalAyahNumber } from "@/data/surahs";
 
 /* ── URL ────────────────────────────────────────────────────────────────── */
 
-function pad(n: number) {
-  return String(n).padStart(3, "0");
-}
-
-function verseAudioUrl(surah: number, ayah: number): string {
-  return `https://verses.quran.com/Alafasy/mp3/${pad(surah)}${pad(ayah)}.mp3`;
+function verseAudioUrl(surah: number, ayah: number, reciterId: string): string {
+  return audioUrlForAyah(globalAyahNumber(surah, ayah), reciterId);
 }
 
 /* ── Store ──────────────────────────────────────────────────────────────── */
@@ -76,11 +75,19 @@ function ensureAudio(): HTMLAudioElement | null {
  * - Same example + paused → resume (restart if it had ended)
  * - Different example → load that verse and play from the start
  */
-export function toggleExampleVerse(id: string, surah: number, ayah: number): void {
+export function toggleExampleVerse(
+  id: string,
+  surah: number,
+  ayah: number,
+  reciterId = "ar.alafasy"
+): void {
   const a = ensureAudio();
   if (!a) return;
 
-  if (state.id === id) {
+  const url = verseAudioUrl(surah, ayah, reciterId);
+
+  // Same example *and* same reciter → pause/resume in place.
+  if (state.id === id && a.src === url) {
     if (a.paused) {
       if (a.duration && a.currentTime >= a.duration - 0.05) {
         a.currentTime = 0;
@@ -93,8 +100,9 @@ export function toggleExampleVerse(id: string, surah: number, ayah: number): voi
     return;
   }
 
+  // New example, or the reciter changed → load the verse fresh from the start.
   a.pause();
-  a.src = verseAudioUrl(surah, ayah);
+  a.src = url;
   a.currentTime = 0;
   setState({ id, playing: false, currentTime: 0, duration: 0 });
   a.load();

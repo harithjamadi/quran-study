@@ -8,6 +8,17 @@ The user-facing version of this list lives in `src/lib/changelog.ts` and is
 shown in-app at `/changelog` (linked from the footer and the mobile "More"
 menu). Keep the two in sync when cutting a release.
 
+## [0.8.8] — 2026-06-01
+
+### Added
+- **Tajweed memory aids.** Rules with a well-known mnemonic now display it in the
+  card: Qalqalah (`قُطْبُ جَدٍّ`), Idgham bil-Ghunna (`يَنْمُو` — the word *is* the
+  four letters), and the classic 15-word Ikhfa couplet.
+- **Reciter choice for examples.** A reciter selector at the top of the guide
+  drives every example's audio, so beginners can pick a slower qari. The example
+  player now uses the islamic.network CDN (same as the reader) with all 8
+  reciters, via a new `globalAyahNumber()` surah:ayah → 1–6236 mapping.
+
 ## [0.8.7] — 2026-06-01
 
 ### Changed
