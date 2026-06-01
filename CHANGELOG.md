@@ -8,6 +8,16 @@ The user-facing version of this list lives in `src/lib/changelog.ts` and is
 shown in-app at `/changelog` (linked from the footer and the mobile "More"
 menu). Keep the two in sync when cutting a release.
 
+## [0.9.0] — 2026-06-01
+
+### Added
+- **Daily Quest.** The Learn dashboard now shows a daily review goal with a
+  progress bar, a completion state, and your streak flame. The goal is adjustable
+  (5–30 words/day) via a new `dailyGoal` in the learning store. Everything stays
+  **on-device** — no accounts, no backend (a cross-user leaderboard is
+  intentionally deferred to preserve the privacy model). Streak tracking
+  (`dayStreak` / `reviewedToday`) was already wired; this surfaces it as a quest.
+
 ## [0.8.9] — 2026-06-01
 
 ### Added

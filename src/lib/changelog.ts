@@ -29,6 +29,18 @@ export interface Release {
 /** Newest first. The first entry's version is the current app version. */
 export const RELEASES: Release[] = [
   {
+    version: "0.9.0",
+    date: "2026-06-01",
+    title: { en: "Daily Quest & streaks", ms: "Misi Harian & streak" },
+    entries: [
+      {
+        type: "added",
+        en: "A Daily Quest on the Learn dashboard — hit your daily review goal to keep your streak alive. Set the goal that suits you (5–30 words a day).",
+        ms: "Misi Harian di papan pemuka Belajar — capai matlamat ulang kaji harian untuk mengekalkan streak anda. Tetapkan matlamat yang sesuai (5–30 perkataan sehari).",
+      },
+    ],
+  },
+  {
     version: "0.8.9",
     date: "2026-06-01",
     title: { en: "Intensive review for weak words", ms: "Ulang kaji intensif untuk perkataan lemah" },

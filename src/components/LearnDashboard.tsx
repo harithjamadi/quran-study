@@ -8,6 +8,7 @@ import {
   comprehensionPct,
   effectiveGloss,
   isDue,
+  localDateKey,
   statusOf,
   type CoverageData,
   type LemmaMeta,
@@ -125,6 +126,9 @@ export function LearnDashboard({ previewLemmas, coverage }: Props) {
         <Stat label={t.dash_streak} value={dayStreak} tone={dayStreak > 0 ? "gold" : "muted"} hint={`${reviewedToday} ${t.dash_reviewed_today}`} icon={<IconFlame />} />
       </section>
 
+      {/* ── Daily quest ── */}
+      <DailyQuest />
+
       {/* ── Primary actions ── */}
       <section className="grid sm:grid-cols-2 gap-3 sm:gap-4">
         <ActionCard
@@ -219,6 +223,106 @@ export function LearnDashboard({ previewLemmas, coverage }: Props) {
         )}
       </section>
     </div>
+  );
+}
+
+function DailyQuest() {
+  const language = useLearning((s) => s.language);
+  const reviewedToday = useLearning((s) => s.reviewedToday);
+  const lastSessionDate = useLearning((s) => s.lastSessionDate);
+  const dayStreak = useLearning((s) => s.dayStreak);
+  const dailyGoal = useLearning((s) => s.dailyGoal);
+  const setDailyGoal = useLearning((s) => s.setDailyGoal);
+
+  // `reviewedToday` only refreshes on the first review of a new day, so guard it:
+  // if the last session wasn't today, today's progress is 0.
+  const todayCount = lastSessionDate === localDateKey() ? reviewedToday : 0;
+  const goal = dailyGoal || 10;
+  const done = Math.min(todayCount, goal);
+  const pct = Math.min(100, (done / goal) * 100);
+  const complete = todayCount >= goal;
+
+  return (
+    <section
+      className={`relative overflow-hidden rounded-[var(--radius-lg)] border p-5 sm:p-6 ${
+        complete
+          ? "border-[color:var(--gold)]/40 bg-gradient-to-br from-[color:var(--gold-soft)] to-[color:var(--surface)]"
+          : "border-[color:var(--border)] bg-[color:var(--surface)]"
+      }`}
+    >
+      <div className="flex items-start justify-between gap-4">
+        <div className="min-w-0">
+          <p className="eyebrow text-[color:var(--gold-strong)] dark:text-[color:var(--gold)] mb-1">
+            {language === "ms" ? "Misi Harian" : "Daily Quest"}
+          </p>
+          <p className="display text-[length:var(--text-xl)]" style={{ fontWeight: 600 }}>
+            {complete
+              ? language === "ms"
+                ? "Misi selesai! 🎉"
+                : "Quest complete! 🎉"
+              : language === "ms"
+                ? `Ulang kaji ${goal} perkataan hari ini`
+                : `Review ${goal} words today`}
+          </p>
+        </div>
+        <span className="inline-flex items-center gap-1.5 rounded-full bg-[color:var(--gold)]/15 text-[color:var(--gold-strong)] dark:text-[color:var(--gold)] px-3 py-1 text-sm font-bold shrink-0">
+          <IconFlame />
+          {dayStreak}
+          <span className="text-[10px] font-semibold uppercase tracking-wider opacity-80">
+            {language === "ms" ? "hari" : dayStreak === 1 ? "day" : "days"}
+          </span>
+        </span>
+      </div>
+
+      <div className="mt-4">
+        <div className="flex items-center justify-between text-xs text-[color:var(--muted)] mb-1.5 tabular-nums font-semibold">
+          <span>
+            {done} / {goal}
+          </span>
+          <span>{Math.round(pct)}%</span>
+        </div>
+        <div className="relative h-2.5 rounded-full bg-[color:var(--border)] overflow-hidden">
+          <div
+            className="absolute inset-y-0 left-0 rounded-full transition-[width] duration-700 ease-out"
+            style={{ width: `${pct}%`, background: "linear-gradient(90deg, var(--gold) 0%, var(--accent) 100%)" }}
+          />
+        </div>
+      </div>
+
+      <div className="mt-4 flex flex-wrap items-center justify-between gap-3">
+        {complete ? (
+          <p className="text-sm text-[color:var(--muted-strong)]">
+            {language === "ms"
+              ? `Streak anda kini ${dayStreak} hari. Kembali esok untuk menyambungnya!`
+              : `Your streak is ${dayStreak} ${dayStreak === 1 ? "day" : "days"}. Come back tomorrow to keep it going!`}
+          </p>
+        ) : (
+          <Link
+            href="/learn/session"
+            className="inline-flex items-center gap-2 rounded-full bg-[color:var(--accent)] text-white px-5 py-2 text-sm font-semibold hover:bg-[color:var(--accent-strong)] transition-colors"
+          >
+            {language === "ms" ? "Teruskan misi" : "Continue quest"}
+            <span aria-hidden>→</span>
+          </Link>
+        )}
+
+        <label className="inline-flex items-center gap-2 text-xs text-[color:var(--muted)]">
+          <span>{language === "ms" ? "Matlamat" : "Goal"}</span>
+          <select
+            value={goal}
+            onChange={(e) => setDailyGoal(Number(e.target.value))}
+            className="rounded-full border border-[color:var(--border-strong)] bg-[color:var(--surface)] px-2.5 py-1 text-xs focus:outline-none focus:border-[color:var(--accent)]"
+            aria-label={language === "ms" ? "Tetapkan matlamat harian" : "Set daily goal"}
+          >
+            {[5, 10, 15, 20, 30].map((n) => (
+              <option key={n} value={n}>
+                {n}
+              </option>
+            ))}
+          </select>
+        </label>
+      </div>
+    </section>
   );
 }
 

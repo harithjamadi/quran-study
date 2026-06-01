@@ -41,6 +41,8 @@ interface LearningState {
   lastSessionDate: string | null;
   dayStreak: number;
   reviewedToday: number;
+  /** Daily quest target — number of reviews that completes the day's quest. */
+  dailyGoal: number;
   /**
    * Stars earned per surah number. Value is 0–3:
    *   1 = Easy completed, 2 = Medium completed, 3 = Hard completed.
@@ -72,6 +74,7 @@ interface LearningState {
   introduce: (lemma: string, surfaceText?: string) => void;
   introduceMany: (items: SeenForm[]) => void;
   advanceIntroducedTo: (rank: number) => void;
+  setDailyGoal: (n: number) => void;
   setLanguage: (l: Language) => void;
   setHasChosenLanguage: (v: boolean) => void;
   setHasSeenTutorial: (v: boolean) => void;
@@ -93,6 +96,7 @@ const DEFAULTS = {
   lastSessionDate: null as string | null,
   dayStreak: 0,
   reviewedToday: 0,
+  dailyGoal: 10,
   surahStars: {} as Record<number, number>,
   tajweedStars: {} as Record<number, number>,
   ruleMastery: {} as Record<string, TajweedRuleMastery>,
@@ -141,6 +145,7 @@ export const useLearning = create<LearningState>()(
         }
       },
       addXp: (amount) => set((s) => ({ xp: s.xp + amount })),
+      setDailyGoal: (n) => set({ dailyGoal: Math.min(50, Math.max(5, Math.round(n))) }),
       introduce: (lemma, surfaceText) => {
         const cur = get();
         const lemmaPatch = cur.lemmas[lemma]
