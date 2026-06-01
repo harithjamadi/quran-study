@@ -6,6 +6,7 @@ import { UI_STRINGS } from "@/lib/i18n";
 import type { SurahMeta } from "@/lib/types";
 import { SurahCard } from "@/components/SurahCard";
 import { classNames } from "@/lib/format";
+import { surahMatches } from "@/lib/search";
 
 type Filter = "all" | "Meccan" | "Medinan";
 
@@ -16,16 +17,9 @@ export function SurahsList({ surahs }: { surahs: SurahMeta[] }) {
   const [filter, setFilter] = useState<Filter>("all");
 
   const filtered = useMemo(() => {
-    const needle = q.trim().toLowerCase();
     return surahs.filter((s) => {
       if (filter !== "all" && s.revelationType !== filter) return false;
-      if (!needle) return true;
-      return (
-        String(s.number) === needle ||
-        s.englishName.toLowerCase().includes(needle) ||
-        s.englishNameTranslation.toLowerCase().includes(needle) ||
-        s.name.includes(needle)
-      );
+      return surahMatches(s, q);
     });
   }, [surahs, q, filter]);
 

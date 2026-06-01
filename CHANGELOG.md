@@ -8,6 +8,18 @@ The user-facing version of this list lives in `src/lib/changelog.ts` and is
 shown in-app at `/changelog` (linked from the footer and the mobile "More"
 menu). Keep the two in sync when cutting a release.
 
+## [0.8.7] — 2026-06-01
+
+### Changed
+- **Switching translation is now instant.** The reader swaps the translation
+  client-side (observing the settings store) instead of navigating to a new URL
+  and re-running the server — no more lag, and audio state is preserved. Only the
+  newly-selected translation edition is fetched; the Arabic text is never reloaded.
+- **Surah search now tolerates romanization variants.** Queries are normalized
+  (fold w/u, e/i, o/u and collapse doubled letters) so "yasin" / "yaseen" /
+  "yasiin" all match Yaseen and "kauthar" matches Al-Kawthar. Number and
+  Arabic-script queries still work.
+
 ## [0.8.6] — 2026-06-01
 
 ### Added

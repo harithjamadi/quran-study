@@ -31,6 +31,9 @@ export function SurahReaderClient({
   const language = useLearning((s) => s.language);
   const persistedTranslationId = useSettings((s) => s.translationId);
   const setTranslation = useSettings((s) => s.setTranslation);
+
+  const langDefault = language === "ms" ? "ms.basmeih" : "en.sahih";
+
   const [data, setData] = useState<{ arabic: SurahEdition; trans?: SurahEdition } | null>(
     initialArabic ? { arabic: initialArabic, trans: initialTrans ?? undefined } : null
   );
@@ -41,9 +44,27 @@ export function SurahReaderClient({
   );
   const [error, setError] = useState(false);
 
+  // Adopt an explicit ?translation= (shared link / SSR prefetch) as the user's
+  // preference once; afterwards the persisted store drives the active edition,
+  // so the picker can swap translations client-side — no navigation, no remount,
+  // no server round-trip (that round-trip is what used to make switching lag).
+  const adoptedParam = useRef(false);
+
+  // Active translation — derived straight from the persisted store (the single
+  // source of truth), so swapping it re-runs only the client fetch below.
+  const translationId = persistedTranslationId || langDefault;
+
+  useEffect(() => {
+    if (!hydrated || adoptedParam.current) return;
+    adoptedParam.current = true;
+    if (translationParam && translationParam !== persistedTranslationId) {
+      setTranslation(translationParam);
+    }
+  }, [hydrated, translationParam, persistedTranslationId, setTranslation]);
+
+  // Follow language changes when the user hasn't pinned a translation via URL.
   const lastSyncedLanguage = useRef<string | null>(null);
   useEffect(() => {
-    // Only sync once per language value — prevents overwriting a manual translation choice.
     if (!hydrated || translationParam) return;
     if (lastSyncedLanguage.current === language) return;
     lastSyncedLanguage.current = language;
@@ -54,29 +75,38 @@ export function SurahReaderClient({
     }
   }, [hydrated, language, persistedTranslationId, translationParam, setTranslation]);
 
-  const translationId = translationParam || persistedTranslationId || (language === "ms" ? "ms.basmeih" : "en.sahih");
-
   useEffect(() => {
-    // Server already prefetched this exact translation — no round-trip needed.
+    // Don't fetch against the pre-hydration default — wait for the real store.
+    if (!hydrated) return;
+    // An unadopted URL param means the store hasn't caught up to a shared link
+    // yet; skip this stale fetch and let the adopt effect set the store first.
+    if (translationParam && !adoptedParam.current && translationParam !== translationId) return;
+    // Server (or a previous swap) already loaded this exact translation.
     if (loadedTranslationId.current === translationId) return;
 
+    // If we already hold the Arabic, fetch only the new translation edition so
+    // the Arabic text never reloads and the verses don't blank out mid-swap.
+    const haveArabic = Boolean(data?.arabic);
+    const editions = haveArabic ? [translationId] : [ARABIC_EDITION, translationId];
+
     let active = true;
-    getSurahWithEditions(surahNumber, [ARABIC_EDITION, translationId])
-      .then((editions) => {
+    getSurahWithEditions(surahNumber, editions)
+      .then((eds) => {
         if (!active) return;
-        const arabic = editions.find((e) => e.edition?.identifier === ARABIC_EDITION) ?? editions[0];
-        const trans = editions.find((e) => e.edition?.identifier === translationId);
+        const arabic =
+          eds.find((e) => e.edition?.identifier === ARABIC_EDITION) ?? data?.arabic ?? eds[0];
+        const trans = eds.find((e) => e.edition?.identifier === translationId);
         loadedTranslationId.current = translationId;
         setData({ arabic, trans });
       })
       .catch(() => {
         if (!active) return;
-        // Only surface a hard error when we have nothing to show; a failed
-        // translation swap shouldn't blank out already-rendered verses.
+        // A failed swap shouldn't blank already-rendered verses; only hard-fail
+        // when we have nothing to show.
         if (loadedTranslationId.current === null) setError(true);
       });
     return () => { active = false; };
-  }, [surahNumber, translationId]);
+  }, [hydrated, translationParam, surahNumber, translationId, data]);
 
   if (!hydrated || !data) {
     if (error) {

@@ -1,7 +1,5 @@
 "use client";
 
-import { useRouter } from "next/navigation";
-import { useEffect, useRef } from "react";
 import { TRANSLATIONS } from "@/lib/editions";
 import { useSettings } from "@/store/settings";
 
@@ -11,24 +9,18 @@ interface Props {
 }
 
 export function TranslationPicker({ current, surahNumber }: Props) {
-  const router = useRouter();
   const setTranslation = useSettings((s) => s.setTranslation);
-  const preferred = useSettings((s) => s.translationId);
-  const syncedRef = useRef(false);
-
-  useEffect(() => {
-    if (syncedRef.current) return;
-    syncedRef.current = true;
-    if (preferred && preferred !== current) {
-      const qs = `?translation=${encodeURIComponent(preferred)}`;
-      router.replace(`/surah/${surahNumber}${qs}`, { scroll: false });
-    }
-  }, [preferred, current, surahNumber, router]);
 
   const onChange = (next: string) => {
+    // Update the preference only. The reader observes the store and swaps the
+    // translation client-side — no navigation, no remount, no server round-trip
+    // (that round-trip is what used to make switching lag badly).
     setTranslation(next);
-    const qs = `?translation=${encodeURIComponent(next)}`;
-    router.replace(`/surah/${surahNumber}${qs}`, { scroll: false });
+    // Keep the URL shareable without triggering a server re-render.
+    if (typeof window !== "undefined") {
+      const qs = next === "en.sahih" ? "" : `?translation=${encodeURIComponent(next)}`;
+      window.history.replaceState(null, "", `/surah/${surahNumber}${qs}`);
+    }
   };
 
   return (

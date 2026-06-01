@@ -29,6 +29,23 @@ export interface Release {
 /** Newest first. The first entry's version is the current app version. */
 export const RELEASES: Release[] = [
   {
+    version: "0.8.7",
+    date: "2026-06-01",
+    title: { en: "Faster reading & smarter search", ms: "Bacaan lebih pantas & carian lebih pintar" },
+    entries: [
+      {
+        type: "improved",
+        en: "Switching translation in the reader is now instant — it swaps in place instead of reloading the whole surah, so no more lag.",
+        ms: "Menukar terjemahan dalam pembaca kini serta-merta — ia bertukar di tempat tanpa memuat semula seluruh surah, jadi tiada lagi lag.",
+      },
+      {
+        type: "improved",
+        en: "Surah search now understands spelling variations — \"yasin\", \"yaseen\" and \"yasiin\" all find Yaseen, and \"kauthar\" finds Al-Kawthar.",
+        ms: "Carian surah kini memahami variasi ejaan — \"yasin\", \"yaseen\" dan \"yasiin\" semua menemui Yaseen, dan \"kauthar\" menemui Al-Kawthar.",
+      },
+    ],
+  },
+  {
     version: "0.8.6",
     date: "2026-06-01",
     title: { en: "Reading & guide polish", ms: "Kemasan bacaan & panduan" },
