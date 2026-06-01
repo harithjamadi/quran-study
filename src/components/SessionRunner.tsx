@@ -5,7 +5,7 @@ import Link from "next/link";
 import { Flashcard } from "@/components/Flashcard";
 import { useLearning } from "@/store/learning";
 import { UI_STRINGS } from "@/lib/i18n";
-import { isDue, statusOf, type Grade, type LemmaMeta } from "@/lib/learning";
+import { isDue, statusOf, needsIntensive, type Grade, type LemmaMeta } from "@/lib/learning";
 import { loadSurahWords } from "@/lib/words";
 
 interface Props {
@@ -188,6 +188,10 @@ export function SessionRunner({ freq, mode = "default" }: Props) {
 
   const card = queue[position];
 
+  // Teach-first when reviewing mistakes, or for any word forgotten ≥2 times.
+  const cardState = useLearning.getState().lemmas[card.lemma];
+  const intensive = mode === "weak" || needsIntensive(cardState);
+
   const onResult = (g: Grade) => {
     grade(card.lemma, g, card.root, card.sampleText);
     if (g === "again") {
@@ -214,6 +218,7 @@ export function SessionRunner({ freq, mode = "default" }: Props) {
         total={queue.length}
         card={card}
         combo={combo}
+        intensive={intensive}
       />
       <Flashcard
         key={card.lemma + position}
@@ -222,6 +227,7 @@ export function SessionRunner({ freq, mode = "default" }: Props) {
         onResult={onResult}
         onNext={onNext}
         verseWords={verseWordsCache[`${card.sampleSurah}-${card.sampleAyah}`]}
+        intensive={intensive}
       />
     </SessionFrame>
   );
@@ -267,11 +273,13 @@ function SessionHeader({
   total,
   card,
   combo,
+  intensive = false,
 }: {
   position: number;
   total: number;
   card: LemmaMeta;
   combo: number;
+  intensive?: boolean;
 }) {
   const state = useLearning((s) => s.lemmas[card.lemma]);
   const language = useLearning((s) => s.language);
@@ -285,6 +293,14 @@ function SessionHeader({
           <span>
             {t.sess_card_of.replace("{pos}", (position + 1).toString()).replace("{total}", total.toString())}
           </span>
+          {intensive && (
+            <span className="inline-flex items-center gap-1 rounded-full bg-[color:var(--gold)]/15 text-[color:var(--gold-strong)] dark:text-[color:var(--gold)] px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider">
+              <svg viewBox="0 0 24 24" width="11" height="11" fill="currentColor" aria-hidden>
+                <path d="M12 2a7 7 0 00-4 12.7V17a1 1 0 001 1h6a1 1 0 001-1v-2.3A7 7 0 0012 2zM9 20a1 1 0 001 1h4a1 1 0 001-1v-1H9v1z" />
+              </svg>
+              {language === "ms" ? "Intensif" : "Intensive"}
+            </span>
+          )}
           {combo >= 3 && (
             <span className="flex items-center gap-1 text-orange-500 font-bold animate-bounce italic">
               <svg viewBox="0 0 24 24" width="14" height="14" fill="currentColor">

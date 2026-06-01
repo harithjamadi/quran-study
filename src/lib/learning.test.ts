@@ -7,6 +7,7 @@ import {
   isConsecutiveDay,
   isDue,
   localDateKey,
+  needsIntensive,
   statusOf,
   tokensCovered,
 } from "./learning";
@@ -108,6 +109,19 @@ describe("isDue", () => {
     expect(isDue(s, NOW + 1000)).toBe(false);
     // Due after more than 10 minutes
     expect(isDue(s, NOW + 11 * 60 * 1000)).toBe(true);
+  });
+});
+
+describe("needsIntensive", () => {
+  it("is false for unseen or never-forgotten cards", () => {
+    expect(needsIntensive(undefined)).toBe(false);
+    expect(needsIntensive(freshLemmaState(NOW))).toBe(false);
+    expect(needsIntensive({ ...freshLemmaState(NOW), lapses: 1 })).toBe(false);
+  });
+
+  it("is true once a card has been forgotten twice", () => {
+    expect(needsIntensive({ ...freshLemmaState(NOW), lapses: 2 })).toBe(true);
+    expect(needsIntensive({ ...freshLemmaState(NOW), lapses: 5 })).toBe(true);
   });
 });
 

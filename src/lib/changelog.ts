@@ -29,6 +29,18 @@ export interface Release {
 /** Newest first. The first entry's version is the current app version. */
 export const RELEASES: Release[] = [
   {
+    version: "0.8.9",
+    date: "2026-06-01",
+    title: { en: "Intensive review for weak words", ms: "Ulang kaji intensif untuk perkataan lemah" },
+    entries: [
+      {
+        type: "added",
+        en: "Reviewing your mistakes now teaches before it tests. Words you keep forgetting open on a short \"understand it first\" step — meaning, root, verse context and audio — then quiz you, instead of repeating the same recall test.",
+        ms: "Mengulang kaji kesilapan kini mengajar dahulu sebelum menguji. Perkataan yang anda sering lupa akan dibuka dengan langkah \"fahami dahulu\" — makna, akar, konteks ayat dan audio — kemudian menguji anda, bukan mengulang ujian yang sama.",
+      },
+    ],
+  },
+  {
     version: "0.8.8",
     date: "2026-06-01",
     title: { en: "Tajweed memory aids & reciter choice", ms: "Bantuan hafalan tajwid & pilihan qari" },

@@ -184,6 +184,16 @@ export function statusOf(state: LemmaState | undefined): WordStatus {
   return "weak";
 }
 
+/**
+ * Whether a word should be drilled in *intensive* (teach-first) mode. A card the
+ * learner has forgotten two or more times isn't helped by yet another bare recall
+ * test — the weakness signals the word was under-explained, so we re-teach it
+ * (meaning, root, context, audio) before testing again.
+ */
+export function needsIntensive(state: LemmaState | undefined): boolean {
+  return !!state && state.lapses >= 2;
+}
+
 export function isDue(state: LemmaState | undefined, now: number = Date.now()): boolean {
   if (!state) return true;
   return state.due <= now;

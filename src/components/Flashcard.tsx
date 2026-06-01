@@ -24,6 +24,13 @@ interface Props {
    * instead of the isolated Arabic form — activated for Review-state cards only.
    */
   verseWords?: string[];
+  /**
+   * Intensive mode — for words the learner keeps getting wrong. Instead of
+   * jumping straight to recall, the card first *teaches*: it reveals the meaning,
+   * root, and verse context (with audio) so the learner understands the word,
+   * then tests. Repetition alone doesn't fix a weak word; better delivery does.
+   */
+  intensive?: boolean;
 }
 
 function shuffle<T>(arr: T[]): T[] {
@@ -48,13 +55,15 @@ function buildOptions(card: LemmaMeta, pool: LemmaMeta[], lang: Language): Lemma
   return shuffle([card, ...distractors]);
 }
 
-type Phase = "guessing" | "revealed";
+type Phase = "learning" | "guessing" | "revealed";
 
-export function Flashcard({ card, distractorPool, onResult, onNext, verseWords }: Props) {
+export function Flashcard({ card, distractorPool, onResult, onNext, verseWords, intensive = false }: Props) {
   const language = useLearning((s) => s.language);
   const t = UI_STRINGS[language];
+  const gloss = effectiveGloss(card, language);
 
-  const [phase, setPhase] = useState<Phase>("guessing");
+  // Intensive cards open on a teaching step; everything else goes straight to recall.
+  const [phase, setPhase] = useState<Phase>(intensive ? "learning" : "guessing");
   const [pickedIndex, setPickedIndex] = useState<number | null>(null);
   // Options are computed once using the language active at mount
   const [options] = useState(() => buildOptions(card, distractorPool, language));
@@ -121,6 +130,13 @@ export function Flashcard({ card, distractorPool, onResult, onNext, verseWords }
     audioRef.current.play().catch(() => undefined);
   };
 
+  // Leaving the teaching step → start the recall timer fresh so the time spent
+  // reading the explanation doesn't skew the speed-based grade.
+  const beginTest = () => {
+    startTime.current = Date.now();
+    setPhase("guessing");
+  };
+
   return (
     <div className="card-raised relative overflow-hidden p-6 sm:p-10 space-y-8 animate-fade-up transform-gpu">
       {/* Subtle gold accent — top edge */}
@@ -151,6 +167,83 @@ export function Flashcard({ card, distractorPool, onResult, onNext, verseWords }
           </span>
         </div>
       )}
+      {phase === "learning" && (
+        <div className="space-y-6 animate-fade-up">
+          <div className="text-center pt-2 sm:pt-4">
+            <p className="eyebrow mb-5 sm:mb-6 text-[color:var(--gold-strong)] dark:text-[color:var(--gold)]">
+              {language === "ms" ? "Mari fahami perkataan ini dahulu" : "Let's understand this word first"}
+            </p>
+            <p
+              className="arabic-display text-[color:var(--foreground)] transform-gpu"
+              lang="ar"
+              dir="rtl"
+              style={{ fontSize: "var(--arabic-xl)", textRendering: "geometricPrecision" }}
+            >
+              {card.sampleText}
+            </p>
+            {card.translit && (
+              <p className="mt-3 display-italic text-[color:var(--muted-strong)] text-[length:var(--text-base)] tracking-wide">
+                {card.translit}
+              </p>
+            )}
+            {gloss && (
+              <p className="mt-4 text-2xl font-bold text-[color:var(--accent-strong)]">
+                {gloss.text}
+                {gloss.secondary && (
+                  <span className="block text-sm font-medium text-[color:var(--muted)] mt-0.5">
+                    {gloss.secondary}
+                  </span>
+                )}
+              </p>
+            )}
+            <button
+              type="button"
+              onClick={replay}
+              className="mt-5 inline-flex items-center gap-2 rounded-full border border-[color:var(--border-strong)] bg-[color:var(--surface)] px-4 py-2 text-sm font-medium text-[color:var(--accent-strong)] hover:border-[color:var(--accent)] hover:bg-[color:var(--accent-soft)]/40 transition-all active:scale-95"
+              aria-label="Play audio"
+            >
+              <svg viewBox="0 0 24 24" width="14" height="14" fill="currentColor" aria-hidden>
+                <path d="M8 5l12 7-12 7z" />
+              </svg>
+              {t.flash_replay}
+            </button>
+          </div>
+
+          <div className="rounded-2xl border border-[color:var(--border)] p-5 bg-[color:var(--surface)]">
+            <div className="flex flex-wrap items-baseline gap-x-4 gap-y-2">
+              <p className="arabic text-3xl text-[color:var(--accent-strong)]" lang="ar" dir="rtl">
+                {card.lemma}
+              </p>
+              {card.root && (
+                <p className="text-sm text-[color:var(--muted)] font-medium">
+                  {t.flash_root}: <span className="arabic text-xl align-middle" lang="ar" dir="rtl">{card.root}</span>
+                </p>
+              )}
+            </div>
+            <p className="text-xs text-[color:var(--muted)] mt-3 font-medium">
+              {t.flash_first_appears} {firstRef} · {card.count.toLocaleString()}× {t.flash_in_quran}
+            </p>
+          </div>
+
+          <LemmaContext card={card} />
+
+          <button
+            onClick={beginTest}
+            className="group relative w-full overflow-hidden rounded-2xl py-5 text-lg font-bold text-white transition-all active:scale-[0.98] hover:-translate-y-0.5"
+            style={{
+              background: "linear-gradient(135deg, var(--accent) 0%, var(--accent-strong) 100%)",
+              boxShadow: "0 16px 40px -12px var(--accent-glow), inset 0 1px 0 rgba(255,255,255,0.12)",
+            }}
+          >
+            <span className="relative inline-flex items-center gap-2">
+              {language === "ms" ? "Saya faham — uji saya" : "Got it — test me"}
+              <span aria-hidden className="transition-transform duration-300 group-hover:translate-x-1.5">→</span>
+            </span>
+          </button>
+        </div>
+      )}
+
+      {phase !== "learning" && (<>
       <div className="text-center pt-2 sm:pt-4">
         <p className="eyebrow mb-5 sm:mb-6">
           {verseWords
@@ -345,6 +438,7 @@ export function Flashcard({ card, distractorPool, onResult, onNext, verseWords }
           )}
         </div>
       )}
+      </>)}
     </div>
   );
 }

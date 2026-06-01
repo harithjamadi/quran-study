@@ -8,6 +8,17 @@ The user-facing version of this list lives in `src/lib/changelog.ts` and is
 shown in-app at `/changelog` (linked from the footer and the mobile "More"
 menu). Keep the two in sync when cutting a release.
 
+## [0.8.9] — 2026-06-01
+
+### Added
+- **Intensive (teach-first) review.** Words the learner keeps getting wrong now
+  open on a teaching step — full meaning, root, verse context and audio — before
+  the recall test, instead of repeating the same multiple-choice. Triggered in
+  "Review Mistakes" (weak) mode and for any card forgotten ≥ 2 times
+  (`needsIntensive`). A new `intensive` mode on `Flashcard` adds a `learning`
+  phase before `guessing`; the recall timer resets when the test begins so the
+  speed-based grade isn't skewed by reading time.
+
 ## [0.8.8] — 2026-06-01
 
 ### Added
