@@ -4,6 +4,7 @@ import { useEffect, useMemo, useRef } from "react";
 import Link from "next/link";
 import type { SurahEdition, SurahMeta } from "@/lib/types";
 import { VerseRow } from "@/components/VerseRow";
+import { SurahPager } from "@/components/SurahPager";
 import { TranslationPicker } from "@/components/TranslationPicker";
 import { useAudio } from "@/components/AudioProvider";
 import { useBookmarks } from "@/store/bookmarks";
@@ -130,6 +131,9 @@ export function SurahReader({ meta, arabic, translation, translationId, children
           </div>
         </div>
       </section>
+
+      {/* Top jump-to-surah — mirrors the one rendered at the foot of the page. */}
+      <SurahPager current={meta.number} translationId={translationId} />
 
       {showBasmala && (
         <p className="bismillah ornament">بِسْمِ ٱللَّهِ ٱلرَّحْمَـٰنِ ٱلرَّحِيمِ</p>

@@ -29,6 +29,25 @@ export function SurahsList({ surahs }: { surahs: SurahMeta[] }) {
     });
   }, [surahs, q, filter]);
 
+  // Filter-aware empty message — names the active filter and/or query so it's
+  // clear *why* nothing showed (e.g. the Meccan/Medinan filter is on).
+  const emptyMessage = (() => {
+    const trimmed = q.trim();
+    const filterLabel =
+      filter === "Meccan" ? t.surah_meccan : filter === "Medinan" ? t.surah_medinan : null;
+    if (filterLabel && trimmed)
+      return language === "ms"
+        ? `Tiada surah ${filterLabel} sepadan dengan "${trimmed}".`
+        : `No ${filterLabel} surahs match "${trimmed}".`;
+    if (filterLabel)
+      return language === "ms" ? `Tiada surah ${filterLabel}.` : `No ${filterLabel} surahs.`;
+    if (trimmed)
+      return language === "ms"
+        ? `Tiada surah sepadan dengan "${trimmed}".`
+        : `No surahs match "${trimmed}".`;
+    return t.surah_none;
+  })();
+
   return (
     <div className="space-y-5">
       <div className="flex flex-col sm:flex-row sm:items-center gap-3">
@@ -77,7 +96,7 @@ export function SurahsList({ surahs }: { surahs: SurahMeta[] }) {
 
       {filtered.length === 0 ? (
         <div className="card p-12 text-center">
-          <p className="display-italic text-[color:var(--muted)]">{t.surah_none}</p>
+          <p className="display-italic text-[color:var(--muted)]">{emptyMessage}</p>
         </div>
       ) : (
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4">

@@ -220,6 +220,8 @@ export default function HomePage() {
           title={t.home_forever_title}
           body={t.home_forever_desc}
           icon={<IconShield />}
+          href="/analytics"
+          cta={language === "ms" ? "Lihat statistik anda" : "View your stats"}
         />
       </section>
 

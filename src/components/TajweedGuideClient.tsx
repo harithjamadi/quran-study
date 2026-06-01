@@ -18,7 +18,14 @@ import {
   useExampleVerseState,
   stopAllExampleVerses,
 } from "@/lib/example-audio";
+import { getSurah } from "@/data/surahs";
 import type { Language } from "@/lib/i18n";
+
+/** "1:1" → "Al-Fatihah 1:1" — surah names help beginners place the example. */
+function refLabel(ref: string): string {
+  const surah = getSurah(Number(ref.split(":")[0]));
+  return surah ? `${surah.englishName} ${ref}` : ref;
+}
 
 const CATEGORY_ORDER: TajweedCategory[] = [
   "qalqalah",
@@ -248,9 +255,6 @@ function RuleCard({
           </div>
           <p className="arabic text-lg text-[color:var(--muted)] mt-0.5" lang="ar" dir="rtl">{rule.name.ar}</p>
         </div>
-        <span className="font-mono text-xs px-2 py-1 rounded-full bg-[color:var(--border)]/50 text-[color:var(--muted)] shrink-0">
-          {rule.code}
-        </span>
       </div>
 
       {/* Mastery bar — only when there's signal */}
@@ -358,8 +362,8 @@ function ExampleBlock({ rule, language }: { rule: TajweedRule; language: Languag
             {example.arabic}
           </p>
           {example.ref && (
-            <span className="font-mono text-xs text-[color:var(--muted)] tabular-nums shrink-0">
-              {example.ref}
+            <span className="text-xs text-[color:var(--muted)] shrink-0">
+              {refLabel(example.ref)}
             </span>
           )}
         </div>
@@ -415,8 +419,8 @@ function ExampleVerse({
           );
         })}
       </p>
-      <span className="font-mono text-xs text-[color:var(--muted)] tabular-nums shrink-0 mt-1">
-        {refStr}
+      <span className="text-xs text-[color:var(--muted)] shrink-0 mt-1">
+        {refLabel(refStr)}
       </span>
     </div>
   );

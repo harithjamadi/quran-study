@@ -8,6 +8,24 @@ The user-facing version of this list lives in `src/lib/changelog.ts` and is
 shown in-app at `/changelog` (linked from the footer and the mobile "More"
 menu). Keep the two in sync when cutting a release.
 
+## [0.8.6] — 2026-06-01
+
+### Added
+- A **feedback / collaborate** link in the footer (mailto) so users can reach the
+  developer directly with ideas — useful while the project is early-stage.
+
+### Changed
+- Tajweed examples now **name the surah** (e.g. "An-Nas 114:1") instead of a bare
+  `surah:ayah` number, which helps beginners place the example.
+- Replaced the very long idgham shafawi example (2:249, ~60 words) with the short
+  **Surah Quraysh 106:4** (`أَطْعَمَهُم مِّن`).
+- Removed the confusing single-letter **rule code badge** (`c`, `w`, …) from the
+  tajweed rule cards — it was an internal edition code, not learner-facing.
+- **"Jump to surah"** now appears at the **top** of the reader as well as the bottom.
+- The surah list **empty state** now names the active Meccan/Medinan filter and/or
+  search term, so it's clear why nothing matched.
+- The home "Private" pillar card now links to your **analytics**.
+
 ## [0.8.5] — 2026-06-01
 
 ### Changed

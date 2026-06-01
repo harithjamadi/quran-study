@@ -29,6 +29,38 @@ export interface Release {
 /** Newest first. The first entry's version is the current app version. */
 export const RELEASES: Release[] = [
   {
+    version: "0.8.6",
+    date: "2026-06-01",
+    title: { en: "Reading & guide polish", ms: "Kemasan bacaan & panduan" },
+    entries: [
+      {
+        type: "improved",
+        en: "Tajweed examples now name the surah (e.g. \"An-Nas 114:1\") instead of a bare number, and the idgham shafawi example is now short and clear.",
+        ms: "Contoh tajwid kini menamakan surah (cth. \"An-Nas 114:1\") bukan sekadar nombor, dan contoh idgham syafawi kini pendek dan jelas.",
+      },
+      {
+        type: "improved",
+        en: "Removed the confusing single-letter code from each tajweed rule card.",
+        ms: "Membuang kod satu huruf yang mengelirukan daripada setiap kad hukum tajwid.",
+      },
+      {
+        type: "improved",
+        en: "\"Jump to surah\" now appears at the top of the reader as well as the bottom.",
+        ms: "\"Lompat ke surah\" kini muncul di bahagian atas pembaca, bukan hanya di bawah.",
+      },
+      {
+        type: "improved",
+        en: "The surah list now tells you which filter is hiding results when nothing matches.",
+        ms: "Senarai surah kini memberitahu penapis mana yang menyembunyikan hasil apabila tiada yang sepadan.",
+      },
+      {
+        type: "added",
+        en: "A feedback link so you can reach the developer directly with ideas or to collaborate.",
+        ms: "Pautan maklum balas supaya anda boleh menghubungi pembangun secara terus dengan idea atau untuk bekerjasama.",
+      },
+    ],
+  },
+  {
     version: "0.8.5",
     date: "2026-06-01",
     title: { en: "Examples in full context", ms: "Contoh dalam konteks penuh" },

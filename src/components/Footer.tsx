@@ -87,7 +87,7 @@ export function Footer() {
             </>
           )}
         </p>
-        <p className="basis-full">
+        <p className="basis-full flex flex-wrap items-center gap-x-4 gap-y-2">
           <Link
             href="/changelog"
             className="inline-flex items-center gap-1.5 font-mono tabular-nums hover:text-[color:var(--foreground)] transition-colors"
@@ -102,6 +102,15 @@ export function Footer() {
               />
             )}
           </Link>
+          <a
+            href="mailto:mubin.feedback@gmail.com?subject=Mubin%20Feedback"
+            className="inline-flex items-center gap-1.5 hover:text-[color:var(--foreground)] transition-colors"
+          >
+            <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
+              <path d="M4 4h16v12H5.2L4 17.2V4Z" />
+            </svg>
+            {language === "ms" ? "Maklum balas / kerjasama" : "Feedback / collaborate"}
+          </a>
         </p>
       </div>
     </footer>
