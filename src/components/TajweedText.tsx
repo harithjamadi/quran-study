@@ -1,6 +1,6 @@
 "use client";
 
-import { Fragment, useEffect, useRef, useState } from "react";
+import { Fragment, useEffect, useMemo, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import {
   loadTajweedSurah,
@@ -9,6 +9,7 @@ import {
 } from "@/lib/tajweed-parser";
 import {
   getTajweedRule,
+  TAJWEED_RULES,
   WAQF_SIGNS,
   type TajweedRule,
   type WaqfSign,
@@ -71,6 +72,19 @@ export function TajweedText({
       active = false;
     };
   }, [surahNumber, ayahNumber]);
+
+  // Only the rules that actually occur in THIS verse — so the legend explains
+  // the colours present and nothing else. Ordered by the rule table for stability.
+  const presentRules = useMemo(() => {
+    if (!segments) return [];
+    const codes = new Set<string>();
+    for (const seg of segments) {
+      if (!seg.code) continue;
+      const rule = getTajweedRule(seg.code);
+      if (rule) codes.add(rule.code);
+    }
+    return Object.values(TAJWEED_RULES).filter((r) => codes.has(r.code));
+  }, [segments]);
 
   // Fallback while loading or if no tajweed data exists for this surah
   if (!segments) {
@@ -184,8 +198,8 @@ export function TajweedText({
         </span>
       </div>
 
-      {/* Inline legend */}
-      <TajweedLegend language={language} />
+      {/* Inline legend — only the rules present in this verse */}
+      <TajweedLegend language={language} rules={presentRules} />
 
       {clicked && (
         <TajweedPopover
@@ -399,26 +413,32 @@ function TajweedPopover({
 
 /* ── Inline legend ──────────────────────────────────────────────────────────── */
 
-const LEGEND_RULES = [
-  { code: "q", colorKey: "#EF4444", label: { en: "Qalqalah", ms: "Qalqalah" } },
-  { code: "n", colorKey: "#60A5FA", label: { en: "Madd", ms: "Mad" } },
-  { code: "g", colorKey: "#22C55E", label: { en: "Ghunna", ms: "Ghunnah" } },
-  { code: "f", colorKey: "#F59E0B", label: { en: "Ikhfa", ms: "Ikhfa'" } },
-  { code: "a", colorKey: "#14B8A6", label: { en: "Idgham", ms: "Idgham" } },
-  { code: "h", colorKey: "#9CA3AF", label: { en: "Hamzat Wasl", ms: "Hamzat Wasl" } },
-];
+/** Short legend label — drop the parenthetical aside from the full rule name
+ *  (e.g. "Madd Tabee'i (Natural)" → "Madd Tabee'i") to keep the strip compact. */
+function legendLabel(rule: TajweedRule, language: "en" | "ms"): string {
+  return rule.name[language].replace(/\s*\(.*?\)\s*$/, "").trim();
+}
 
-function TajweedLegend({ language }: { language: "en" | "ms" }) {
+function TajweedLegend({
+  language,
+  rules,
+}: {
+  language: "en" | "ms";
+  rules: TajweedRule[];
+}) {
+  // Nothing coloured in this verse → no legend to show.
+  if (rules.length === 0) return null;
+
   return (
     <div className="flex flex-wrap gap-x-4 gap-y-1 mt-1 text-[10px] text-[color:var(--muted)] select-none">
-      {LEGEND_RULES.map(({ code, colorKey, label }) => (
-        <span key={code} className="flex items-center gap-1">
+      {rules.map((rule) => (
+        <span key={rule.code} className="flex items-center gap-1">
           <span
             className="inline-block w-2.5 h-2.5 rounded-full"
-            style={{ backgroundColor: colorKey }}
+            style={{ backgroundColor: rule.color }}
             aria-hidden
           />
-          {label[language]}
+          {legendLabel(rule, language)}
         </span>
       ))}
       <a

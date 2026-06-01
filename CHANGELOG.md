@@ -8,6 +8,16 @@ The user-facing version of this list lives in `src/lib/changelog.ts` and is
 shown in-app at `/changelog` (linked from the footer and the mobile "More"
 menu). Keep the two in sync when cutting a release.
 
+## [0.9.1] — 2026-06-02
+
+### Changed
+- **The tajweed colour key under each verse is now per-verse.** Instead of a fixed
+  six-rule strip shown on every verse, the legend is derived from the rules that
+  actually occur in that verse. This removes irrelevant entries (e.g. Qalqalah on
+  a verse with none) **and** fills the gaps the fixed key had — every colour that
+  appears (including the purple idgham variants) now has a labelled entry, so no
+  coloured letter is left unexplained. Legend dots use each rule's exact colour.
+
 ## [0.9.0] — 2026-06-01
 
 ### Added

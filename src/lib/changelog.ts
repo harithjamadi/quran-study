@@ -29,6 +29,18 @@ export interface Release {
 /** Newest first. The first entry's version is the current app version. */
 export const RELEASES: Release[] = [
   {
+    version: "0.9.1",
+    date: "2026-06-02",
+    title: { en: "Per-verse tajweed legend", ms: "Legenda tajwid ikut ayat" },
+    entries: [
+      {
+        type: "improved",
+        en: "The colour key under each verse now lists only the tajweed rules that actually appear in that verse — and every colour shown is now explained, including ones the old fixed key left out (like the purple idgham).",
+        ms: "Kunci warna di bawah setiap ayat kini menyenaraikan hanya hukum tajwid yang benar-benar ada dalam ayat itu — dan setiap warna yang dipaparkan kini diterangkan, termasuk yang tertinggal sebelum ini (seperti idgham ungu).",
+      },
+    ],
+  },
+  {
     version: "0.9.0",
     date: "2026-06-01",
     title: { en: "Daily Quest & streaks", ms: "Misi Harian & streak" },
