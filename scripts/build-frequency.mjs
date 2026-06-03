@@ -5,14 +5,18 @@
 import { promises as fs } from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
+import {
+  normalize,
+  buildGlossTables,
+  resolveGloss,
+  cleanEnGloss,
+} from "./lib/glosses.mjs";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const PROJECT_ROOT = path.resolve(__dirname, "..");
 const WORDS_DIR = path.join(PROJECT_ROOT, "public", "data", "words");
 const OUT_LEMMA = path.join(PROJECT_ROOT, "public", "data", "lemma-frequency.json");
 const OUT_COVERAGE = path.join(PROJECT_ROOT, "public", "data", "coverage.json");
-
-const normalize = (s) => s ? s.replace(/[\u064B-\u065F\u0670]/g, "") : "";
 
 // Curated Malay glosses for the most frequent lemmas in the Quran.
 // Keys are bare Arabic (no tashkeel) — normalize() is applied before lookup
@@ -22,7 +26,13 @@ const RAW_MS_GLOSSES = {
   // — Particles, prepositions, conjunctions —
   "من|P": "daripada / dari",
   "من|N": "siapa / sesiapa",
-  "إن": "sekiranya / sesungguhnya",
+  // إِنَّ (inna, with shadda) and إِنْ (in, without) are a minimal pair: the
+  // shadda is the ONLY distinguishing mark and it changes the meaning entirely
+  // (emphatic "indeed" vs conditional "if"). They are keyed with full diacritics
+  // so the exact-match layer keeps them apart — a bare "إن" key would collapse
+  // both into one (diacritic-stripping) bucket and mistranslate one of them.
+  "إِنّ": "sesungguhnya",
+  "إِن": "sekiranya / jika",
   "أن": "bahawa / untuk",
   "لا": "tidak / bukan",
   "في": "di dalam / pada",
@@ -31,6 +41,8 @@ const RAW_MS_GLOSSES = {
   "إلى": "kepada / ke arah",
   "مع": "bersama-sama",
   "ب": "dengan / pada",
+  "و": "dan",
+  "ف": "maka / lalu",
   "ل": "untuk / bagi / kepunyaan",
   "إذا": "apabila / tatkala",
   "إذ": "ketika / sewaktu",
@@ -270,13 +282,10 @@ const RAW_MS_GLOSSES = {
   "ضالين": "sesat",
 };
 
-// Map normalized keys (with POS for disambiguation) to the glosses
-const MS_GLOSSES = {};
-for (const k of Object.keys(RAW_MS_GLOSSES)) {
-  const [ar, pos] = k.split("|");
-  const key = pos ? `${normalize(ar)}|${pos}` : normalize(ar);
-  MS_GLOSSES[key] = RAW_MS_GLOSSES[k];
-}
+// Gloss-table construction and resolution live in ./lib/glosses.mjs so they can
+// be unit-tested. The exact-match layer is what keeps lexical minimal pairs such
+// as إِنَّ ("indeed") and إِنْ ("if") from collapsing into one bucket.
+const MS_TABLES = buildGlossTables(RAW_MS_GLOSSES, "MS");
 
 const RAW_EN_GLOSSES = {
   "من|P": "from / of",
@@ -300,6 +309,7 @@ const RAW_EN_GLOSSES = {
   "آمَنَ": "to believe",
   "ب": "with / by / in",
   "و": "and",
+  "ف": "so / then",
   "يَوْم": "day",
   "عَن": "from / about",
   "أَرْض": "earth / land",
@@ -318,14 +328,25 @@ const RAW_EN_GLOSSES = {
   "سَماء": "sky / heaven",
   "نَفْس": "self / soul",
   "كَفَرَ": "to disbelieve / to deny",
+
+  // — Lemmas whose first Quranic occurrence is an inflected/contextual form, so
+  //   the raw per-word gloss reads as a sentence fragment ("will be taken",
+  //   "you took"). Curated dictionary forms here keep the vocabulary cards clean.
+  //   Keyed with full diacritics so the exact-match layer hits the right lemma.
+  "أَخَذَ|V": "to take / to seize",
+  "اتَّخَذَ|V": "to take / to adopt",
+  "يُؤاخِذُ|V": "to take to task / to hold accountable",
+  "أَخْذ|N": "taking / seizure",
+  "آخِذ|N": "one who takes",
+  "مُتَّخِذ|N": "one who takes / adopts",
+  "اتِّخاذ|N": "taking / adoption",
+  "باطِن|N": "inner / hidden",
+  "باطِنَة|N": "hidden / inner",
+  "يُمَحِّصَ|V": "to purify / to test",
+  "صَغَتْ|V": "to incline / to lean",
 };
 
-const EN_GLOSSES = {};
-for (const k of Object.keys(RAW_EN_GLOSSES)) {
-  const [ar, pos] = k.split("|");
-  const key = pos ? `${normalize(ar)}|${pos}` : normalize(ar);
-  EN_GLOSSES[key] = RAW_EN_GLOSSES[k];
-}
+const EN_TABLES = buildGlossTables(RAW_EN_GLOSSES, "EN");
 
 // Source for contextual per-word Indonesian translations (~95% intelligible
 // to Malay speakers; identical for religious vocabulary). The data is keyed
@@ -412,11 +433,7 @@ async function main() {
           // 2. Indonesian per-word translation aligned at the sample occurrence
           //    (contextual, fluent, ~95% intelligible to Malay readers)
           // 3. null → UI falls back to English with an "EN" badge
-          const lemmaKey = `${normalize(w.lemma)}|${w.pos}`;
-          const textKey = `${normalize(w.text)}|${w.pos}`;
-          const curated =
-            MS_GLOSSES[lemmaKey] || MS_GLOSSES[textKey] ||
-            MS_GLOSSES[normalize(w.lemma)] || MS_GLOSSES[normalize(w.text)] || null;
+          const curated = resolveGloss(MS_TABLES, w);
 
           const idGloss = curated
             ? null
@@ -429,8 +446,9 @@ async function main() {
             root: w.root,
             pos: w.pos,
             count: 1,
-            en: EN_GLOSSES[lemmaKey] || EN_GLOSSES[textKey] ||
-                EN_GLOSSES[normalize(w.lemma)] || EN_GLOSSES[normalize(w.text)] || w.gloss,
+            // Curated glosses are already clean lemma forms — use as-is. Only the
+            // raw per-word fallback needs the leading-conjunction trim.
+            en: resolveGloss(EN_TABLES, w) ?? cleanEnGloss(w.gloss),
             ms: curated || idGloss,
             msSource: curated ? "curated" : idGloss ? "id" : null,
             translit: w.translit,
