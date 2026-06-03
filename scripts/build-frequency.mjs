@@ -270,7 +270,7 @@ const RAW_MS_GLOSSES = {
   "مَرْضِيَّة": "diredhai",
 
   // — Fatihah / very-common phrases (preserved from original) —
-  "إياك": "hanya Engkau",
+  "إياك": "hanya kepada-Mu",
   "نعبد": "kami sembah",
   "نستعين": "kami minta tolong",
   "اهدنا": "tunjukkanlah kami",

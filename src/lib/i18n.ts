@@ -175,6 +175,14 @@ export const UI_STRINGS = {
     last_resume: "Resume",
     last_verse: "verse",
 
+    // Surah reader chrome
+    read_play: "Play surah",
+    read_ayahs: "verses",
+    read_word_hint: "Tap any Arabic word to see its meaning, root, and other appearances.",
+    read_jump: "Jump to surah",
+    read_all_surahs: "All surahs",
+    read_translation: "Translation",
+
     // Surahs
     surah_title: "All surahs",
     surah_desc: "The Quran is composed of 114 chapters (surahs), arranged from longest to shortest. Each verse links to its full text, translation, and audio.",
@@ -402,6 +410,14 @@ export const UI_STRINGS = {
     last_continue: "Sambung bacaan",
     last_resume: "Teruskan",
     last_verse: "ayat",
+
+    // Surah reader chrome
+    read_play: "Main surah",
+    read_ayahs: "ayat",
+    read_word_hint: "Tekan mana-mana kata Arab untuk lihat maksud, akar, dan ayat lain yang menggunakannya.",
+    read_jump: "Lompat ke surah",
+    read_all_surahs: "Semua surah",
+    read_translation: "Terjemahan",
 
     // Surahs
     surah_title: "Semua surah",

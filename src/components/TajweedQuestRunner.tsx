@@ -1843,7 +1843,7 @@ function CompleteStage({
             href="/learn"
             className="touch-target rounded-full border border-[color:var(--border-strong)] bg-[color:var(--surface)] px-6 py-3 text-sm font-semibold hover:border-[color:var(--accent)] transition-all"
           >
-            {language === "ms" ? "Papan pemuka" : "Dashboard"}
+            {language === "ms" ? "Kembali" : "Done"}
           </Link>
         </div>
       </div>

@@ -2,6 +2,8 @@
 
 import { TRANSLATIONS } from "@/lib/editions";
 import { useSettings } from "@/store/settings";
+import { useLearning } from "@/store/learning";
+import { UI_STRINGS } from "@/lib/i18n";
 
 interface Props {
   current: string;
@@ -10,6 +12,8 @@ interface Props {
 
 export function TranslationPicker({ current, surahNumber }: Props) {
   const setTranslation = useSettings((s) => s.setTranslation);
+  const language = useLearning((s) => s.language);
+  const t = UI_STRINGS[language];
 
   const onChange = (next: string) => {
     // Update the preference only. The reader observes the store and swaps the
@@ -25,16 +29,16 @@ export function TranslationPicker({ current, surahNumber }: Props) {
 
   return (
     <label className="inline-flex items-center gap-2 text-sm">
-      <span className="text-[color:var(--muted)]">Translation</span>
+      <span className="text-[color:var(--muted)]">{t.read_translation}</span>
       <select
         value={current}
         onChange={(e) => onChange(e.target.value)}
         className="rounded-full border border-[color:var(--border)] bg-[color:var(--surface)] px-3 py-1.5 text-sm focus:outline-none focus:border-[color:var(--accent)]"
         aria-label="Choose translation"
       >
-        {TRANSLATIONS.map((t) => (
-          <option key={t.id} value={t.id}>
-            {t.language} — {t.label}
+        {TRANSLATIONS.map((opt) => (
+          <option key={opt.id} value={opt.id}>
+            {opt.language} — {opt.label}
           </option>
         ))}
       </select>

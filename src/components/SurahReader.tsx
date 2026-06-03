@@ -9,6 +9,8 @@ import { TranslationPicker } from "@/components/TranslationPicker";
 import { useAudio } from "@/components/AudioProvider";
 import { useBookmarks } from "@/store/bookmarks";
 import { useSettings } from "@/store/settings";
+import { useLearning } from "@/store/learning";
+import { UI_STRINGS } from "@/lib/i18n";
 import { toArabicDigits } from "@/lib/format";
 
 interface Props {
@@ -23,6 +25,8 @@ export function SurahReader({ meta, arabic, translation, translationId, children
   const { setQueue, current, playAyah } = useAudio();
   const setLastRead = useBookmarks((s) => s.setLastRead);
   const wordStudyMode = useSettings((s) => s.wordStudyMode);
+  const language = useLearning((s) => s.language);
+  const t = UI_STRINGS[language];
 
   const queue = useMemo(
     () =>
@@ -114,8 +118,9 @@ export function SurahReader({ meta, arabic, translation, translationId, children
           <h1 className="text-3xl font-semibold mt-2">{meta.englishName}</h1>
           <p className="arabic text-2xl mt-1 text-[color:var(--accent-strong)]">{meta.name}</p>
           <p className="text-sm text-[color:var(--muted)] mt-2">
-            {meta.englishNameTranslation} · {meta.revelationType} ·{" "}
-            {toArabicDigits(meta.numberOfAyahs)} verses
+            {meta.englishNameTranslation} ·{" "}
+            {meta.revelationType === "Meccan" ? t.surah_meccan : t.surah_medinan} ·{" "}
+            {toArabicDigits(meta.numberOfAyahs)} {t.read_ayahs}
           </p>
           <div className="mt-5 flex flex-wrap items-center justify-center gap-3">
             <button
@@ -125,7 +130,7 @@ export function SurahReader({ meta, arabic, translation, translationId, children
               <svg viewBox="0 0 24 24" width="14" height="14" fill="currentColor" aria-hidden>
                 <path d="M8 5l12 7-12 7z" />
               </svg>
-              Play surah
+              {t.read_play}
             </button>
             <TranslationPicker current={translationId} surahNumber={meta.number} />
           </div>
@@ -141,7 +146,7 @@ export function SurahReader({ meta, arabic, translation, translationId, children
 
       {wordStudyMode && (
         <p className="text-center text-xs text-[color:var(--muted)]">
-          Tap any Arabic word to see its meaning, root, and other appearances.
+          {t.read_word_hint}
         </p>
       )}
 
@@ -167,7 +172,7 @@ export function SurahReader({ meta, arabic, translation, translationId, children
       <nav className="flex items-center justify-between pt-6">
         <PrevNext surahNumber={meta.number} dir="prev" translationId={translationId} />
         <Link href="/surahs" className="text-sm text-[color:var(--muted)] hover:underline">
-          All surahs
+          {t.read_all_surahs}
         </Link>
         <PrevNext surahNumber={meta.number} dir="next" translationId={translationId} />
       </nav>
