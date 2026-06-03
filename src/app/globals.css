@@ -553,3 +553,339 @@ textarea:focus-visible {
   /* Cards get a bit more breathing room edge-to-edge */
   .card { border-radius: var(--radius); }
 }
+
+/* ── Mushaf reader ─────────────────────────────────────────────────────────
+ * Pixel-authentic 15-line Madani page, rendered with per-page QPC v2 glyph
+ * fonts. The page is a warm "paper" surface; pages turn right-to-left like a
+ * physical Quran. */
+
+.mushaf-reader {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  margin: -0.5rem 0 0;
+}
+
+.mushaf-viewport {
+  position: relative;
+  overflow: hidden;
+  height: min(76vh, 760px);
+  border: 1px solid var(--border-strong);
+  border-radius: 1.25rem;
+  background:
+    radial-gradient(120% 80% at 50% 0%, rgba(255, 255, 255, 0.5), transparent 60%),
+    var(--surface);
+  box-shadow: 0 10px 30px -16px rgba(0, 0, 0, 0.3);
+  touch-action: pan-y;
+  user-select: none;
+}
+
+.mushaf-slide {
+  position: absolute;
+  inset: 0;
+  will-change: transform;
+}
+
+.mushaf-canvas {
+  width: 100%;
+  height: 100%;
+  padding: clamp(0.75rem, 3vw, 2rem) clamp(0.85rem, 3.5vw, 2.25rem);
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  overflow-y: auto;
+  overflow-x: hidden;
+}
+
+.mushaf-lines {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 0.15em;
+  width: 100%;
+  color: var(--foreground);
+  transition: opacity 160ms ease;
+}
+
+.mushaf-line {
+  display: block;
+  text-align: center;
+  line-height: 1.85;
+  letter-spacing: 0;
+}
+.mushaf-line-inner {
+  display: inline-block;
+  white-space: nowrap;
+}
+
+.mushaf-word {
+  cursor: pointer;
+  border-radius: 4px;
+  transition: background-color 120ms ease, color 120ms ease;
+}
+.mushaf-word.mushaf-end { color: var(--accent-strong); }
+.mushaf-word:hover { color: var(--accent-strong); }
+.mushaf-word-active,
+.mushaf-verse-active {
+  background-color: var(--accent-soft);
+  color: var(--accent-strong);
+  border-radius: 6px;
+}
+
+.mushaf-surah-header {
+  display: flex;
+  justify-content: center;
+  margin: 0.35em auto;
+  width: 100%;
+}
+.mushaf-surah-frame {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0.2em 2.2em;
+  border: 1.5px solid var(--accent);
+  border-radius: 999px;
+  background:
+    linear-gradient(0deg, var(--accent-soft), transparent),
+    var(--surface-raised);
+  color: var(--accent-strong);
+  box-shadow: inset 0 0 0 3px var(--surface-raised), 0 1px 0 var(--border-strong);
+}
+.mushaf-surah-frame .arabic {
+  font-size: clamp(1.05rem, 0.9rem + 1.2vw, 1.5rem);
+  line-height: 1.6;
+}
+.mushaf-bism {
+  text-align: center;
+  color: var(--foreground-soft);
+  font-size: clamp(1.1rem, 0.9rem + 1.6vw, 1.7rem);
+  margin: 0.1em 0 0.3em;
+  line-height: 1.9;
+}
+
+.mushaf-flow {
+  width: 100%;
+  text-align: justify;
+  line-height: 2.15;
+  color: var(--foreground);
+}
+.mushaf-verse { cursor: pointer; }
+.mushaf-uthmani { font-size: clamp(1.4rem, 1rem + 2.4vw, 2.1rem); }
+.mushaf-ayah-num {
+  display: inline-block;
+  margin: 0 0.35em;
+  font-size: 0.62em;
+  color: var(--accent-strong);
+  background: var(--accent-soft);
+  border-radius: 999px;
+  padding: 0.05em 0.55em;
+  vertical-align: middle;
+}
+
+.mushaf-loading { display: grid; place-items: center; height: 100%; }
+
+.mushaf-edge {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  width: clamp(2.2rem, 9vw, 3.5rem);
+  display: grid;
+  place-items: center;
+  font-size: 1.8rem;
+  color: var(--muted);
+  background: transparent;
+  opacity: 0.55;
+  transition: opacity 140ms ease, color 140ms ease;
+}
+.mushaf-edge:hover:not(:disabled) { opacity: 1; color: var(--accent-strong); }
+.mushaf-edge:disabled { opacity: 0.15; cursor: default; }
+.mushaf-edge-left { left: 0; }
+.mushaf-edge-right { right: 0; }
+
+.mushaf-toolbar {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.4rem 0.5rem;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  background: var(--surface);
+  box-shadow: 0 8px 24px -16px rgba(0, 0, 0, 0.3);
+}
+.mushaf-tool {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  padding: 0.5rem 0.7rem;
+  border-radius: 999px;
+  color: var(--foreground-soft);
+  font-size: 0.82rem;
+  font-weight: 600;
+}
+.mushaf-tool:hover { background: var(--border); }
+.mushaf-pagepill {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  line-height: 1.15;
+  padding: 0.25rem 0.5rem;
+  border-radius: 0.75rem;
+}
+.mushaf-pagepill:hover { background: var(--border); }
+.mushaf-pagepill-main { font-weight: 700; font-size: 0.95rem; }
+.mushaf-pagepill-sub {
+  font-size: 0.7rem;
+  color: var(--muted);
+  max-width: 48vw;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.mushaf-modes {
+  display: inline-flex;
+  padding: 0.15rem;
+  gap: 0.1rem;
+  background: var(--background);
+  border-radius: 999px;
+  border: 1px solid var(--border);
+}
+.mushaf-mode {
+  padding: 0.35rem 0.6rem;
+  border-radius: 999px;
+  font-size: 0.74rem;
+  font-weight: 600;
+  color: var(--muted);
+}
+.mushaf-mode.is-active { background: var(--accent); color: #fff; }
+
+.mushaf-sheet-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 70;
+  background: rgba(0, 0, 0, 0.42);
+  backdrop-filter: blur(2px);
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  animation: fade-in 160ms ease;
+}
+.mushaf-sheet {
+  width: 100%;
+  max-width: 34rem;
+  max-height: 82vh;
+  display: flex;
+  flex-direction: column;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-bottom: none;
+  border-radius: 1.25rem 1.25rem 0 0;
+  padding: 0.5rem 0.85rem calc(1rem + env(safe-area-inset-bottom));
+  box-shadow: 0 -16px 48px -18px rgba(0, 0, 0, 0.45);
+  animation: slide-up 220ms cubic-bezier(0.22, 1, 0.36, 1);
+}
+.mushaf-sheet-grip {
+  width: 2.5rem;
+  height: 0.35rem;
+  border-radius: 999px;
+  background: var(--border-strong);
+  margin: 0.35rem auto 0.6rem;
+}
+.mushaf-tabs {
+  display: flex;
+  gap: 0.25rem;
+  padding: 0.2rem;
+  background: var(--background);
+  border-radius: 999px;
+  margin-bottom: 0.6rem;
+}
+.mushaf-tab {
+  flex: 1;
+  padding: 0.5rem;
+  border-radius: 999px;
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--muted);
+}
+.mushaf-tab.is-active {
+  background: var(--surface-raised);
+  color: var(--accent-strong);
+  box-shadow: 0 1px 0 var(--border-strong);
+}
+.mushaf-sheet-body { overflow-y: auto; }
+
+.mushaf-jumplist { display: flex; flex-direction: column; }
+.mushaf-jumplist button {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.7rem 0.5rem;
+  border-bottom: 1px solid var(--border);
+  text-align: left;
+}
+.mushaf-jumplist button:hover { background: var(--accent-soft); }
+.mushaf-jump-num {
+  flex: none;
+  width: 1.9rem;
+  height: 1.9rem;
+  display: grid;
+  place-items: center;
+  font-size: 0.75rem;
+  font-weight: 700;
+  color: var(--accent-strong);
+  background: var(--accent-soft);
+  border-radius: 0.6rem;
+}
+.mushaf-jump-main { flex: 1; font-weight: 600; }
+.mushaf-jump-ar { font-size: 1.15rem; color: var(--foreground-soft); }
+
+.mushaf-juzgrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(5.5rem, 1fr));
+  gap: 0.5rem;
+}
+.mushaf-juzgrid button {
+  padding: 0.7rem 0.4rem;
+  border: 1px solid var(--border);
+  border-radius: 0.75rem;
+  font-size: 0.82rem;
+  font-weight: 600;
+}
+.mushaf-juzgrid button:hover { background: var(--accent-soft); border-color: var(--accent); }
+
+.mushaf-pageform { display: flex; flex-direction: column; gap: 0.8rem; padding: 0.5rem 0.25rem; }
+.mushaf-pageform label { font-size: 0.85rem; font-weight: 600; color: var(--foreground-soft); }
+.mushaf-pageform-row { display: flex; gap: 0.5rem; }
+.mushaf-pageform input[type="number"] {
+  flex: 1;
+  padding: 0.7rem;
+  border: 1px solid var(--border-strong);
+  border-radius: 0.75rem;
+  background: var(--surface-raised);
+  font-size: 1rem;
+}
+.mushaf-pageform-row button {
+  padding: 0.7rem 1.2rem;
+  border-radius: 0.75rem;
+  font-weight: 700;
+  background: var(--accent);
+  color: #fff;
+}
+.mushaf-pageslider { width: 100%; accent-color: var(--accent); }
+
+.mushaf-versesheet .mushaf-verse-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--foreground-soft);
+  padding: 0 0.25rem 0.5rem;
+}
+.mushaf-verse-open { color: var(--accent-strong); font-weight: 700; }
+.mushaf-verse-body { padding: 0.25rem; }
+.mushaf-verse-ar { font-size: clamp(1.7rem, 1.3rem + 3vw, 2.4rem); line-height: 2; text-align: right; margin-bottom: 0.75rem; }
+.mushaf-verse-tr { font-size: 1rem; line-height: 1.7; color: var(--foreground); }
+.mushaf-verse-edition { margin-top: 0.6rem; font-size: 0.72rem; color: var(--muted); }

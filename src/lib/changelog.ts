@@ -29,6 +29,23 @@ export interface Release {
 /** Newest first. The first entry's version is the current app version. */
 export const RELEASES: Release[] = [
   {
+    version: "0.10.0",
+    date: "2026-06-03",
+    title: { en: "Mushaf reader", ms: "Pembaca Mushaf" },
+    entries: [
+      {
+        type: "added",
+        en: "A new Mushaf — read the Quran page by page in the authentic 15-line Madani script, turning pages right-to-left like a real Quran. Jump straight to any surah, juz or page, switch between Madani, plain Uthmani and tajweed-coloured views, and tap any verse for its translation.",
+        ms: "Mushaf baharu — baca al-Quran halaman demi halaman dalam skrip Madani 15 baris yang asli, menyelak halaman dari kanan ke kiri seperti al-Quran sebenar. Lompat terus ke mana-mana surah, juzuk atau halaman, tukar antara paparan Madani, Uthmani biasa dan berwarna tajwid, dan ketik mana-mana ayat untuk terjemahannya.",
+      },
+      {
+        type: "fixed",
+        en: "Corrected the word إِنَّ (inna), which was being taught as “if” — it means “indeed / surely” (sesungguhnya). The conditional “if” is a different word, إِنْ (in). A handful of other word meanings were cleaned up and many Malay glosses repaired in the same pass.",
+        ms: "Membetulkan perkataan إِنَّ (inna) yang sebelum ini diajar sebagai “if” — maknanya “sesungguhnya”. Perkataan syarat “jika/sekiranya” ialah perkataan lain, إِنْ (in). Beberapa makna perkataan lain turut dikemas kini dan banyak makna Melayu diperbaiki sekali.",
+      },
+    ],
+  },
+  {
     version: "0.9.1",
     date: "2026-06-02",
     title: { en: "Per-verse tajweed legend", ms: "Legenda tajwid ikut ayat" },

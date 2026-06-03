@@ -8,6 +8,32 @@ The user-facing version of this list lives in `src/lib/changelog.ts` and is
 shown in-app at `/changelog` (linked from the footer and the mobile "More"
 menu). Keep the two in sync when cutting a release.
 
+## [0.10.0] — 2026-06-03
+
+### Added
+- **Mushaf reader** (`/mushaf`). A pixel-authentic 15-line Madani mushaf that
+  renders each page with its own KFGQPC v2 glyph font (lazy-loaded per page from
+  the quran.com CDN), reproducing real line breaks, justification, surah headers
+  and basmallah lines. Pages turn **right-to-left like a physical Quran** (drag
+  right for the previous page, left for the next; next arrow on the left). Jump
+  to any surah, juz or page; switch between Madani, plain Uthmani and
+  tajweed-coloured views; tap any verse for its translation. Built from
+  `scripts/build-mushaf.mjs` into per-page layout JSON under
+  `public/data/mushaf/`.
+
+### Fixed
+- **Quran word meaning: إِنَّ (inna) was being taught as "if".** It means
+  "indeed / surely" (Malay *sesungguhnya*); the conditional "if" is the separate
+  word إِنْ (*in*). Root cause: the gloss builder stripped *all* diacritics before
+  matching, collapsing the minimal pair (the only difference is the shadda) into
+  one key so "if" silently overwrote "indeed". Added an exact-match (diacritized)
+  layer with a build-time collision guard, plus unit + data-integrity tests.
+
+### Changed
+- Same pass cleaned up English glosses (stripped leading-conjunction artifacts
+  like "And when" → "when", restored clean dictionary forms for a few verbs) and
+  repaired ~500 Malay glosses the previous build had truncated.
+
 ## [0.9.1] — 2026-06-02
 
 ### Changed

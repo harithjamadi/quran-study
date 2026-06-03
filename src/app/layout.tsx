@@ -107,6 +107,11 @@ export default function RootLayout({
           href="https://audio.qurancdn.com"
           crossOrigin="anonymous"
         />
+        <link
+          rel="preconnect"
+          href="https://static.qurancdn.com"
+          crossOrigin="anonymous"
+        />
       </head>
       <body className="min-h-screen antialiased">
         <ThemeProvider>
