@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { SURAHS, getSurah, globalAyahNumber } from "@/data/surahs";
 import { getAyahWithEditions } from "@/lib/api";
 import { ARABIC_EDITION, getTranslation, RECITERS } from "@/lib/editions";
@@ -35,18 +36,46 @@ interface Props {
 }
 
 export function MushafReader({ initialPage }: Props) {
+  const router = useRouter();
   const hydrated = useHydrated();
   const language = useLearning((s) => s.language);
   const t = useMemo(() => makeStrings(language), [language]);
 
   const mushafScale = useSettings((s) => s.mushafScale);
+  const mushafLineSpacing = useSettings((s) => s.mushafLineSpacing);
 
   const [page, setPage] = useState(() => clampPage(initialPage));
-  const [mode, setMode] = useState<MushafMode>("madani");
+  // The edition lives in the persisted store so the reader always reopens the
+  // Mushaf the user last chose (Phase 1: "Choose Mushaf").
+  const mode = useSettings((s) => s.mushafEdition) as MushafMode;
+  const setMode = useSettings((s) => s.setMushafEdition);
   const [pages, setPages] = useState<Map<number, MushafPage>>(new Map());
   const [navOpen, setNavOpen] = useState(false);
   const [settingsOpen, setSettingsOpen] = useState(false);
+  const [chooseOpen, setChooseOpen] = useState(false);
   const [selectedVerse, setSelectedVerse] = useState<string | null>(null);
+  // HUD starts visible so the controls are discoverable, then a single tap on
+  // the page toggles total immersion (edge-to-edge, no chrome).
+  const [hudVisible, setHudVisible] = useState(true);
+
+  // The reader is a full-screen overlay above the app chrome — lock the body so
+  // nothing scrolls behind it, and flag immersion for any chrome that reacts.
+  useEffect(() => {
+    const prevOverflow = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    document.documentElement.classList.add("mushaf-immersive");
+    return () => {
+      document.body.style.overflow = prevOverflow;
+      document.documentElement.classList.remove("mushaf-immersive");
+    };
+  }, []);
+
+  // "Back" leaves the reader. Prefer the real history entry the user came from;
+  // fall back to the surah index for deep links / fresh tabs.
+  const goBack = useCallback(() => {
+    if (typeof window !== "undefined" && window.history.length > 2) router.back();
+    else router.push("/surahs");
+  }, [router]);
 
   // ── Load current page + prefetch neighbours ──
   useEffect(() => {
@@ -85,34 +114,55 @@ export function MushafReader({ initialPage }: Props) {
     setPage(clampPage(next));
   }, []);
 
-  // In the mushaf the page numbers increase to the LEFT (it is bound on the
-  // right and read right-to-left), so a real page-turn is: drag the sheet to the
-  // RIGHT to bring the next (higher) page in from the left. That is the gesture
-  // a physical Quran uses — the opposite of a left-to-right book.
-  const next = useCallback(() => go(page + 1), [go, page]);
-  const prev = useCallback(() => go(page - 1), [go, page]);
-
-  // ── Keyboard ──
-  useEffect(() => {
-    const onKey = (e: KeyboardEvent) => {
-      if (navOpen || selectedVerse) return;
-      if (e.key === "ArrowLeft") next();
-      else if (e.key === "ArrowRight") prev();
-    };
-    window.addEventListener("keydown", onKey);
-    return () => window.removeEventListener("keydown", onKey);
-  }, [next, prev, navOpen, selectedVerse]);
-
   // ── Drag / swipe pager ──
   const dragRef = useRef<{ x: number; y: number; dx: number; active: boolean; moved: boolean } | null>(
     null
   );
+  const committingRef = useRef(false);
   const [dragX, setDragX] = useState(0);
   const [animating, setAnimating] = useState(false);
   const viewportRef = useRef<HTMLDivElement>(null);
 
+  // Commit a page turn with a follow-through slide: the current page travels all
+  // the way off in the swipe direction and the incoming page rides into centre,
+  // THEN we swap the page state with the transform reset (invisible, since the
+  // new current sits exactly where the incoming page already was). dir = +1 means
+  // advance (swipe left → next), dir = -1 means go back (swipe right → previous).
+  const commit = useCallback(
+    (dir: 1 | -1) => {
+      const target = dir === 1 ? page + 1 : page - 1;
+      if (target < 1 || target > TOTAL_PAGES) {
+        setAnimating(true);
+        setDragX(0);
+        return;
+      }
+      const width = viewportRef.current?.clientWidth ?? window.innerWidth;
+      committingRef.current = true;
+      setAnimating(true);
+      setDragX(dir === 1 ? -width : width);
+      window.setTimeout(() => {
+        setAnimating(false);
+        setDragX(0);
+        go(target);
+        committingRef.current = false;
+      }, 260);
+    },
+    [go, page]
+  );
+
+  // ── Keyboard: ← previous, → next (matches the swipe mapping) ──
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      if (navOpen || selectedVerse) return;
+      if (e.key === "ArrowLeft") commit(-1);
+      else if (e.key === "ArrowRight") commit(1);
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [commit, navOpen, selectedVerse]);
+
   const onPointerDown = (e: React.PointerEvent) => {
-    if (navOpen || selectedVerse) return;
+    if (navOpen || selectedVerse || committingRef.current) return;
     dragRef.current = { x: e.clientX, y: e.clientY, dx: 0, active: true, moved: false };
     setAnimating(false);
   };
@@ -131,18 +181,31 @@ export function MushafReader({ initialPage }: Props) {
     d.dx = dx;
     setDragX(dx);
   };
-  const endDrag = () => {
+  const settleDrag = () => {
     const d = dragRef.current;
     dragRef.current = null;
     if (!d) return;
     const width = viewportRef.current?.clientWidth ?? window.innerWidth;
     const threshold = Math.min(120, width * 0.22);
-    setAnimating(true);
-    setDragX(0);
-    // Dragging RIGHT (dx > 0) reveals the page to the right = the PREVIOUS
-    // (lower) page; dragging LEFT advances. This matches a right-bound mushaf.
-    if (d.dx > threshold && page > 1) requestAnimationFrame(prev);
-    else if (d.dx < -threshold && page < TOTAL_PAGES) requestAnimationFrame(next);
+    // Swipe LEFT past the threshold advances (next); swipe RIGHT goes back (prev).
+    if (d.dx < -threshold) commit(1);
+    else if (d.dx > threshold) commit(-1);
+    else {
+      // Not far enough — rubber-band back to centre.
+      setAnimating(true);
+      setDragX(0);
+    }
+  };
+
+  // A clean tap (no drag) on the page background toggles the HUD. Taps that land
+  // on a word, a control, or the open sheets are left alone so they keep working.
+  const onPointerUp = (e: React.PointerEvent) => {
+    const wasTap = !!dragRef.current && !dragRef.current.moved;
+    settleDrag();
+    if (!wasTap) return;
+    const el = e.target as HTMLElement | null;
+    if (el && el.closest(".mushaf-word, button, a, input, select")) return;
+    setHudVisible((v) => !v);
   };
 
   const cur = pages.get(page) ?? null;
@@ -157,11 +220,11 @@ export function MushafReader({ initialPage }: Props) {
   const headerSurah = getSurah(curSurahs[0] ?? 0);
 
   return (
-    <div className="mushaf-reader" dir="ltr">
-      {/* ── Top header: surah context + settings ── */}
-      <div className="mushaf-header">
-        <button className="mushaf-header-btn" onClick={() => setNavOpen(true)} aria-label={t.go}>
-          <IconList />
+    <div className="mushaf-reader" dir="ltr" data-hud={hudVisible ? "true" : "false"}>
+      {/* ── Top HUD: back · surah context · settings (fades on tap) ── */}
+      <div className="mushaf-hud mushaf-hud-top">
+        <button className="mushaf-header-btn" onClick={goBack} aria-label={t.back}>
+          <IconBack />
         </button>
         <button className="mushaf-header-title" onClick={() => setNavOpen(true)}>
           {headerSurah ? (
@@ -195,13 +258,14 @@ export function MushafReader({ initialPage }: Props) {
         className="mushaf-viewport"
         onPointerDown={onPointerDown}
         onPointerMove={onPointerMove}
-        onPointerUp={endDrag}
-        onPointerCancel={endDrag}
+        onPointerUp={onPointerUp}
+        onPointerCancel={settleDrag}
         onPointerLeave={() => {
-          if (dragRef.current?.active) endDrag();
+          if (dragRef.current?.active) settleDrag();
         }}
       >
-        {/* prev page sits to the RIGHT (+100%), next to the LEFT (-100%) */}
+        {/* Standard pager: the NEXT page waits off-screen to the RIGHT (+100%)
+            so dragging LEFT brings it in; the PREVIOUS page waits to the LEFT. */}
         <div
           className="mushaf-slide"
           style={{
@@ -210,7 +274,7 @@ export function MushafReader({ initialPage }: Props) {
           }}
           aria-hidden
         >
-          {prevPage && <MushafPageView key={`p${prevPage.p}-${mode}`} page={prevPage} mode={mode} scale={mushafScale} />}
+          {nextPage && <MushafPageView key={`n${nextPage.p}-${mode}`} page={nextPage} mode={mode} scale={mushafScale} lineSpacing={mushafLineSpacing} />}
         </div>
         <div
           className="mushaf-slide"
@@ -225,6 +289,7 @@ export function MushafReader({ initialPage }: Props) {
               page={cur}
               mode={mode}
               scale={mushafScale}
+              lineSpacing={mushafLineSpacing}
               onSelectVerse={setSelectedVerse}
               activeVerse={selectedVerse}
             />
@@ -242,55 +307,53 @@ export function MushafReader({ initialPage }: Props) {
           }}
           aria-hidden
         >
-          {nextPage && <MushafPageView key={`n${nextPage.p}-${mode}`} page={nextPage} mode={mode} scale={mushafScale} />}
+          {prevPage && <MushafPageView key={`p${prevPage.p}-${mode}`} page={prevPage} mode={mode} scale={mushafScale} lineSpacing={mushafLineSpacing} />}
         </div>
 
-        {/* Edge tap arrows — next is on the LEFT (RTL paging) */}
+        {/* Edge tap arrows — left goes back, right goes forward (next). */}
         <button
           className="mushaf-edge mushaf-edge-left"
-          onClick={next}
-          disabled={page >= TOTAL_PAGES}
-          aria-label={t.next}
+          onClick={() => commit(-1)}
+          disabled={page <= 1}
+          aria-label={t.prev}
         >
           ‹
         </button>
         <button
           className="mushaf-edge mushaf-edge-right"
-          onClick={prev}
-          disabled={page <= 1}
-          aria-label={t.prev}
+          onClick={() => commit(1)}
+          disabled={page >= TOTAL_PAGES}
+          aria-label={t.next}
         >
           ›
         </button>
       </div>
 
-      {/* ── Bottom toolbar ── */}
-      <div className="mushaf-toolbar">
-        <button
-          className="mushaf-pagepill"
-          onClick={() => setNavOpen(true)}
-          aria-label={t.go}
-        >
-          <span className="mushaf-pagepill-main">
-            {t.page} {toArabicDigits(page)}
-          </span>
-          <span className="mushaf-pagepill-sub">
-            {t.juz} {cur?.juz ?? "—"}
-            {surahLabel ? ` · ${surahLabel}` : ""}
-          </span>
-        </button>
+      {/* ── Bottom HUD: page context + script modes (fades on tap) ── */}
+      <div className="mushaf-hud mushaf-hud-bottom">
+        <div className="mushaf-toolbar">
+          <button
+            className="mushaf-pagepill"
+            onClick={() => setNavOpen(true)}
+            aria-label={t.go}
+          >
+            <span className="mushaf-pagepill-main">
+              {t.page} {toArabicDigits(page)}
+            </span>
+            <span className="mushaf-pagepill-sub">
+              {t.juz} {cur?.juz ?? "—"}
+              {surahLabel ? ` · ${surahLabel}` : ""}
+            </span>
+          </button>
 
-        <div className="mushaf-modes" role="group" aria-label={t.mode}>
-          {(["madani", "uthmani", "tajweed"] as MushafMode[]).map((m) => (
-            <button
-              key={m}
-              className={"mushaf-mode" + (mode === m ? " is-active" : "")}
-              onClick={() => setMode(m)}
-              aria-pressed={mode === m}
-            >
-              {MODE_LABEL(m, language)}
-            </button>
-          ))}
+          <button
+            className="mushaf-edition-pill"
+            onClick={() => setChooseOpen(true)}
+            aria-label={t.chooseMushaf}
+          >
+            <span className="mushaf-edition-pill-name">{MODE_LABEL(mode, language)}</span>
+            <IconChevronDown />
+          </button>
         </div>
       </div>
 
@@ -302,6 +365,19 @@ export function MushafReader({ initialPage }: Props) {
           onGo={(p) => {
             setNavOpen(false);
             go(p);
+          }}
+        />
+      )}
+
+      {chooseOpen && (
+        <ChooseMushaf
+          active={mode}
+          language={language}
+          strings={t}
+          onClose={() => setChooseOpen(false)}
+          onChoose={(m) => {
+            setMode(m);
+            setChooseOpen(false);
           }}
         />
       )}
@@ -614,6 +690,8 @@ function VerseSheet({
 function MushafSettings({ strings, onClose }: { strings: Strings; onClose: () => void }) {
   const mushafScale = useSettings((s) => s.mushafScale);
   const setMushafScale = useSettings((s) => s.setMushafScale);
+  const mushafLineSpacing = useSettings((s) => s.mushafLineSpacing);
+  const setMushafLineSpacing = useSettings((s) => s.setMushafLineSpacing);
   const reciterId = useSettings((s) => s.reciterId);
   const setReciter = useSettings((s) => s.setReciter);
 
@@ -662,6 +740,23 @@ function MushafSettings({ strings, onClose }: { strings: Strings; onClose: () =>
           </div>
 
           <div className="mushaf-set-row">
+            <div className="mushaf-set-label">
+              <span>{strings.lineSpacing}</span>
+              <span className="mushaf-set-value">{mushafLineSpacing.toFixed(1)}×</span>
+            </div>
+            <input
+              type="range"
+              min={1.5}
+              max={2.6}
+              step={0.1}
+              value={mushafLineSpacing}
+              onChange={(e) => setMushafLineSpacing(Number(e.target.value))}
+              className="mushaf-pageslider"
+              aria-label={strings.lineSpacing}
+            />
+          </div>
+
+          <div className="mushaf-set-row">
             <label className="mushaf-set-label" htmlFor="mushaf-reciter">
               <span>{strings.reciter}</span>
             </label>
@@ -679,7 +774,13 @@ function MushafSettings({ strings, onClose }: { strings: Strings; onClose: () =>
             </select>
           </div>
 
-          <button className="mushaf-set-reset" onClick={() => setMushafScale(1)}>
+          <button
+            className="mushaf-set-reset"
+            onClick={() => {
+              setMushafScale(1);
+              setMushafLineSpacing(1.9);
+            }}
+          >
             {strings.reset}
           </button>
         </div>
@@ -688,12 +789,139 @@ function MushafSettings({ strings, onClose }: { strings: Strings; onClose: () =>
   );
 }
 
+/* ── Choose Mushaf: card-based edition picker ─────────────────────────────── */
+
+interface EditionMeta {
+  id: MushafMode;
+  name: { en: string; ms: string };
+  meta: { en: string; ms: string };
+  desc: { en: string; ms: string };
+  /** A short representative line, rendered in the edition's own style. */
+  sample: string;
+}
+
+const EDITIONS: EditionMeta[] = [
+  {
+    id: "madani",
+    name: { en: "Madani Mushaf", ms: "Mushaf Madani" },
+    meta: { en: "King Fahd Complex · 1405 AH · 15 lines", ms: "Kompleks Raja Fahd · 1405H · 15 baris" },
+    desc: {
+      en: "The page-accurate Madani print in authentic QPC glyphs — Ḥafṣ ʿan ʿĀṣim.",
+      ms: "Cetakan Madani tepat-halaman dengan glif QPC asli — Ḥafṣ ʿan ʿĀṣim.",
+    },
+    sample: "بِسْمِ ٱللَّهِ ٱلرَّحْمَٰنِ ٱلرَّحِيمِ",
+  },
+  {
+    id: "uthmani",
+    name: { en: "Uthmani Script", ms: "Skrip Uthmani" },
+    meta: { en: "Flowing Uthmani · reflowable", ms: "Uthmani mengalir · boleh susun semula" },
+    desc: {
+      en: "Continuous Uthmani text that reflows to fit any screen size.",
+      ms: "Teks Uthmani berterusan yang menyesuaikan setiap saiz skrin.",
+    },
+    sample: "بِسْمِ ٱللَّهِ ٱلرَّحْمَٰنِ ٱلرَّحِيمِ",
+  },
+  {
+    id: "tajweed",
+    name: { en: "Tajweed", ms: "Tajwid" },
+    meta: { en: "Colour-coded recitation rules", ms: "Hukum tajwid berkod warna" },
+    desc: {
+      en: "Every rule of recitation highlighted in colour as you read.",
+      ms: "Setiap hukum bacaan diserlahkan dengan warna semasa anda membaca.",
+    },
+    sample: "بِسْمِ ٱللَّهِ ٱلرَّحْمَٰنِ ٱلرَّحِيمِ",
+  },
+];
+
+function ChooseMushaf({
+  active,
+  language,
+  strings,
+  onChoose,
+  onClose,
+}: {
+  active: MushafMode;
+  language: "en" | "ms";
+  strings: Strings;
+  onChoose: (m: MushafMode) => void;
+  onClose: () => void;
+}) {
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => e.key === "Escape" && onClose();
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [onClose]);
+
+  return (
+    <div className="mushaf-sheet-backdrop" role="dialog" aria-modal="true" onClick={onClose}>
+      <div className="mushaf-sheet mushaf-choosesheet" onClick={(e) => e.stopPropagation()}>
+        <div aria-hidden className="mushaf-sheet-grip" />
+        <div className="mushaf-choose-head">
+          <h2>{strings.chooseMushaf}</h2>
+          <p>{strings.chooseSub}</p>
+        </div>
+        <div className="mushaf-sheet-body">
+          <ul className="mushaf-edition-list">
+            {EDITIONS.map((ed) => {
+              const isActive = ed.id === active;
+              return (
+                <li key={ed.id}>
+                  <button
+                    className={"mushaf-edition-card" + (isActive ? " is-active" : "")}
+                    onClick={() => onChoose(ed.id)}
+                    aria-pressed={isActive}
+                  >
+                    {isActive && (
+                      <span className="mushaf-edition-check" aria-hidden>
+                        <IconCheck />
+                      </span>
+                    )}
+                    <span
+                      className={
+                        "mushaf-edition-preview" + (ed.id === "tajweed" ? " is-tajweed" : "")
+                      }
+                      aria-hidden
+                    >
+                      <span className="arabic">{ed.sample}</span>
+                    </span>
+                    <span className="mushaf-edition-info">
+                      <span className="mushaf-edition-name">{ed.name[language]}</span>
+                      <span className="mushaf-edition-meta">{ed.meta[language]}</span>
+                      <span className="mushaf-edition-desc">{ed.desc[language]}</span>
+                    </span>
+                  </button>
+                </li>
+              );
+            })}
+          </ul>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 /* ── Icons ────────────────────────────────────────────────────────────────── */
 
-function IconList() {
+function IconChevronDown() {
   return (
-    <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round" aria-hidden>
-      <path d="M8 6h13M8 12h13M8 18h13M3 6h.01M3 12h.01M3 18h.01" />
+    <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
+      <path d="M6 9l6 6 6-6" />
+    </svg>
+  );
+}
+
+function IconCheck() {
+  return (
+    <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" strokeWidth="2.6" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
+      <path d="M5 12.5l4.5 4.5L19 6.5" />
+    </svg>
+  );
+}
+
+function IconBack() {
+  return (
+    <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
+      <path d="M15 18l-6-6 6-6" />
     </svg>
   );
 }
@@ -750,13 +978,17 @@ function makeStrings(lang: "en" | "ms") {
     ayah: "Ayah",
     go: "Go to",
     mode: "Script",
+    chooseMushaf: "Choose Mushaf",
+    chooseSub: "Pick the edition the reader opens with.",
     next: "Next page",
     prev: "Previous page",
+    back: "Back",
     surah: "Surah",
     openSurah: "Open in reader",
     loadError: "Couldn’t load this verse. Check your connection.",
     settings: "Settings",
     textSize: "Text size",
+    lineSpacing: "Line spacing",
     reciter: "Reciter",
     reset: "Reset",
     actions: "Verse actions",
@@ -772,13 +1004,17 @@ function makeStrings(lang: "en" | "ms") {
     ayah: "Ayat",
     go: "Pergi ke",
     mode: "Skrip",
+    chooseMushaf: "Pilih Mushaf",
+    chooseSub: "Pilih edisi yang dibuka oleh pembaca.",
     next: "Halaman seterusnya",
     prev: "Halaman sebelumnya",
+    back: "Kembali",
     surah: "Surah",
     openSurah: "Buka dalam pembaca",
     loadError: "Tidak dapat memuatkan ayat ini. Semak sambungan anda.",
     settings: "Tetapan",
     textSize: "Saiz teks",
+    lineSpacing: "Jarak baris",
     reciter: "Qari",
     reset: "Set semula",
     actions: "Tindakan ayat",

@@ -4,6 +4,10 @@ import { create } from "zustand";
 import { persist, createJSONStorage } from "zustand/middleware";
 import type { ArabicScript, ThemeMode } from "@/lib/types";
 
+/** Which Mushaf the reader renders. Persisted so the app reopens the user's
+ *  preferred edition. Matches the render modes in MushafPageView. */
+export type MushafEdition = "madani" | "uthmani" | "tajweed";
+
 interface SettingsState {
   translationId: string;
   reciterId: string;
@@ -18,6 +22,10 @@ interface SettingsState {
   tajweedMode: boolean;
   /** Mushaf reader text-size multiplier applied on top of the auto-fit size. */
   mushafScale: number;
+  /** Line-height for the Mushaf page (vertical air between lines). */
+  mushafLineSpacing: number;
+  /** The Mushaf edition the reader opens with. */
+  mushafEdition: MushafEdition;
   setTranslation: (id: string) => void;
   setReciter: (id: string) => void;
   setShowTransliteration: (v: boolean) => void;
@@ -30,6 +38,8 @@ interface SettingsState {
   setWordStudyMode: (v: boolean) => void;
   setTajweedMode: (v: boolean) => void;
   setMushafScale: (n: number) => void;
+  setMushafLineSpacing: (n: number) => void;
+  setMushafEdition: (e: MushafEdition) => void;
   reset: () => void;
 }
 
@@ -46,6 +56,8 @@ const DEFAULTS = {
   wordStudyMode: true,
   tajweedMode: false,
   mushafScale: 1,
+  mushafLineSpacing: 1.9,
+  mushafEdition: "madani" as MushafEdition,
 };
 
 export const useSettings = create<SettingsState>()(
@@ -67,6 +79,9 @@ export const useSettings = create<SettingsState>()(
       setTajweedMode: (tajweedMode) => set({ tajweedMode }),
       setMushafScale: (mushafScale) =>
         set({ mushafScale: Math.min(1.8, Math.max(0.8, mushafScale)) }),
+      setMushafLineSpacing: (mushafLineSpacing) =>
+        set({ mushafLineSpacing: Math.min(2.6, Math.max(1.5, mushafLineSpacing)) }),
+      setMushafEdition: (mushafEdition) => set({ mushafEdition }),
       reset: () => set(DEFAULTS),
     }),
     {

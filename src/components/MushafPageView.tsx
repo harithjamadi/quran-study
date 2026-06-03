@@ -1,13 +1,13 @@
 "use client";
 
-import { useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
+import { Fragment, useEffect, useLayoutEffect, useRef, useState } from "react";
 import { getSurah } from "@/data/surahs";
 import { toArabicDigits } from "@/lib/format";
-import { TajweedText } from "@/components/TajweedText";
+import { getTajweedRule } from "@/lib/tajweed";
+import { loadTajweedSurah, parseTajweedVerse } from "@/lib/tajweed-parser";
 import {
   ensureFontsForPage,
   pageFontFamily,
-  type MushafLine,
   type MushafPage,
   type MushafWord,
 } from "@/lib/mushaf";
@@ -21,36 +21,82 @@ interface Props {
   activeVerse?: string | null;
   /** User text-size multiplier on top of the auto-fit size (default 1). */
   scale?: number;
+  /** Line-height for the page lines (vertical air). Default 1.9. */
+  lineSpacing?: number;
 }
 
-/** A verse's words collected from the (possibly multi-line) page layout. */
-interface PageVerse {
-  key: string;
-  surah: number;
-  ayah: number;
-  words: MushafWord[];
+/* ── Tajweed colouring ─────────────────────────────────────────────────────────
+ * The Madani page lays words out by the Mushaf's own tokenisation; the tajweed
+ * edition is a *separate* text source. We split each tajweed ayah into per-word
+ * coloured runs (its spaces are word boundaries) and only colour a Mushaf word
+ * when its Uthmani text matches the tajweed word exactly — so a word is never
+ * mis-coloured; where the editions differ orthographically it stays plain. */
+
+interface ColorRun {
+  text: string;
+  color: string | null;
 }
 
-function collectVerses(lines: MushafLine[]): PageVerse[] {
-  const order: string[] = [];
-  const map = new Map<string, PageVerse>();
-  for (const line of lines) {
-    if (line.t !== "ayah") continue;
-    for (const w of line.w) {
-      let v = map.get(w.k);
-      if (!v) {
-        const [s, a] = w.k.split(":").map(Number);
-        v = { key: w.k, surah: s, ayah: a, words: [] };
-        map.set(w.k, v);
-        order.push(w.k);
-      }
-      v.words.push(w);
+function splitTajweedWords(raw: string): ColorRun[][] {
+  const segs = parseTajweedVerse(raw);
+  const words: ColorRun[][] = [];
+  let cur: ColorRun[] = [];
+  const flush = () => {
+    if (cur.length) {
+      words.push(cur);
+      cur = [];
+    }
+  };
+  for (const seg of segs) {
+    const color = seg.code ? getTajweedRule(seg.code)?.color ?? null : null;
+    const parts = seg.text.split(" ");
+    for (let i = 0; i < parts.length; i++) {
+      if (i > 0) flush();
+      if (parts[i]) cur.push({ text: parts[i], color });
     }
   }
-  return order.map((k) => map.get(k)!);
+  flush();
+  return words;
 }
 
-/* ── Decorative lines shared by all modes ─────────────────────────────────── */
+const runsText = (runs: ColorRun[]) => runs.map((r) => r.text).join("");
+
+/** Load + parse tajweed colours for every ayah on the page (only when needed). */
+function useTajweedColors(page: MushafPage, enabled: boolean) {
+  const [map, setMap] = useState<Map<string, ColorRun[][]>>(new Map());
+  useEffect(() => {
+    if (!enabled) return;
+    let active = true;
+    const surahs = new Set<number>();
+    const keys = new Set<string>();
+    for (const l of page.lines) {
+      if (l.t !== "ayah") continue;
+      for (const w of l.w) {
+        surahs.add(Number(w.k.split(":")[0]));
+        keys.add(w.k);
+      }
+    }
+    Promise.all(
+      [...surahs].map((s) => loadTajweedSurah(s).then((d) => [s, d] as const))
+    ).then((entries) => {
+      if (!active) return;
+      const data = new Map(entries);
+      const next = new Map<string, ColorRun[][]>();
+      for (const key of keys) {
+        const [s, a] = key.split(":");
+        const raw = data.get(Number(s))?.[a];
+        if (raw) next.set(key, splitTajweedWords(raw));
+      }
+      setMap(next);
+    });
+    return () => {
+      active = false;
+    };
+  }, [page, enabled]);
+  return map;
+}
+
+/* ── Decorative lines shared by all editions ───────────────────────────────── */
 
 function SurahHeader({ surah }: { surah: number }) {
   const meta = getSurah(surah);
@@ -71,19 +117,101 @@ function BasmalahLine() {
   );
 }
 
-/* ── Madani (authentic glyph) page ────────────────────────────────────────── */
+/* ── A single word, rendered for the active edition ────────────────────────── */
 
-function MadaniPage({ page, onSelectVerse, activeVerse, scale = 1 }: Props) {
+function Word({
+  w,
+  mode,
+  colors,
+  activeVerse,
+  onSelectVerse,
+}: {
+  w: MushafWord;
+  mode: MushafMode;
+  colors: Map<string, ColorRun[][]>;
+  activeVerse?: string | null;
+  onSelectVerse?: (verseKey: string) => void;
+}) {
+  const isMarker = !!w.e;
+  const className =
+    "mushaf-word" +
+    (isMarker ? " mushaf-end" : "") +
+    (activeVerse === w.k ? " mushaf-word-active" : "");
+  const interactive = onSelectVerse
+    ? { onClick: () => onSelectVerse(w.k), role: "button" as const }
+    : {};
+
+  // Madani: the authentic QPC glyph, drawn with its per-page font.
+  if (mode === "madani") {
+    return (
+      <span className={className} style={{ fontFamily: `'${pageFontFamily(w.fp)}'` }} {...interactive}>
+        {w.c}
+      </span>
+    );
+  }
+
+  // Uthmani / Tajweed: the same page layout, drawn with the Uthmani text.
+  if (isMarker) {
+    const ayah = Number(w.k.split(":")[1]);
+    return (
+      <span className={className} {...interactive}>
+        <span className="mushaf-ayah-num">{toArabicDigits(ayah)}</span>
+      </span>
+    );
+  }
+
+  const u = w.u ?? "";
+  if (mode === "tajweed") {
+    const cw = colors.get(w.k)?.[w.i - 1];
+    if (cw && runsText(cw) === u) {
+      return (
+        <span className={"arabic " + className} {...interactive}>
+          {cw.map((r, i) =>
+            r.color ? (
+              <span key={i} style={{ color: r.color }}>
+                {r.text}
+              </span>
+            ) : (
+              <Fragment key={i}>{r.text}</Fragment>
+            )
+          )}
+        </span>
+      );
+    }
+  }
+  return (
+    <span className={"arabic " + className} {...interactive}>
+      {u}
+    </span>
+  );
+}
+
+/* ── The page: 15 lines, identical structure for every edition ─────────────── */
+
+export function MushafPageView({
+  page,
+  mode,
+  onSelectVerse,
+  activeVerse,
+  scale = 1,
+  lineSpacing = 1.9,
+}: Props) {
   const containerRef = useRef<HTMLDivElement>(null);
   const linesRef = useRef<HTMLDivElement>(null);
   const [fitSize, setFitSize] = useState(28);
-  const [ready, setReady] = useState(false);
+  const needsGlyphFont = mode === "madani";
+  const [ready, setReady] = useState(!needsGlyphFont);
   const fontSize = fitSize * scale;
+  const colors = useTajweedColors(page, mode === "tajweed");
 
-  // Lazy-load this page's glyph font(s), then reveal once they're ready so the
-  // private-use glyphs never flash as tofu. This component is keyed by page, so
-  // it remounts (and `ready` resets to false) on every page change.
+  // Madani's glyphs live in the private-use area — lazy-load this page's font(s)
+  // and reveal only once they're ready so the glyphs never flash as tofu. The
+  // Uthmani/Tajweed editions use the already-loaded Amiri font, so they show at
+  // once. This component is keyed by page+mode, so it remounts on either change.
   useEffect(() => {
+    // Only Madani needs the lazy QPC glyph fonts; `ready` already starts true for
+    // the Amiri-based editions (and resets on remount, which is keyed by mode).
+    if (!needsGlyphFont) return;
     let active = true;
     ensureFontsForPage(page);
     const families = new Set<number>();
@@ -93,22 +221,17 @@ function MadaniPage({ page, onSelectVerse, activeVerse, scale = 1 }: Props) {
         ? document.fonts.load(`32px '${pageFontFamily(fp)}'`).catch(() => {})
         : Promise.resolve()
     );
-    Promise.all(loaders).then(() => {
-      if (active) setReady(true);
-    });
-    // Don't hang forever if the CDN is slow/offline.
+    Promise.all(loaders).then(() => active && setReady(true));
     const t = setTimeout(() => active && setReady(true), 2500);
     return () => {
       active = false;
       clearTimeout(t);
     };
-  }, [page]);
+  }, [page, needsGlyphFont]);
 
-  // Size the page so it fits within the viewport in BOTH dimensions. The QPC
-  // glyphs are pre-justified, so a full line spans the width at the right size;
-  // but a whole 15-line page must also fit the height — so we take the smaller
-  // of the width-fit and height-fit sizes. Width-bound pages fill edge to edge;
-  // height-bound (narrow/tall screens) sit centred with even margins.
+  // Size the page so all 15 lines fit within the viewport in BOTH dimensions.
+  // The QPC glyph lines are pre-justified to the page width; we take the smaller
+  // of the width-fit and height-fit so a whole page always fits the screen.
   useLayoutEffect(() => {
     if (!ready) return;
     const container = containerRef.current;
@@ -136,14 +259,23 @@ function MadaniPage({ page, onSelectVerse, activeVerse, scale = 1 }: Props) {
     const ro = new ResizeObserver(measure);
     ro.observe(container);
     return () => ro.disconnect();
-  }, [ready, page]);
+  }, [ready, page, mode, lineSpacing]);
 
   return (
     <div ref={containerRef} className="mushaf-canvas">
       <div
         ref={linesRef}
-        className="mushaf-lines"
-        style={{ fontSize, opacity: ready ? 1 : 0 }}
+        className={"mushaf-lines" + (mode === "madani" ? " is-glyph" : " is-text")}
+        style={
+          {
+            fontSize,
+            opacity: ready ? 1 : 0,
+            // Madani needs extra line-height to prevent vertical diacritic clashes,
+            // and horizontal word-spacing to separate glyphs.
+            "--mushaf-lh": mode === "madani" ? Math.max(2.2, lineSpacing) : lineSpacing - 0.1,
+            "--mushaf-ws": mode === "madani" ? "0.15em" : "normal",
+          } as React.CSSProperties
+        }
       >
         {page.lines.map((line, i) => {
           if (line.t === "surah") return <SurahHeader key={`s${i}`} surah={line.s} />;
@@ -151,20 +283,17 @@ function MadaniPage({ page, onSelectVerse, activeVerse, scale = 1 }: Props) {
           return (
             <div key={`l${line.n}`} className="mushaf-line">
               <span className="mushaf-line-inner" dir="rtl">
-                {line.w.map((w) => (
-                  <span
-                    key={`${w.k}-${w.i}${w.e ? "e" : ""}`}
-                    className={
-                      "mushaf-word" +
-                      (w.e ? " mushaf-end" : "") +
-                      (activeVerse === w.k ? " mushaf-word-active" : "")
-                    }
-                    style={{ fontFamily: `'${pageFontFamily(w.fp)}'` }}
-                    onClick={onSelectVerse ? () => onSelectVerse(w.k) : undefined}
-                    role={onSelectVerse ? "button" : undefined}
-                  >
-                    {w.c}
-                  </span>
+                {line.w.map((w, wi) => (
+                  <Fragment key={`${w.k}-${w.i}${w.e ? "e" : ""}`}>
+                    {wi > 0 ? " " : null}
+                    <Word
+                      w={w}
+                      mode={mode}
+                      colors={colors}
+                      activeVerse={activeVerse}
+                      onSelectVerse={onSelectVerse}
+                    />
+                  </Fragment>
                 ))}
               </span>
             </div>
@@ -173,77 +302,4 @@ function MadaniPage({ page, onSelectVerse, activeVerse, scale = 1 }: Props) {
       </div>
     </div>
   );
-}
-
-/* ── Uthmani / Tajweed flowing page ───────────────────────────────────────── */
-
-function FlowingPage({ page, mode, onSelectVerse, activeVerse, scale = 1 }: Props) {
-  const verses = useMemo(() => collectVerses(page.lines), [page.lines]);
-  // Where each surah header / basmallah falls, keyed by the verse it precedes.
-  const decorBefore = useMemo(() => {
-    const m = new Map<string, ("surah" | "bism")[]>();
-    let pendingKey: string | null = null;
-    const pending: ("surah" | "bism")[] = [];
-    for (const line of page.lines) {
-      if (line.t === "surah") pending.push("surah");
-      else if (line.t === "bism") pending.push("bism");
-      else if (line.t === "ayah") {
-        const firstKey = line.w[0]?.k;
-        if (pending.length && firstKey) {
-          m.set(firstKey, [...pending]);
-          pending.length = 0;
-        }
-        pendingKey = firstKey ?? pendingKey;
-      }
-    }
-    return m;
-  }, [page.lines]);
-
-  return (
-    <div className="mushaf-canvas">
-      <div className="mushaf-flow" style={{ "--mscale": scale } as React.CSSProperties}>
-        {verses.map((v) => {
-          const decor = decorBefore.get(v.key);
-          const surahHeader = decor?.includes("surah");
-          const bism = decor?.includes("bism");
-          return (
-            <div key={v.key}>
-              {surahHeader && <SurahHeader surah={v.surah} />}
-              {bism && <BasmalahLine />}
-              <span
-                className={
-                  "mushaf-verse" + (activeVerse === v.key ? " mushaf-verse-active" : "")
-                }
-                dir="rtl"
-                onClick={onSelectVerse ? () => onSelectVerse(v.key) : undefined}
-                role={onSelectVerse ? "button" : undefined}
-              >
-                {mode === "tajweed" ? (
-                  <TajweedText
-                    surahNumber={v.surah}
-                    ayahNumber={v.ayah}
-                    arabicFallback={v.words.map((w) => w.u ?? "").join(" ")}
-                    fontSize={Math.round(30 * scale)}
-                  />
-                ) : (
-                  <span className="arabic mushaf-uthmani">
-                    {v.words
-                      .filter((w) => !w.e)
-                      .map((w) => w.u ?? "")
-                      .join(" ")}
-                    <span className="mushaf-ayah-num">{toArabicDigits(v.ayah)}</span>
-                  </span>
-                )}
-              </span>
-            </div>
-          );
-        })}
-      </div>
-    </div>
-  );
-}
-
-export function MushafPageView(props: Props) {
-  if (props.mode === "madani") return <MadaniPage {...props} />;
-  return <FlowingPage {...props} />;
 }
