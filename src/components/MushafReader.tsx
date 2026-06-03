@@ -139,7 +139,9 @@ export function MushafReader({ initialPage }: Props) {
       const width = viewportRef.current?.clientWidth ?? window.innerWidth;
       committingRef.current = true;
       setAnimating(true);
-      setDragX(dir === 1 ? -width : width);
+      // Swiping RIGHT (next, dir=1) moves the page to the right (+width)
+      // Swiping LEFT (prev, dir=-1) moves the page to the left (-width)
+      setDragX(dir === 1 ? width : -width);
       window.setTimeout(() => {
         setAnimating(false);
         setDragX(0);
@@ -150,12 +152,12 @@ export function MushafReader({ initialPage }: Props) {
     [go, page]
   );
 
-  // ── Keyboard: ← previous, → next (matches the swipe mapping) ──
+  // ── Keyboard: → next, ← previous (matches the swipe mapping) ──
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
       if (navOpen || selectedVerse) return;
-      if (e.key === "ArrowLeft") commit(-1);
-      else if (e.key === "ArrowRight") commit(1);
+      if (e.key === "ArrowRight") commit(1);
+      else if (e.key === "ArrowLeft") commit(-1);
     };
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
@@ -187,9 +189,9 @@ export function MushafReader({ initialPage }: Props) {
     if (!d) return;
     const width = viewportRef.current?.clientWidth ?? window.innerWidth;
     const threshold = Math.min(120, width * 0.22);
-    // Swipe LEFT past the threshold advances (next); swipe RIGHT goes back (prev).
-    if (d.dx < -threshold) commit(1);
-    else if (d.dx > threshold) commit(-1);
+    // Swipe RIGHT past the threshold advances (next); swipe LEFT goes back (prev).
+    if (d.dx > threshold) commit(1);
+    else if (d.dx < -threshold) commit(-1);
     else {
       // Not far enough — rubber-band back to centre.
       setAnimating(true);
@@ -264,12 +266,12 @@ export function MushafReader({ initialPage }: Props) {
           if (dragRef.current?.active) settleDrag();
         }}
       >
-        {/* Standard pager: the NEXT page waits off-screen to the RIGHT (+100%)
-            so dragging LEFT brings it in; the PREVIOUS page waits to the LEFT. */}
+        {/* Standard pager: the NEXT page waits off-screen to the LEFT (-100%)
+            so dragging RIGHT brings it in; the PREVIOUS page waits to the RIGHT. */}
         <div
           className="mushaf-slide"
           style={{
-            transform: `translateX(calc(100% + ${dragX}px))`,
+            transform: `translateX(calc(-100% + ${dragX}px))`,
             transition: animating ? "transform 240ms ease" : "none",
           }}
           aria-hidden
@@ -302,7 +304,7 @@ export function MushafReader({ initialPage }: Props) {
         <div
           className="mushaf-slide"
           style={{
-            transform: `translateX(calc(-100% + ${dragX}px))`,
+            transform: `translateX(calc(100% + ${dragX}px))`,
             transition: animating ? "transform 240ms ease" : "none",
           }}
           aria-hidden
