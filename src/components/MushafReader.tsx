@@ -2,12 +2,14 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
-import { SURAHS, getSurah } from "@/data/surahs";
+import { SURAHS, getSurah, globalAyahNumber } from "@/data/surahs";
 import { getAyahWithEditions } from "@/lib/api";
-import { ARABIC_EDITION, getTranslation } from "@/lib/editions";
+import { ARABIC_EDITION, getTranslation, RECITERS } from "@/lib/editions";
 import { toArabicDigits } from "@/lib/format";
 import { useSettings } from "@/store/settings";
 import { useLearning } from "@/store/learning";
+import { useBookmarks } from "@/store/bookmarks";
+import { useAudio } from "@/components/AudioProvider";
 import { useHydrated } from "@/lib/use-hydrated";
 import {
   clampPage,
@@ -37,10 +39,13 @@ export function MushafReader({ initialPage }: Props) {
   const language = useLearning((s) => s.language);
   const t = useMemo(() => makeStrings(language), [language]);
 
+  const mushafScale = useSettings((s) => s.mushafScale);
+
   const [page, setPage] = useState(() => clampPage(initialPage));
   const [mode, setMode] = useState<MushafMode>("madani");
   const [pages, setPages] = useState<Map<number, MushafPage>>(new Map());
   const [navOpen, setNavOpen] = useState(false);
+  const [settingsOpen, setSettingsOpen] = useState(false);
   const [selectedVerse, setSelectedVerse] = useState<string | null>(null);
 
   // ── Load current page + prefetch neighbours ──
@@ -149,9 +154,41 @@ export function MushafReader({ initialPage }: Props) {
     curSurahs.length > 0
       ? curSurahs.map((s) => getSurah(s)?.englishName).filter(Boolean).join(" · ")
       : "";
+  const headerSurah = getSurah(curSurahs[0] ?? 0);
 
   return (
     <div className="mushaf-reader" dir="ltr">
+      {/* ── Top header: surah context + settings ── */}
+      <div className="mushaf-header">
+        <button className="mushaf-header-btn" onClick={() => setNavOpen(true)} aria-label={t.go}>
+          <IconList />
+        </button>
+        <button className="mushaf-header-title" onClick={() => setNavOpen(true)}>
+          {headerSurah ? (
+            <>
+              <span className="mushaf-header-name">
+                <span className="arabic">{headerSurah.name}</span>
+                <span className="mushaf-header-en">{headerSurah.englishName}</span>
+              </span>
+              <span className="mushaf-header-sub">
+                {t.juz} {cur?.juz ?? "—"} · {t.page} {toArabicDigits(page)}
+              </span>
+            </>
+          ) : (
+            <span className="mushaf-header-sub">
+              {t.page} {toArabicDigits(page)}
+            </span>
+          )}
+        </button>
+        <button
+          className="mushaf-header-btn"
+          onClick={() => setSettingsOpen(true)}
+          aria-label={t.settings}
+        >
+          <IconGear />
+        </button>
+      </div>
+
       {/* ── Page surface ── */}
       <div
         ref={viewportRef}
@@ -173,7 +210,7 @@ export function MushafReader({ initialPage }: Props) {
           }}
           aria-hidden
         >
-          {prevPage && <MushafPageView key={`p${prevPage.p}-${mode}`} page={prevPage} mode={mode} />}
+          {prevPage && <MushafPageView key={`p${prevPage.p}-${mode}`} page={prevPage} mode={mode} scale={mushafScale} />}
         </div>
         <div
           className="mushaf-slide"
@@ -187,6 +224,7 @@ export function MushafReader({ initialPage }: Props) {
               key={`c${cur.p}-${mode}`}
               page={cur}
               mode={mode}
+              scale={mushafScale}
               onSelectVerse={setSelectedVerse}
               activeVerse={selectedVerse}
             />
@@ -204,7 +242,7 @@ export function MushafReader({ initialPage }: Props) {
           }}
           aria-hidden
         >
-          {nextPage && <MushafPageView key={`n${nextPage.p}-${mode}`} page={nextPage} mode={mode} />}
+          {nextPage && <MushafPageView key={`n${nextPage.p}-${mode}`} page={nextPage} mode={mode} scale={mushafScale} />}
         </div>
 
         {/* Edge tap arrows — next is on the LEFT (RTL paging) */}
@@ -228,11 +266,6 @@ export function MushafReader({ initialPage }: Props) {
 
       {/* ── Bottom toolbar ── */}
       <div className="mushaf-toolbar">
-        <button className="mushaf-tool" onClick={() => setNavOpen(true)}>
-          <IconList />
-          <span>{t.go}</span>
-        </button>
-
         <button
           className="mushaf-pagepill"
           onClick={() => setNavOpen(true)}
@@ -272,6 +305,8 @@ export function MushafReader({ initialPage }: Props) {
           }}
         />
       )}
+
+      {settingsOpen && <MushafSettings strings={t} onClose={() => setSettingsOpen(false)} />}
 
       {selectedVerse && (
         <VerseSheet
@@ -435,8 +470,62 @@ function VerseSheet({
   const translationId = useSettings((s) => s.translationId) || (language === "ms" ? "ms.basmeih" : "en.sahih");
   const [data, setData] = useState<{ arabic: string; translation: string } | null>(null);
   const [error, setError] = useState(false);
+  const [copied, setCopied] = useState(false);
   const [surahN, ayahN] = verseKey.split(":").map(Number);
   const meta = getSurah(surahN);
+
+  const { playAyah } = useAudio();
+  const toggleBookmark = useBookmarks((s) => s.toggle);
+  const isBookmarked = useBookmarks((s) => s.has(surahN, ayahN));
+
+  const onPlay = () => {
+    playAyah({
+      surahNumber: surahN,
+      ayahNumber: ayahN,
+      globalAyahNumber: globalAyahNumber(surahN, ayahN),
+      surahName: meta?.englishName ?? `Surah ${surahN}`,
+    });
+    onClose();
+  };
+  const onBookmark = () => {
+    if (!data) return;
+    toggleBookmark({
+      surahNumber: surahN,
+      ayahNumber: ayahN,
+      surahName: meta?.englishName ?? `Surah ${surahN}`,
+      ayahText: data.arabic,
+      translation: data.translation,
+    });
+  };
+  const onCopy = async () => {
+    if (!data) return;
+    const text = `${data.arabic}\n\n${data.translation}\n— ${meta?.englishName ?? ""} ${surahN}:${ayahN}`;
+    try {
+      await navigator.clipboard.writeText(text.trim());
+      setCopied(true);
+      setTimeout(() => setCopied(false), 1500);
+    } catch {
+      /* clipboard unavailable */
+    }
+  };
+  const onShare = async () => {
+    const url = `${location.origin}/surah/${surahN}#${ayahN}`;
+    const shareData = {
+      title: `${meta?.englishName ?? "Quran"} ${surahN}:${ayahN}`,
+      text: data ? `${data.arabic}\n${data.translation}` : undefined,
+      url,
+    };
+    try {
+      if (navigator.share) await navigator.share(shareData);
+      else {
+        await navigator.clipboard.writeText(url);
+        setCopied(true);
+        setTimeout(() => setCopied(false), 1500);
+      }
+    } catch {
+      /* user cancelled / unsupported */
+    }
+  };
 
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => e.key === "Escape" && onClose();
@@ -471,6 +560,29 @@ function VerseSheet({
             {strings.openSurah} ›
           </Link>
         </div>
+        <div className="mushaf-actions" role="group" aria-label={strings.actions}>
+          <button className="mushaf-action" onClick={onPlay}>
+            <IconPlay />
+            <span>{strings.play}</span>
+          </button>
+          <button
+            className={"mushaf-action" + (isBookmarked ? " is-on" : "")}
+            onClick={onBookmark}
+            disabled={!data}
+            aria-pressed={isBookmarked}
+          >
+            <IconBookmark filled={isBookmarked} />
+            <span>{strings.bookmark}</span>
+          </button>
+          <button className="mushaf-action" onClick={onCopy} disabled={!data}>
+            <IconCopy />
+            <span>{copied ? strings.copied : strings.copy}</span>
+          </button>
+          <button className="mushaf-action" onClick={onShare}>
+            <IconShare />
+            <span>{strings.share}</span>
+          </button>
+        </div>
         <div className="mushaf-verse-body">
           {error ? (
             <p className="text-sm text-[color:var(--muted)]">{strings.loadError}</p>
@@ -497,10 +609,136 @@ function VerseSheet({
 
 /* ── Icons + strings ──────────────────────────────────────────────────────── */
 
+/* ── Reading settings sheet ───────────────────────────────────────────────── */
+
+function MushafSettings({ strings, onClose }: { strings: Strings; onClose: () => void }) {
+  const mushafScale = useSettings((s) => s.mushafScale);
+  const setMushafScale = useSettings((s) => s.setMushafScale);
+  const reciterId = useSettings((s) => s.reciterId);
+  const setReciter = useSettings((s) => s.setReciter);
+
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => e.key === "Escape" && onClose();
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [onClose]);
+
+  return (
+    <div className="mushaf-sheet-backdrop" role="dialog" aria-modal="true" onClick={onClose}>
+      <div className="mushaf-sheet" onClick={(e) => e.stopPropagation()}>
+        <div aria-hidden className="mushaf-sheet-grip" />
+        <div className="mushaf-settings">
+          <div className="mushaf-set-row">
+            <div className="mushaf-set-label">
+              <span>{strings.textSize}</span>
+              <span className="mushaf-set-value">{Math.round(mushafScale * 100)}%</span>
+            </div>
+            <div className="mushaf-set-size">
+              <button
+                className="mushaf-size-btn"
+                aria-label="A-"
+                onClick={() => setMushafScale(Math.round((mushafScale - 0.1) * 10) / 10)}
+              >
+                A−
+              </button>
+              <input
+                type="range"
+                min={0.8}
+                max={1.8}
+                step={0.1}
+                value={mushafScale}
+                onChange={(e) => setMushafScale(Number(e.target.value))}
+                className="mushaf-pageslider"
+                aria-label={strings.textSize}
+              />
+              <button
+                className="mushaf-size-btn"
+                aria-label="A+"
+                onClick={() => setMushafScale(Math.round((mushafScale + 0.1) * 10) / 10)}
+              >
+                A+
+              </button>
+            </div>
+          </div>
+
+          <div className="mushaf-set-row">
+            <label className="mushaf-set-label" htmlFor="mushaf-reciter">
+              <span>{strings.reciter}</span>
+            </label>
+            <select
+              id="mushaf-reciter"
+              value={reciterId}
+              onChange={(e) => setReciter(e.target.value)}
+              className="mushaf-set-select"
+            >
+              {RECITERS.map((r) => (
+                <option key={r.id} value={r.id}>
+                  {r.name}
+                </option>
+              ))}
+            </select>
+          </div>
+
+          <button className="mushaf-set-reset" onClick={() => setMushafScale(1)}>
+            {strings.reset}
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+/* ── Icons ────────────────────────────────────────────────────────────────── */
+
 function IconList() {
   return (
     <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round" aria-hidden>
       <path d="M8 6h13M8 12h13M8 18h13M3 6h.01M3 12h.01M3 18h.01" />
+    </svg>
+  );
+}
+
+function IconGear() {
+  return (
+    <svg viewBox="0 0 24 24" width="19" height="19" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
+      <circle cx="12" cy="12" r="2.8" />
+      <path d="M12 2v3M12 19v3M4.2 4.2l2.1 2.1M17.7 17.7l2.1 2.1M2 12h3M19 12h3M4.2 19.8l2.1-2.1M17.7 6.3l2.1-2.1" />
+    </svg>
+  );
+}
+
+function IconPlay() {
+  return (
+    <svg viewBox="0 0 24 24" width="20" height="20" fill="currentColor" aria-hidden>
+      <path d="M8 5l12 7-12 7z" />
+    </svg>
+  );
+}
+
+function IconBookmark({ filled }: { filled: boolean }) {
+  return (
+    <svg viewBox="0 0 24 24" width="20" height="20" fill={filled ? "currentColor" : "none"} stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
+      <path d="M6 3h12v18l-6-4.5L6 21V3Z" />
+    </svg>
+  );
+}
+
+function IconCopy() {
+  return (
+    <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
+      <rect x="9" y="9" width="11" height="11" rx="2" />
+      <path d="M5 15V5a2 2 0 0 1 2-2h10" />
+    </svg>
+  );
+}
+
+function IconShare() {
+  return (
+    <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
+      <circle cx="18" cy="5" r="3" />
+      <circle cx="6" cy="12" r="3" />
+      <circle cx="18" cy="19" r="3" />
+      <path d="M8.6 13.5l6.8 4M15.4 6.5l-6.8 4" />
     </svg>
   );
 }
@@ -517,6 +755,16 @@ function makeStrings(lang: "en" | "ms") {
     surah: "Surah",
     openSurah: "Open in reader",
     loadError: "Couldn’t load this verse. Check your connection.",
+    settings: "Settings",
+    textSize: "Text size",
+    reciter: "Reciter",
+    reset: "Reset",
+    actions: "Verse actions",
+    play: "Play",
+    bookmark: "Bookmark",
+    copy: "Copy",
+    copied: "Copied",
+    share: "Share",
   };
   const ms = {
     page: "Halaman",
@@ -529,6 +777,16 @@ function makeStrings(lang: "en" | "ms") {
     surah: "Surah",
     openSurah: "Buka dalam pembaca",
     loadError: "Tidak dapat memuatkan ayat ini. Semak sambungan anda.",
+    settings: "Tetapan",
+    textSize: "Saiz teks",
+    reciter: "Qari",
+    reset: "Set semula",
+    actions: "Tindakan ayat",
+    play: "Main",
+    bookmark: "Simpan",
+    copy: "Salin",
+    copied: "Disalin",
+    share: "Kongsi",
   };
   return lang === "ms" ? ms : en;
 }

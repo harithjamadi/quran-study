@@ -19,6 +19,8 @@ interface Props {
   mode: MushafMode;
   onSelectVerse?: (verseKey: string) => void;
   activeVerse?: string | null;
+  /** User text-size multiplier on top of the auto-fit size (default 1). */
+  scale?: number;
 }
 
 /** A verse's words collected from the (possibly multi-line) page layout. */
@@ -71,11 +73,12 @@ function BasmalahLine() {
 
 /* ── Madani (authentic glyph) page ────────────────────────────────────────── */
 
-function MadaniPage({ page, onSelectVerse, activeVerse }: Props) {
+function MadaniPage({ page, onSelectVerse, activeVerse, scale = 1 }: Props) {
   const containerRef = useRef<HTMLDivElement>(null);
   const linesRef = useRef<HTMLDivElement>(null);
-  const [fontSize, setFontSize] = useState(28);
+  const [fitSize, setFitSize] = useState(28);
   const [ready, setReady] = useState(false);
+  const fontSize = fitSize * scale;
 
   // Lazy-load this page's glyph font(s), then reveal once they're ready so the
   // private-use glyphs never flash as tofu. This component is keyed by page, so
@@ -122,10 +125,12 @@ function MadaniPage({ page, onSelectVerse, activeVerse }: Props) {
       }
       const totalH = linesEl.scrollHeight;
       if (!widest || !totalH) return;
+      // base, widest and totalH are all at the current rendered size (fit*scale),
+      // so the `scale` cancels here — this computes the scale-1 fit size.
       const widthFit = (base * availW) / widest;
       const heightFit = (base * availH) / totalH;
       const next = Math.max(13, Math.min(60, Math.min(widthFit, heightFit) * 0.97));
-      setFontSize(next);
+      setFitSize(next);
     };
     measure();
     const ro = new ResizeObserver(measure);
@@ -172,7 +177,7 @@ function MadaniPage({ page, onSelectVerse, activeVerse }: Props) {
 
 /* ── Uthmani / Tajweed flowing page ───────────────────────────────────────── */
 
-function FlowingPage({ page, mode, onSelectVerse, activeVerse }: Props) {
+function FlowingPage({ page, mode, onSelectVerse, activeVerse, scale = 1 }: Props) {
   const verses = useMemo(() => collectVerses(page.lines), [page.lines]);
   // Where each surah header / basmallah falls, keyed by the verse it precedes.
   const decorBefore = useMemo(() => {
@@ -196,7 +201,7 @@ function FlowingPage({ page, mode, onSelectVerse, activeVerse }: Props) {
 
   return (
     <div className="mushaf-canvas">
-      <div className="mushaf-flow">
+      <div className="mushaf-flow" style={{ "--mscale": scale } as React.CSSProperties}>
         {verses.map((v) => {
           const decor = decorBefore.get(v.key);
           const surahHeader = decor?.includes("surah");
@@ -218,7 +223,7 @@ function FlowingPage({ page, mode, onSelectVerse, activeVerse }: Props) {
                     surahNumber={v.surah}
                     ayahNumber={v.ayah}
                     arabicFallback={v.words.map((w) => w.u ?? "").join(" ")}
-                    fontSize={30}
+                    fontSize={Math.round(30 * scale)}
                   />
                 ) : (
                   <span className="arabic mushaf-uthmani">

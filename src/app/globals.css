@@ -670,7 +670,7 @@ textarea:focus-visible {
   color: var(--foreground);
 }
 .mushaf-verse { cursor: pointer; }
-.mushaf-uthmani { font-size: clamp(1.4rem, 1rem + 2.4vw, 2.1rem); }
+.mushaf-uthmani { font-size: calc(clamp(1.4rem, 1rem + 2.4vw, 2.1rem) * var(--mscale, 1)); }
 .mushaf-ayah-num {
   display: inline-block;
   margin: 0 0.35em;
@@ -889,3 +889,113 @@ textarea:focus-visible {
 .mushaf-verse-ar { font-size: clamp(1.7rem, 1.3rem + 3vw, 2.4rem); line-height: 2; text-align: right; margin-bottom: 0.75rem; }
 .mushaf-verse-tr { font-size: 1rem; line-height: 1.7; color: var(--foreground); }
 .mushaf-verse-edition { margin-top: 0.6rem; font-size: 0.72rem; color: var(--muted); }
+
+/* Top header bar */
+.mushaf-header {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.35rem 0.5rem;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  background: var(--surface);
+  box-shadow: 0 8px 24px -16px rgba(0, 0, 0, 0.3);
+}
+.mushaf-header-btn {
+  flex: none;
+  display: grid;
+  place-items: center;
+  width: 2.5rem;
+  height: 2.5rem;
+  border-radius: 999px;
+  color: var(--foreground-soft);
+}
+.mushaf-header-btn:hover { background: var(--border); color: var(--accent-strong); }
+.mushaf-header-title {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.05rem;
+  min-width: 0;
+  padding: 0.15rem;
+}
+.mushaf-header-title:hover { color: var(--accent-strong); }
+.mushaf-header-name {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 0.5rem;
+  max-width: 100%;
+  overflow: hidden;
+}
+.mushaf-header-name .arabic { font-size: 1.25rem; line-height: 1.2; color: var(--accent-strong); }
+.mushaf-header-en { font-weight: 700; font-size: 0.95rem; }
+.mushaf-header-sub { font-size: 0.7rem; color: var(--muted); }
+
+/* Verse action menu */
+.mushaf-actions {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 0.4rem;
+  padding: 0.25rem 0.25rem 0.6rem;
+  border-bottom: 1px solid var(--border);
+  margin-bottom: 0.6rem;
+}
+.mushaf-action {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.3rem;
+  padding: 0.55rem 0.25rem;
+  border-radius: 0.85rem;
+  font-size: 0.72rem;
+  font-weight: 600;
+  color: var(--foreground-soft);
+  background: var(--background);
+  border: 1px solid var(--border);
+}
+.mushaf-action:hover:not(:disabled) { border-color: var(--accent); color: var(--accent-strong); }
+.mushaf-action:disabled { opacity: 0.45; }
+.mushaf-action.is-on { color: var(--accent-strong); border-color: var(--accent); background: var(--accent-soft); }
+
+/* Reading settings */
+.mushaf-settings { display: flex; flex-direction: column; gap: 1.1rem; padding: 0.4rem 0.25rem 0.25rem; }
+.mushaf-set-row { display: flex; flex-direction: column; gap: 0.55rem; }
+.mushaf-set-label {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: var(--foreground);
+}
+.mushaf-set-value { font-size: 0.85rem; color: var(--accent-strong); font-weight: 700; }
+.mushaf-set-size { display: flex; align-items: center; gap: 0.75rem; }
+.mushaf-size-btn {
+  flex: none;
+  width: 2.6rem;
+  height: 2.6rem;
+  border-radius: 0.75rem;
+  border: 1px solid var(--border-strong);
+  background: var(--surface-raised);
+  font-weight: 700;
+  font-size: 0.95rem;
+}
+.mushaf-size-btn:hover { border-color: var(--accent); color: var(--accent-strong); }
+.mushaf-set-select {
+  padding: 0.7rem;
+  border: 1px solid var(--border-strong);
+  border-radius: 0.75rem;
+  background: var(--surface-raised);
+  font-size: 0.95rem;
+}
+.mushaf-set-reset {
+  align-self: flex-start;
+  padding: 0.5rem 1rem;
+  border-radius: 999px;
+  border: 1px solid var(--border-strong);
+  font-size: 0.82rem;
+  font-weight: 600;
+  color: var(--foreground-soft);
+}
+.mushaf-set-reset:hover { border-color: var(--accent); color: var(--accent-strong); }

@@ -35,8 +35,8 @@ export const RELEASES: Release[] = [
     entries: [
       {
         type: "added",
-        en: "A new Mushaf — read the Quran page by page in the authentic 15-line Madani script, turning pages right-to-left like a real Quran. Jump straight to any surah, juz or page, switch between Madani, plain Uthmani and tajweed-coloured views, and tap any verse for its translation.",
-        ms: "Mushaf baharu — baca al-Quran halaman demi halaman dalam skrip Madani 15 baris yang asli, menyelak halaman dari kanan ke kiri seperti al-Quran sebenar. Lompat terus ke mana-mana surah, juzuk atau halaman, tukar antara paparan Madani, Uthmani biasa dan berwarna tajwid, dan ketik mana-mana ayat untuk terjemahannya.",
+        en: "A new Mushaf — read the Quran page by page in the authentic 15-line Madani script, turning pages right-to-left like a real Quran. A header shows the current surah, juz and page; jump straight to any surah, juz or page; switch between Madani, plain Uthmani and tajweed-coloured views; adjust text size and reciter in settings; and tap any verse to play it, bookmark, copy, share or read its translation.",
+        ms: "Mushaf baharu — baca al-Quran halaman demi halaman dalam skrip Madani 15 baris yang asli, menyelak halaman dari kanan ke kiri seperti al-Quran sebenar. Pengepala menunjukkan surah, juzuk dan halaman semasa; lompat terus ke mana-mana surah, juzuk atau halaman; tukar antara paparan Madani, Uthmani biasa dan berwarna tajwid; laras saiz teks dan qari dalam tetapan; dan ketik mana-mana ayat untuk mainkannya, simpan, salin, kongsi atau baca terjemahannya.",
       },
       {
         type: "fixed",

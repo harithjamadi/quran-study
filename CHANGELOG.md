@@ -17,7 +17,9 @@ menu). Keep the two in sync when cutting a release.
   and basmallah lines. Pages turn **right-to-left like a physical Quran** (drag
   right for the previous page, left for the next; next arrow on the left). Jump
   to any surah, juz or page; switch between Madani, plain Uthmani and
-  tajweed-coloured views; tap any verse for its translation. Built from
+  tajweed-coloured views. A header shows the current surah/juz/page; a settings
+  sheet adjusts text size and reciter; and a per-verse action menu plays the
+  verse, bookmarks, copies, shares or shows its translation. Built from
   `scripts/build-mushaf.mjs` into per-page layout JSON under
   `public/data/mushaf/`.
 

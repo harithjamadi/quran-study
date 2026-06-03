@@ -16,6 +16,8 @@ interface SettingsState {
   highlightCurrentVerse: boolean;
   wordStudyMode: boolean;
   tajweedMode: boolean;
+  /** Mushaf reader text-size multiplier applied on top of the auto-fit size. */
+  mushafScale: number;
   setTranslation: (id: string) => void;
   setReciter: (id: string) => void;
   setShowTransliteration: (v: boolean) => void;
@@ -27,6 +29,7 @@ interface SettingsState {
   setHighlightCurrentVerse: (v: boolean) => void;
   setWordStudyMode: (v: boolean) => void;
   setTajweedMode: (v: boolean) => void;
+  setMushafScale: (n: number) => void;
   reset: () => void;
 }
 
@@ -42,6 +45,7 @@ const DEFAULTS = {
   highlightCurrentVerse: true,
   wordStudyMode: true,
   tajweedMode: false,
+  mushafScale: 1,
 };
 
 export const useSettings = create<SettingsState>()(
@@ -61,6 +65,8 @@ export const useSettings = create<SettingsState>()(
       setHighlightCurrentVerse: (highlightCurrentVerse) => set({ highlightCurrentVerse }),
       setWordStudyMode: (wordStudyMode) => set({ wordStudyMode }),
       setTajweedMode: (tajweedMode) => set({ tajweedMode }),
+      setMushafScale: (mushafScale) =>
+        set({ mushafScale: Math.min(1.8, Math.max(0.8, mushafScale)) }),
       reset: () => set(DEFAULTS),
     }),
     {
