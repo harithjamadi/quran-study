@@ -1,0 +1,43 @@
+# Production stack for mubinapp.com
+# - app:   Next.js standalone server (built from ./Dockerfile), NOT published to the host
+# - caddy: reverse proxy terminating TLS (auto Let's Encrypt) on 80/443
+#
+# The app container is only reachable on the internal "web" network via caddy,
+# so the Node server is never exposed directly to the internet.
+
+services:
+  app:
+    build: .
+    restart: unless-stopped
+    environment:
+      - NODE_ENV=production
+      - NEXT_TELEMETRY_DISABLED=1
+      - PORT=3000
+      - HOSTNAME=0.0.0.0
+    expose:
+      - "3000"          # internal only — no host port mapping
+    networks:
+      - web
+
+  caddy:
+    image: caddy:2-alpine
+    restart: unless-stopped
+    ports:
+      - "80:80"
+      - "443:443"
+      - "443:443/udp"   # HTTP/3
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy_data:/data      # persists issued certs across restarts
+      - caddy_config:/config
+    depends_on:
+      - app
+    networks:
+      - web
+
+networks:
+  web:
+
+volumes:
+  caddy_data:
+  caddy_config:

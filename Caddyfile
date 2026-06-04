@@ -1,0 +1,20 @@
+# ACME contact address — used by Let's Encrypt once a real domain is configured.
+{
+	email harithjamadi33@gmail.com
+}
+
+# TEMPORARY (no DNS yet): serve over plain HTTP on the Elastic IP.
+# A ":80" site address means Caddy does NOT attempt TLS, so it works on a bare IP.
+:80 {
+	encode zstd gzip
+	reverse_proxy app:3000
+}
+
+# WHEN mubinapp.com DNS A record points at the Elastic IP, delete the ":80"
+# block above and uncomment the block below. Caddy will then automatically
+# obtain + auto-renew a Let's Encrypt cert and redirect HTTP->HTTPS:
+#
+# mubinapp.com {
+# 	encode zstd gzip
+# 	reverse_proxy app:3000
+# }
