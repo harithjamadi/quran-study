@@ -2,6 +2,7 @@
 
 import { create } from "zustand";
 import { persist, createJSONStorage } from "zustand/middleware";
+import { renamedLocalStorage } from "@/lib/persist-migrate";
 import type { Bookmark, LastRead } from "@/lib/types";
 
 interface BookmarksState {
@@ -59,8 +60,8 @@ export const useBookmarks = create<BookmarksState>()(
       setLastRead: (r) => set({ lastRead: r }),
     }),
     {
-      name: "noor.bookmarks.v1",
-      storage: createJSONStorage(() => localStorage),
+      name: "mubin.bookmarks.v1",
+      storage: createJSONStorage(() => renamedLocalStorage("noor.bookmarks.v1")),
     }
   )
 );

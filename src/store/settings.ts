@@ -2,6 +2,7 @@
 
 import { create } from "zustand";
 import { persist, createJSONStorage } from "zustand/middleware";
+import { renamedLocalStorage } from "@/lib/persist-migrate";
 import type { ArabicScript, ThemeMode } from "@/lib/types";
 
 /** Which Mushaf the reader renders. Persisted so the app reopens the user's
@@ -85,8 +86,8 @@ export const useSettings = create<SettingsState>()(
       reset: () => set(DEFAULTS),
     }),
     {
-      name: "noor.settings.v1",
-      storage: createJSONStorage(() => localStorage),
+      name: "mubin.settings.v1",
+      storage: createJSONStorage(() => renamedLocalStorage("noor.settings.v1")),
     }
   )
 );

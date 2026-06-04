@@ -14,6 +14,7 @@ import {
   type WordStatus,
 } from "@/lib/learning";
 import { computeRootBoosts } from "@/lib/root-progression";
+import { renamedLocalStorage } from "@/lib/persist-migrate";
 import { loadRootIndex } from "@/lib/words";
 import { useSettings } from "./settings";
 
@@ -222,7 +223,7 @@ export const useLearning = create<LearningState>()(
       },
     }),
     {
-      name: "noor.learning.v2",
+      name: "mubin.learning.v2",
       version: 4,
       migrate: (persisted: unknown, fromVersion: number) => {
         const state = persisted as Record<string, unknown>;
@@ -287,7 +288,7 @@ export const useLearning = create<LearningState>()(
           hasChosenLanguage: true,
         };
       },
-      storage: createJSONStorage(() => localStorage),
+      storage: createJSONStorage(() => renamedLocalStorage("noor.learning.v2")),
     }
   )
 );

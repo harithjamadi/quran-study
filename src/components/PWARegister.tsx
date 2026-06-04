@@ -8,7 +8,8 @@ interface BeforeInstallPromptEvent extends Event {
   readonly userChoice: Promise<{ outcome: "accepted" | "dismissed"; platform: string }>;
 }
 
-const DISMISSED_KEY = "noor.pwa.installDismissed";
+const DISMISSED_KEY = "mubin.pwa.installDismissed";
+const LEGACY_DISMISSED_KEY = "noor.pwa.installDismissed";
 
 function isIOSSafari(): boolean {
   if (typeof navigator === "undefined") return false;
@@ -29,6 +30,12 @@ function isAlreadyInstalled(): boolean {
 
 function dismissedRecently(): boolean {
   if (typeof window === "undefined") return false;
+  // Adopt the pre-rename (Noor → Mubin) key so a recent dismissal still counts.
+  const legacy = localStorage.getItem(LEGACY_DISMISSED_KEY);
+  if (legacy !== null && localStorage.getItem(DISMISSED_KEY) === null) {
+    localStorage.setItem(DISMISSED_KEY, legacy);
+    localStorage.removeItem(LEGACY_DISMISSED_KEY);
+  }
   const dismissedAt = Number(localStorage.getItem(DISMISSED_KEY) || 0);
   return Date.now() - dismissedAt < 7 * 24 * 60 * 60 * 1000;
 }
