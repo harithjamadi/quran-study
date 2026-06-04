@@ -44,7 +44,37 @@ export function PWARegister() {
     if (typeof window === "undefined") return;
 
     if (process.env.NODE_ENV === "production" && "serviceWorker" in navigator) {
-      navigator.serviceWorker.register("/sw.js").catch(() => undefined);
+      // When an *updated* worker takes control, reload once so the page swaps to
+      // fresh assets instead of running against a stale cached shell. We skip the
+      // reload on the very first install (no prior controller) — that's not an
+      // update, and reloading then would be a pointless flash. `refreshing`
+      // guards against more than one reload.
+      const hadController = !!navigator.serviceWorker.controller;
+      let refreshing = false;
+      navigator.serviceWorker.addEventListener("controllerchange", () => {
+        if (refreshing || !hadController) return;
+        refreshing = true;
+        window.location.reload();
+      });
+
+      navigator.serviceWorker
+        .register("/sw.js")
+        .then((reg) => {
+          // Proactively check for an updated worker on each load, and tell a
+          // waiting worker to take over immediately so fixes ship without a
+          // manual cache clear.
+          reg.update().catch(() => undefined);
+          reg.addEventListener("updatefound", () => {
+            const installing = reg.installing;
+            if (!installing) return;
+            installing.addEventListener("statechange", () => {
+              if (installing.state === "installed" && navigator.serviceWorker.controller) {
+                reg.waiting?.postMessage("SKIP_WAITING");
+              }
+            });
+          });
+        })
+        .catch(() => undefined);
     }
 
     if (dismissedRecently() || isAlreadyInstalled()) return;

@@ -1,29 +1,48 @@
 // Service worker for Mubin — offline-friendly Quran study.
+//
 // Strategy:
-//   • Static assets (font/image/style/script): cache-first.
+//   • Static assets (font/image/style/script): cache-first. Safe because Next.js
+//     content-hashes these URLs, so a given URL's bytes never change.
 //   • Quran word/root data and /api/roots: stale-while-revalidate.
-//   • HTML documents: network-first with offline fallback to the cached root.
-//   • Cross-origin (Quran audio CDN, translation API): pass through.
+//   • HTML documents: network-first, falling back to cache only when offline.
+//     We deliberately do NOT precache the HTML shell — a stale shell references
+//     old hashed chunk URLs that 404 after a deploy, which boots a blank page.
+//
+// IMPORTANT: bump CACHE_VERSION on every deploy that changes caching behaviour.
+// Changing this file's bytes is what makes browsers detect and install the new
+// worker; the `activate` step then purges every older cache, self-healing any
+// device stuck on a previous version.
 
-const CACHE = "mubin-v1";
-const ESSENTIAL = ["/", "/learn", "/surahs", "/manifest.webmanifest", "/icon.svg"];
+const CACHE_VERSION = "v2";
+const CACHE = `mubin-${CACHE_VERSION}`;
+
+// Only stable, non-hashed static files. Never precache HTML routes.
+const ESSENTIAL = ["/manifest.webmanifest", "/icon.svg"];
 
 self.addEventListener("install", (event) => {
   event.waitUntil(
-    caches.open(CACHE).then((cache) =>
-      Promise.allSettled(ESSENTIAL.map((url) => cache.add(url)))
-    )
+    caches
+      .open(CACHE)
+      .then((cache) => Promise.allSettled(ESSENTIAL.map((url) => cache.add(url))))
   );
+  // Activate this worker as soon as it finishes installing.
   self.skipWaiting();
 });
 
 self.addEventListener("activate", (event) => {
   event.waitUntil(
-    caches.keys().then((keys) =>
-      Promise.all(keys.filter((k) => k !== CACHE).map((k) => caches.delete(k)))
-    )
+    caches
+      .keys()
+      .then((keys) =>
+        Promise.all(keys.filter((k) => k !== CACHE).map((k) => caches.delete(k)))
+      )
+      .then(() => self.clients.claim())
   );
-  self.clients.claim();
+});
+
+// Allow the page to tell a waiting worker to take over immediately.
+self.addEventListener("message", (event) => {
+  if (event.data === "SKIP_WAITING") self.skipWaiting();
 });
 
 self.addEventListener("fetch", (event) => {
@@ -52,7 +71,9 @@ self.addEventListener("fetch", (event) => {
     return;
   }
 
-  // HTML documents: network-first; on failure, fall back to cached page or root.
+  // HTML documents: network-first. Only fall back to cache when the network is
+  // unreachable — never serve a stale shell while online, so fresh chunk URLs
+  // always match the served HTML.
   if (req.destination === "document" || req.headers.get("accept")?.includes("text/html")) {
     event.respondWith(
       fetch(req)
@@ -68,7 +89,7 @@ self.addEventListener("fetch", (event) => {
     return;
   }
 
-  // Static assets: cache-first.
+  // Static assets: cache-first (URLs are content-hashed, so this is safe).
   if (["font", "image", "style", "script"].includes(req.destination)) {
     event.respondWith(
       caches.open(CACHE).then(async (cache) => {
