@@ -1,15 +1,20 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
-import { useLearning } from "@/store/learning";
+import { useLearning, BADGES } from "@/store/learning";
 import { classNames } from "@/lib/format";
-import { categoryLabel, type TajweedCategory, type TajweedRule } from "@/lib/tajweed";
-import { getTajweedRule } from "@/lib/tajweed";
+import {
+  categoryLabel,
+  getTajweedRule,
+  type TajweedCategory,
+  type TajweedRule,
+} from "@/lib/tajweed";
 import type { TajweedSegment } from "@/lib/tajweed-parser";
 import {
   generateTajweedQuest,
   type TajweedStage,
+  type RuleHit,
 } from "@/lib/tajweed-learning";
 import { ConfettiBurst } from "@/components/ConfettiBurst";
 import {
@@ -132,6 +137,8 @@ export function TajweedQuestRunner({
     correct: boolean;
     rule?: TajweedRule;
   } | null>(null);
+  // Track whether the completed quest was perfect so badge logic can fire.
+  const [completedPerfect, setCompletedPerfect] = useState(false);
 
   const stage = quest?.stages[stageIdx];
   const isComplete = stage?.kind === "complete";
@@ -146,9 +153,9 @@ export function TajweedQuestRunner({
 
   useEffect(() => {
     if (isComplete && passedThreshold) {
-      recordTajweedStar(surahNumber, difficulty);
+      recordTajweedStar(surahNumber, difficulty, completedPerfect);
     }
-  }, [isComplete, passedThreshold, surahNumber, difficulty, recordTajweedStar]);
+  }, [isComplete, passedThreshold, surahNumber, difficulty, recordTajweedStar, completedPerfect]);
 
   // Whenever the runner unmounts (user navigates away mid-quest), stop any
   // verse that's still playing so the audio doesn't bleed into another route.
@@ -202,7 +209,18 @@ export function TajweedQuestRunner({
     // shows a different verse and the carry-over audio is disorienting.
     stopAllVerseAudio();
     setPendingResult(null);
-    setStageIdx((i) => Math.min(i + 1, stages.length - 1));
+    
+    const nextIdx = Math.min(stageIdx + 1, stages.length - 1);
+    setStageIdx(nextIdx);
+    
+    if (stages[nextIdx].kind === "complete" && stage?.kind !== "complete") {
+      const isPass = totalQuestions > 0 && stats.correct / totalQuestions >= 0.8;
+      const isPerfect = totalQuestions > 0 && stats.correct === totalQuestions;
+      if (isPass) {
+        setCompletedPerfect(isPerfect);
+        recordTajweedStar(surahNumber, difficulty, isPerfect);
+      }
+    }
   }
 
   const isLastBeforeComplete = stageIdx + 1 < stages.length && stages[stageIdx + 1].kind === "complete";
@@ -287,10 +305,10 @@ function FeedbackCard({
   return (
     <div
       className={classNames(
-        "sticky bottom-0 z-30 -mx-4 sm:mx-0 sm:rounded-2xl border-t-4 px-4 sm:px-5 py-3 sm:py-4 flex items-center gap-3 shadow-[0_-10px_30px_-12px_rgba(0,0,0,0.25)] animate-fade-up",
+        "sticky bottom-0 z-30 -mx-4 sm:mx-0 sm:rounded-2xl border px-4 sm:px-5 py-3 sm:py-4 flex items-center gap-3 shadow-[0_-10px_30px_-12px_rgba(0,0,0,0.25)] animate-fade-up",
         correct
-          ? "bg-[color:var(--accent-soft)] border-[color:var(--accent)]"
-          : "bg-[color:var(--danger)]/10 border-[color:var(--danger)]"
+          ? "bg-[color:var(--accent-soft)] border-[color:var(--accent)]/60"
+          : "bg-[color:var(--danger)]/10 border-[color:var(--danger)]/40"
       )}
       role="status"
     >
@@ -466,6 +484,47 @@ function StageView(props: StageViewProps) {
           segments={stage.segments}
           targetRule={stage.targetRule}
           targetSegmentIdxs={stage.targetSegmentIdxs}
+          language={language}
+          onAnswer={props.onAnswer}
+        />
+      );
+    case "sound-sorter":
+      return (
+        <SoundSorterStage
+          surahNumber={stage.surahNumber}
+          items={stage.items}
+          buckets={stage.buckets}
+          language={language}
+          onAnswer={props.onAnswer}
+        />
+      );
+    case "hear-the-rule":
+      return (
+        <HearTheRuleStage
+          hit={stage.hit}
+          surahNumber={stage.surahNumber}
+          options={stage.options}
+          language={language}
+          onAnswer={props.onAnswer}
+        />
+      );
+    case "confused-pairs":
+      return (
+        <ConfusedPairsStage
+          pairA={stage.pairA}
+          pairB={stage.pairB}
+          distractors={stage.distractors}
+          language={language}
+          onAnswer={props.onAnswer}
+        />
+      );
+    case "rule-whisperer":
+      return (
+        <RuleWhispererStage
+          ayah={stage.ayah}
+          surahNumber={stage.surahNumber}
+          segments={stage.segments}
+          ruleSegments={stage.ruleSegments}
           language={language}
           onAnswer={props.onAnswer}
         />
@@ -1419,6 +1478,186 @@ function RuleSortStage({
   );
 }
 
+/* ── Sound Sorter (3★) ───────────────────────────────────────────────── */
+
+function SoundSorterItem({
+  index, item, surahNumber, isSelected, assignedRule, submitted, language, buckets, onSelect,
+}: {
+  index: number;
+  item: { ayah: number; segmentIdx: number; segments: TajweedSegment[]; correctRule: TajweedRule };
+  surahNumber: number;
+  isSelected: boolean;
+  assignedRule: TajweedRule | undefined;
+  submitted: boolean;
+  language: "en" | "ms";
+  buckets: TajweedRule[];
+  onSelect: (i: number) => void;
+}) {
+  const { playing, isActive } = useVerseAudioState(surahNumber, item.ayah);
+  const isCorrect = submitted && assignedRule?.code === item.correctRule.code;
+  const isWrong = submitted && assignedRule?.code !== item.correctRule.code;
+  return (
+    <div
+      className={classNames(
+        "rounded-2xl border-2 p-3 transition-all cursor-pointer",
+        isSelected && !submitted ? "border-[color:var(--accent)] bg-[color:var(--accent-soft)]/20"
+          : submitted && isCorrect ? "border-[color:var(--accent)] bg-[color:var(--accent)]/8"
+          : submitted && isWrong ? "border-[color:var(--danger)] bg-[color:var(--danger)]/8"
+          : "border-[color:var(--border)] bg-[color:var(--surface)]"
+      )}
+      onClick={() => onSelect(index)}
+    >
+      <div className="flex items-center gap-3">
+        <button
+          type="button"
+          onClick={(e) => { e.stopPropagation(); toggleVerseAudio(surahNumber, item.ayah); }}
+          className={classNames(
+            "h-9 w-9 shrink-0 rounded-full grid place-items-center transition-colors",
+            playing && isActive ? "bg-[color:var(--accent)] text-white" : "bg-[color:var(--border)]/60 hover:bg-[color:var(--accent)]/20"
+          )}
+          aria-label={playing && isActive ? "Pause" : `Play verse ${item.ayah}`}
+        >
+          {playing && isActive
+            ? <svg viewBox="0 0 24 24" width="14" height="14" fill="currentColor" aria-hidden><rect x="6" y="5" width="4" height="14" rx="1"/><rect x="14" y="5" width="4" height="14" rx="1"/></svg>
+            : <svg viewBox="0 0 24 24" width="14" height="14" fill="currentColor" aria-hidden><path d="M8 5l12 7-12 7z"/></svg>}
+        </button>
+        <div className="flex-1 min-w-0">
+          <p className="text-xs text-[color:var(--muted)] mb-1">
+            {language === "ms" ? `Ayat ${item.ayah}` : `Verse ${item.ayah}`}
+            {submitted && isWrong && <span className="ml-2 text-[color:var(--accent)]">→ {item.correctRule.name[language]}</span>}
+          </p>
+          <p className="arabic text-right leading-loose text-[length:var(--arabic-sm)]" lang="ar" dir="rtl">
+            {item.segments.map((seg, si) => (
+              <span key={si} style={si === item.segmentIdx ? { color: item.correctRule.color, fontWeight: 700 } : undefined}>{seg.text}</span>
+            ))}
+          </p>
+        </div>
+        <div className="shrink-0 text-right">
+          {assignedRule
+            ? <span className="inline-block rounded-full px-2 py-1 text-[10px] font-bold" style={{ background: assignedRule.color + "22", color: assignedRule.color }}>{assignedRule.name[language]}</span>
+            : <span className="text-[10px] text-[color:var(--muted)]">{isSelected ? (language === "ms" ? "Pilih hukum ↓" : "Pick rule ↓") : (language === "ms" ? "Ketik pilih" : "Tap to select")}</span>}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function SoundSorterStage({
+  surahNumber,
+  items,
+  buckets,
+  language,
+  onAnswer,
+}: {
+  surahNumber: number;
+  items: { ayah: number; segmentIdx: number; segments: TajweedSegment[]; correctRule: TajweedRule }[];
+  buckets: TajweedRule[];
+  language: "en" | "ms";
+  onAnswer: (correct: boolean, rule?: TajweedRule) => void;
+}) {
+  const [assignments, setAssignments] = useState<Record<number, string>>({});
+  const [selected, setSelected] = useState<number | null>(null);
+  const [submitted, setSubmitted] = useState(false);
+
+  const allAssigned = items.every((_, i) => assignments[i] !== undefined);
+
+  function selectItem(idx: number) {
+    if (submitted) return;
+    setSelected(selected === idx ? null : idx);
+  }
+
+  function assignBucket(ruleCode: string) {
+    if (submitted || selected === null) return;
+    setAssignments((prev) => ({ ...prev, [selected]: ruleCode }));
+    setSelected(null);
+  }
+
+  function check() {
+    if (!allAssigned || submitted) return;
+    setSubmitted(true);
+    const correct = items.filter((item, i) => assignments[i] === item.correctRule.code).length;
+    const isCorrect = correct / items.length >= 0.75;
+    // Report the most common correct rule as the feedback rule
+    const correctItems = items.filter((item, i) => assignments[i] === item.correctRule.code);
+    const feedbackRule = correctItems[0]?.correctRule ?? items[0]?.correctRule;
+    setTimeout(() => onAnswer(isCorrect, feedbackRule), 700);
+  }
+
+  return (
+    <div className="card-raised p-6 sm:p-8 animate-fade-up space-y-5">
+      <div className="text-center">
+        <p className="eyebrow mb-1 text-[color:var(--accent-strong)]">
+          {language === "ms" ? "🎧 Pengisih Bunyi" : "🎧 Sound Sorter"}
+        </p>
+        <p className="text-xs text-[color:var(--muted)]">
+          {language === "ms"
+            ? "Dengar setiap ayat · pilih segmen · kemudian ketik hukum yang betul"
+            : "Listen to each verse · select a segment · then tap the correct rule"}
+        </p>
+      </div>
+
+      {/* Items */}
+      <div className="space-y-2">
+        {items.map((item, i) => (
+          <SoundSorterItem
+            key={i}
+            index={i}
+            item={item}
+            surahNumber={surahNumber}
+            isSelected={selected === i}
+            assignedRule={buckets.find((b) => b.code === assignments[i])}
+            submitted={submitted}
+            language={language}
+            buckets={buckets}
+            onSelect={selectItem}
+          />
+        ))}
+      </div>
+
+      {/* Buckets */}
+      <div className="grid grid-cols-2 gap-2">
+        {buckets.map((rule) => (
+          <button
+            key={rule.code}
+            onClick={() => assignBucket(rule.code)}
+            disabled={submitted || selected === null}
+            className={classNames(
+              "rounded-2xl border-2 p-3 text-left transition-all",
+              selected !== null && !submitted
+                ? "border-dashed hover:scale-[1.02] active:scale-[0.98]"
+                : "opacity-60 cursor-default",
+              submitted ? "pointer-events-none" : ""
+            )}
+            style={selected !== null ? { borderColor: rule.color, background: rule.color + "10" } : undefined}
+          >
+            <p className="text-sm font-bold" style={{ color: rule.color }}>{rule.name[language]}</p>
+            <p className="text-[10px] text-[color:var(--muted)] mt-0.5 leading-tight line-clamp-2">
+              {rule.condition[language].slice(0, 60)}…
+            </p>
+          </button>
+        ))}
+      </div>
+
+      <button
+        onClick={check}
+        disabled={!allAssigned || submitted}
+        className={classNames(
+          "w-full rounded-2xl py-4 text-base font-bold transition-all active:scale-[0.98]",
+          allAssigned && !submitted
+            ? "text-white hover:-translate-y-0.5"
+            : "bg-[color:var(--border)] text-[color:var(--muted)] cursor-not-allowed"
+        )}
+        style={allAssigned && !submitted ? {
+          background: "linear-gradient(135deg, var(--accent), var(--accent-strong))",
+          boxShadow: "0 12px 32px -8px var(--accent-glow)",
+        } : undefined}
+      >
+        {language === "ms" ? "SEMAK" : "CHECK"} →
+      </button>
+    </div>
+  );
+}
+
 /* ── Mistake Finder (3★) ─────────────────────────────────────────────── */
 
 function MistakeFinderStage({
@@ -1456,8 +1695,11 @@ function MistakeFinderStage({
   return (
     <div className="card-raised p-6 sm:p-8 animate-fade-up space-y-5">
       <div className="text-center">
-        <p className="eyebrow mb-1">
-          {language === "ms" ? "Cari kesilapan" : "Find the mistake"}
+        <p className="eyebrow mb-1 text-[color:var(--accent-strong)]">
+          🕵️ {language === "ms" ? "Mod Detektif" : "Detective Mode"}
+        </p>
+        <p className="font-semibold text-sm mb-0.5">
+          {language === "ms" ? "Cari kesilapan Tajweed" : "Spot the Tajweed mistake"}
         </p>
         <p className="text-xs text-[color:var(--muted)]">
           {language === "ms"
@@ -1769,6 +2011,451 @@ function AudioTapStage({
   );
 }
 
+/* ── Hear the Rule (1★ audio) ────────────────────────────────────────── */
+
+function HearTheRuleStage({
+  hit,
+  surahNumber,
+  options,
+  language,
+  onAnswer,
+}: {
+  hit: RuleHit;
+  surahNumber: number;
+  options: TajweedRule[];
+  language: "en" | "ms";
+  onAnswer: (correct: boolean, rule?: TajweedRule) => void;
+}) {
+  const [picked, setPicked] = useState<string | null>(null);
+  const [revealed, setRevealed] = useState(false);
+  const { playing } = useVerseAudioState(surahNumber, hit.ayah);
+  const target = hit.rule;
+
+  const pick = (code: string) => {
+    if (picked) return;
+    setPicked(code);
+    setTimeout(() => {
+      setRevealed(true);
+      onAnswer(code === target.code, target);
+    }, 400);
+  };
+
+  return (
+    <div className="card-raised p-6 sm:p-8 animate-fade-up space-y-5">
+      <div className="text-center">
+        <p className="eyebrow mb-1 text-[color:var(--accent-strong)]">
+          🎧 {language === "ms" ? "Dengar & Kenal" : "Hear the Rule"}
+        </p>
+        <p className="font-semibold text-sm mb-0.5">
+          {language === "ms"
+            ? "Dengar ayat. Peraturan manakah yang digunakan?"
+            : "Listen to the verse. Which rule is being applied?"}
+        </p>
+        <p className="text-xs text-[color:var(--muted)]">
+          {language === "ms"
+            ? "Kenal dari bunyi sahaja — tiada warna"
+            : "Identify from sound alone — no colors"}
+        </p>
+      </div>
+
+      <div className="flex justify-center">
+        <button
+          type="button"
+          onClick={() => toggleVerseAudio(surahNumber, hit.ayah)}
+          className={classNames(
+            "h-16 w-16 rounded-full grid place-items-center shadow-lg active:scale-95 transition-all",
+            playing ? "bg-[color:var(--accent)] text-white" : "bg-[color:var(--gold)] text-black"
+          )}
+          aria-label={playing ? (language === "ms" ? "Henti" : "Pause") : (language === "ms" ? "Main" : "Play")}
+        >
+          {playing ? (
+            <svg viewBox="0 0 24 24" width="24" height="24" fill="currentColor" aria-hidden>
+              <rect x="6" y="5" width="4" height="14" rx="1" />
+              <rect x="14" y="5" width="4" height="14" rx="1" />
+            </svg>
+          ) : (
+            <svg viewBox="0 0 24 24" width="24" height="24" fill="currentColor" aria-hidden>
+              <path d="M8 5l12 7-12 7z" />
+            </svg>
+          )}
+        </button>
+      </div>
+
+      {revealed && (
+        <div className="rounded-2xl bg-[color:var(--surface)] border border-[color:var(--border)] p-4 animate-fade-up">
+          <p className="text-xs text-[color:var(--muted)] text-center mb-2">
+            {language === "ms" ? "Ayat yang dimainkan:" : "The verse played:"}
+          </p>
+          <RenderedAyah
+            segments={hit.ayahSegments}
+            highlightIdx={hit.segmentIdx}
+            monochrome={false}
+          />
+        </div>
+      )}
+
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+        {options.map((o) => {
+          const isPicked = picked === o.code;
+          const isCorrect = o.code === target.code;
+          return (
+            <button
+              key={o.code}
+              onClick={() => pick(o.code)}
+              disabled={picked !== null}
+              className={classNames(
+                "rounded-2xl border-2 px-4 py-3 text-left transition-all duration-300 active:scale-[0.98] min-h-[60px]",
+                !picked && "border-[color:var(--border)] bg-[color:var(--surface)] hover:border-[color:var(--accent)] hover:bg-[color:var(--accent-soft)]/30",
+                picked && isPicked && isCorrect && "border-[color:var(--accent)] bg-[color:var(--accent)] text-white",
+                picked && isPicked && !isCorrect && "border-[color:var(--danger)] bg-[color:var(--danger)] text-white animate-shake",
+                picked && !isPicked && isCorrect && "border-[color:var(--accent)] bg-[color:var(--accent-soft)]/60",
+                picked && !isPicked && !isCorrect && "opacity-40"
+              )}
+            >
+              <div className="flex items-center gap-2">
+                <span
+                  className="inline-block w-2.5 h-2.5 rounded-full shrink-0"
+                  style={{ backgroundColor: o.color }}
+                  aria-hidden
+                />
+                <span className="font-bold text-sm">{o.name[language]}</span>
+              </div>
+              <span className="text-[11px] opacity-75 block mt-0.5 font-mono">{o.name.ar}</span>
+            </button>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
+
+/* ── Confused Pairs (2★) ─────────────────────────────────────────────── */
+
+function ConfusedPairsStage({
+  pairA,
+  pairB,
+  distractors,
+  language,
+  onAnswer,
+}: {
+  pairA: TajweedRule;
+  pairB: TajweedRule;
+  distractors: [TajweedRule, TajweedRule];
+  language: "en" | "ms";
+  onAnswer: (correct: boolean, rule?: TajweedRule) => void;
+}) {
+  // blanks[0] = slot for pairA, blanks[1] = slot for pairB
+  const [blanks, setBlanks] = useState<[string | null, string | null]>([null, null]);
+  const [activeSlot, setActiveSlot] = useState<0 | 1 | null>(null);
+  const [submitted, setSubmitted] = useState(false);
+
+  const wordBank = useMemo(
+    () => [pairA, pairB, distractors[0], distractors[1]].sort(
+      (a, b) => a.name[language].localeCompare(b.name[language])
+    ),
+    [pairA, pairB, distractors, language]
+  );
+
+  const allFilled = blanks[0] !== null && blanks[1] !== null;
+
+  function tapSlot(idx: 0 | 1) {
+    if (submitted) return;
+    setActiveSlot((s) => (s === idx ? null : idx));
+  }
+
+  function tapTile(code: string) {
+    if (submitted || activeSlot === null) return;
+    const next = [...blanks] as [string | null, string | null];
+    next[activeSlot] = code;
+    setBlanks(next);
+    setActiveSlot(null);
+  }
+
+  function check() {
+    if (!allFilled || submitted) return;
+    setSubmitted(true);
+    const correct = blanks[0] === pairA.code && blanks[1] === pairB.code;
+    setTimeout(() => onAnswer(correct, correct ? pairA : pairA), 600);
+  }
+
+  const isCorrectA = submitted && blanks[0] === pairA.code;
+  const isCorrectB = submitted && blanks[1] === pairB.code;
+
+  function BlankSlot({ idx, rule, isCorrect }: { idx: 0 | 1; rule: TajweedRule; isCorrect: boolean }) {
+    const filled = blanks[idx];
+    const filledRule = filled ? [pairA, pairB, ...distractors].find((r) => r.code === filled) : null;
+    const isActive = activeSlot === idx;
+    return (
+      <div
+        className={classNames(
+          "rounded-2xl border-2 p-4 flex flex-col gap-2 cursor-pointer transition-all",
+          submitted && isCorrect && "border-[color:var(--accent)] bg-[color:var(--accent)]/8",
+          submitted && !isCorrect && "border-[color:var(--danger)] bg-[color:var(--danger)]/8",
+          !submitted && isActive && "border-[color:var(--gold)] bg-[color:var(--gold)]/10",
+          !submitted && !isActive && "border-[color:var(--border)] bg-[color:var(--surface)] hover:border-[color:var(--accent)]/50"
+        )}
+        onClick={() => !submitted && tapSlot(idx)}
+        role="button"
+        aria-label={`Slot ${idx + 1}`}
+      >
+        <p className="text-xs text-[color:var(--muted)] leading-snug line-clamp-3">
+          {rule.condition[language]}
+        </p>
+        <div
+          className={classNames(
+            "rounded-xl px-3 py-2 text-sm font-bold text-center min-h-[36px] flex items-center justify-center gap-2 transition-all",
+            filledRule
+              ? "bg-[color:var(--surface-raised)] border border-[color:var(--border-strong)]"
+              : "border-2 border-dashed border-[color:var(--border-strong)]"
+          )}
+        >
+          {filledRule ? (
+            <>
+              <span className="w-2.5 h-2.5 rounded-full shrink-0" style={{ backgroundColor: filledRule.color }} aria-hidden />
+              {filledRule.name[language]}
+            </>
+          ) : (
+            <span className="text-[color:var(--muted)] text-xs">
+              {isActive
+                ? language === "ms" ? "↓ Pilih nama" : "↓ Pick a name"
+                : language === "ms" ? "Ketik untuk isi" : "Tap to fill"}
+            </span>
+          )}
+        </div>
+        {submitted && !isCorrect && (
+          <p className="text-xs text-[color:var(--accent-strong)] font-semibold">
+            → {rule.name[language]}
+          </p>
+        )}
+      </div>
+    );
+  }
+
+  return (
+    <div className="card-raised p-6 sm:p-8 animate-fade-up space-y-5">
+      <div className="text-center">
+        <p className="eyebrow mb-1">
+          {language === "ms" ? "Bezakan pasangan yang mengelirukan" : "Distinguish the confused pair"}
+        </p>
+        <p className="text-xs text-[color:var(--muted)]">
+          {language === "ms"
+            ? "Isi nama peraturan yang betul untuk setiap syarat"
+            : "Fill in the correct rule name for each condition"}
+        </p>
+      </div>
+
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+        <BlankSlot idx={0} rule={pairA} isCorrect={isCorrectA} />
+        <BlankSlot idx={1} rule={pairB} isCorrect={isCorrectB} />
+      </div>
+
+      <div>
+        <p className="text-xs text-[color:var(--muted)] mb-2 text-center">
+          {language === "ms" ? "Bank kata — ketik untuk meletak" : "Word bank — tap to place"}
+        </p>
+        <div className="flex flex-wrap gap-2 justify-center">
+          {wordBank.map((r) => {
+            const isPlaced = blanks.includes(r.code);
+            return (
+              <button
+                key={r.code}
+                onClick={() => tapTile(r.code)}
+                disabled={submitted || isPlaced}
+                className={classNames(
+                  "rounded-full border px-4 py-2 text-sm font-semibold transition-all active:scale-95 flex items-center gap-2",
+                  isPlaced && "opacity-30 pointer-events-none",
+                  !isPlaced && activeSlot !== null && "border-[color:var(--accent)] bg-[color:var(--accent-soft)]/30 hover:bg-[color:var(--accent-soft)]/60",
+                  !isPlaced && activeSlot === null && "border-[color:var(--border-strong)] bg-[color:var(--surface)] hover:border-[color:var(--accent)]"
+                )}
+              >
+                <span className="w-2 h-2 rounded-full" style={{ backgroundColor: r.color }} aria-hidden />
+                {r.name[language]}
+              </button>
+            );
+          })}
+        </div>
+      </div>
+
+      <button
+        onClick={check}
+        disabled={!allFilled || submitted}
+        className={classNames(
+          "w-full rounded-2xl py-4 text-base font-bold transition-all active:scale-[0.98]",
+          allFilled && !submitted
+            ? "text-white hover:-translate-y-0.5"
+            : "bg-[color:var(--border)] text-[color:var(--muted)] cursor-not-allowed"
+        )}
+        style={allFilled && !submitted ? {
+          background: "linear-gradient(135deg, var(--accent), var(--accent-strong))",
+          boxShadow: "0 12px 32px -8px var(--accent-glow)",
+        } : undefined}
+      >
+        {language === "ms" ? "SEMAK" : "CHECK"} →
+      </button>
+    </div>
+  );
+}
+
+/* ── Rule Whisperer (3★) ─────────────────────────────────────────────── */
+
+function RuleWhispererStage({
+  ayah,
+  surahNumber,
+  segments,
+  ruleSegments,
+  language,
+  onAnswer,
+}: {
+  ayah: number;
+  surahNumber: number;
+  segments: TajweedSegment[];
+  ruleSegments: Array<{ segmentIdx: number; rule: TajweedRule; options: TajweedRule[] }>;
+  language: "en" | "ms";
+  onAnswer: (correct: boolean, rule?: TajweedRule) => void;
+}) {
+  // result for each segment: null = unresolved, true = correct 1st guess, false = wrong
+  const [results, setResults] = useState<Record<number, boolean | null>>(() =>
+    Object.fromEntries(ruleSegments.map((s) => [s.segmentIdx, null]))
+  );
+  const [active, setActive] = useState<number | null>(null);
+  const [firstGuesses, setFirstGuesses] = useState<Record<number, boolean>>({});
+
+  const resolved = ruleSegments.filter((s) => results[s.segmentIdx] !== null);
+  const allDone = resolved.length === ruleSegments.length;
+
+  useEffect(() => {
+    if (allDone) {
+      const correctFirstGuesses = Object.values(firstGuesses).filter(Boolean).length;
+      const isCorrect = correctFirstGuesses / ruleSegments.length >= 0.6;
+      setTimeout(() => onAnswer(isCorrect), 800);
+    }
+  }, [allDone, firstGuesses, ruleSegments.length, onAnswer]);
+
+  function tapSegment(segIdx: number) {
+    if (results[segIdx] !== null) return;
+    setActive((a) => (a === segIdx ? null : segIdx));
+  }
+
+  function pickRule(segIdx: number, code: string) {
+    const seg = ruleSegments.find((s) => s.segmentIdx === segIdx);
+    if (!seg || results[segIdx] !== null) return;
+    const isCorrect = code === seg.rule.code;
+    if (!(segIdx in firstGuesses)) {
+      setFirstGuesses((prev) => ({ ...prev, [segIdx]: isCorrect }));
+    }
+    setResults((prev) => ({ ...prev, [segIdx]: isCorrect }));
+    setActive(null);
+  }
+
+  const activeSegData = active !== null ? ruleSegments.find((s) => s.segmentIdx === active) : null;
+
+  return (
+    <div className="card-raised p-6 sm:p-8 animate-fade-up space-y-5">
+      <div className="text-center">
+        <p className="eyebrow mb-1 text-[color:var(--accent-strong)]">
+          ✦ {language === "ms" ? "Pembisik Hukum" : "Rule Whisperer"}
+        </p>
+        <p className="font-semibold text-sm mb-0.5">
+          {language === "ms"
+            ? "Ketik setiap segmen dan namakan hukumnya"
+            : "Tap each segment and name its rule"}
+        </p>
+        <p className="text-xs text-[color:var(--muted)]">
+          {resolved.length} / {ruleSegments.length}{" "}
+          {language === "ms" ? "diselesaikan" : "resolved"}
+        </p>
+      </div>
+
+      <PlayVerseButton surahNumber={surahNumber} ayah={ayah} language={language} />
+
+      <div className="rounded-2xl bg-[color:var(--surface)] border border-[color:var(--border)] p-4">
+        <p
+          className="arabic text-center leading-loose"
+          lang="ar"
+          dir="rtl"
+          style={{ fontSize: "var(--arabic-md)" }}
+        >
+          {segments.map((seg, idx) => {
+            const ruleEntry = ruleSegments.find((s) => s.segmentIdx === idx);
+            const isRuleSeg = !!ruleEntry;
+            const result = isRuleSeg ? results[idx] : null;
+            const isActive = active === idx;
+            const isResolved = result !== null;
+
+            if (!isRuleSeg) {
+              return <span key={idx}>{seg.text}</span>;
+            }
+
+            let bg = "color-mix(in srgb, var(--gold) 14%, transparent)";
+            let textColor: string | undefined = undefined;
+            if (isActive) bg = "color-mix(in srgb, var(--gold) 38%, transparent)";
+            if (result === true) {
+              bg = `color-mix(in srgb, ${ruleEntry.rule.color} 28%, transparent)`;
+              textColor = ruleEntry.rule.color;
+            }
+            if (result === false) bg = "color-mix(in srgb, var(--danger) 20%, transparent)";
+
+            return (
+              <span
+                key={idx}
+                role="button"
+                tabIndex={isResolved ? -1 : 0}
+                onClick={() => !isResolved && tapSegment(idx)}
+                onKeyDown={(e) => {
+                  if (isResolved) return;
+                  if (e.key === "Enter" || e.key === " ") { e.preventDefault(); tapSegment(idx); }
+                }}
+                className={classNames(
+                  "rounded-md underline decoration-dashed underline-offset-[6px] decoration-2 transition-colors",
+                  !isResolved && "cursor-pointer",
+                  isResolved && "cursor-default"
+                )}
+                style={{
+                  backgroundColor: bg,
+                  color: textColor,
+                  textDecorationColor: result === true ? ruleEntry.rule.color : "var(--gold)",
+                }}
+              >
+                {seg.text}
+              </span>
+            );
+          })}
+        </p>
+      </div>
+
+      {activeSegData && (
+        <div className="rounded-2xl border border-[color:var(--gold)]/40 bg-[color:var(--gold)]/5 p-4 animate-fade-up space-y-3">
+          <p className="text-xs text-[color:var(--muted)] text-center">
+            {language === "ms" ? "Pilih hukum untuk segmen ini:" : "Pick the rule for this segment:"}
+          </p>
+          <div className="grid grid-cols-2 gap-2">
+            {activeSegData.options.map((o) => (
+              <button
+                key={o.code}
+                onClick={() => pickRule(activeSegData.segmentIdx, o.code)}
+                className="rounded-xl border-2 border-[color:var(--border)] bg-[color:var(--surface)] px-3 py-2 text-left hover:border-[color:var(--accent)] hover:bg-[color:var(--accent-soft)]/20 transition-all active:scale-95"
+              >
+                <div className="flex items-center gap-2">
+                  <span className="w-2.5 h-2.5 rounded-full shrink-0" style={{ backgroundColor: o.color }} aria-hidden />
+                  <span className="text-sm font-bold">{o.name[language]}</span>
+                </div>
+              </button>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {!allDone && !active && (
+        <p className="text-xs text-center text-[color:var(--muted)]">
+          {language === "ms"
+            ? "Ketik mana-mana segmen yang ditebalkan untuk menjawab"
+            : "Tap any underlined segment to answer"}
+        </p>
+      )}
+    </div>
+  );
+}
+
 /* ── Completion ───────────────────────────────────────────────────────── */
 
 function CompleteStage({
@@ -1788,8 +2475,13 @@ function CompleteStage({
   starAwarded: boolean;
   language: "en" | "ms";
 }) {
+  const badges = useLearning((s) => s.badges ?? {});
   const pct = total > 0 ? Math.round((correct / total) * 100) : 0;
   const isPerfect = correct === total;
+
+  // Show badges earned in the last 30 seconds (just unlocked this quest)
+  const cutoff = Date.now() - 30_000;
+  const newBadges = BADGES.filter((b) => (badges[b.id] ?? 0) > cutoff);
   return (
     <div className="card-raised relative overflow-hidden p-8 sm:p-12 text-center animate-fade-up">
       <div
@@ -1832,6 +2524,25 @@ function CompleteStage({
           </div>
         )}
         {starAwarded && !isPerfect && <div className="mb-3" />}
+
+        {/* Newly unlocked badges */}
+        {newBadges.length > 0 && (
+          <div className="mb-5 rounded-2xl border border-[color:var(--gold)]/40 bg-[color:var(--gold)]/8 px-4 py-3 animate-pop">
+            <p className="eyebrow text-[color:var(--gold-strong)] dark:text-[color:var(--gold)] mb-2">
+              {language === "ms" ? "Lencana baru!" : "Badge unlocked!"}
+            </p>
+            <div className="flex flex-wrap gap-2 justify-center">
+              {newBadges.map((b) => (
+                <span
+                  key={b.id}
+                  className="inline-flex items-center gap-1.5 rounded-full bg-[color:var(--gold)]/20 text-[color:var(--gold-strong)] dark:text-[color:var(--gold)] px-3 py-1.5 text-sm font-bold"
+                >
+                  {b.icon} {b.name[language]}
+                </span>
+              ))}
+            </div>
+          </div>
+        )}
         <div className="flex flex-col sm:flex-row gap-3 justify-center">
           <Link
             href={`/surah/${surahNumber}`}
