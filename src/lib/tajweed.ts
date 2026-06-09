@@ -456,55 +456,55 @@ export const WAQF_SIGNS: WaqfSign[] = [
   {
     char: "م",
     mushafChars: ["ۘ"], // ۘ ARABIC SMALL HIGH MEEM INITIAL FORM
-    name: { ar: "وقف لازم", en: "Waqf Lazim", ms: "Waqf Lazim" },
+    name: { ar: "وقف لازم", en: "Waqf Lazim", ms: "Waqaf Lazim" },
     instruction: {
       en: "Must stop here. Continuing without stopping would change the meaning.",
-      ms: "Mesti berhenti di sini. Meneruskan tanpa berhenti akan mengubah makna.",
+      ms: "Wajib berhenti — sambung je makna lari.",
     },
   },
   {
     char: "ط",
     mushafChars: [],
-    name: { ar: "وقف مطلق", en: "Waqf Mutlaq", ms: "Waqf Mutlaq" },
+    name: { ar: "وقف مطلق", en: "Waqf Mutlaq", ms: "Waqaf Mutlaq" },
     instruction: {
       en: "Preferred to stop. Stopping is better than continuing.",
-      ms: "Lebih baik berhenti. Berhenti lebih baik daripada meneruskan.",
+      ms: "Elok berhenti di sini.",
     },
   },
   {
     char: "ج",
     mushafChars: ["ۚ"], // ۚ ARABIC SMALL HIGH JEEM
-    name: { ar: "وقف جائز", en: "Waqf Ja'iz", ms: "Waqf Ja'iz" },
+    name: { ar: "وقف جائز", en: "Waqf Ja'iz", ms: "Waqaf Ja'iz" },
     instruction: {
       en: "Permissible to stop. Both stopping and continuing are acceptable.",
-      ms: "Dibenarkan berhenti. Kedua-dua berhenti dan meneruskan adalah boleh diterima.",
+      ms: "Boleh berhenti atau sambung — sama je.",
     },
   },
   {
     char: "ز",
     mushafChars: [],
-    name: { ar: "وقف مجوّز", en: "Waqf Mujawwaz", ms: "Waqf Mujawwaz" },
+    name: { ar: "وقف مجوّز", en: "Waqf Mujawwaz", ms: "Waqaf Mujawwaz" },
     instruction: {
       en: "Permissible to stop, though continuing is slightly preferred.",
-      ms: "Dibenarkan berhenti, walaupun meneruskan sedikit lebih diutamakan.",
+      ms: "Boleh berhenti, tapi lebih baik sambung.",
     },
   },
   {
     char: "ص",
     mushafChars: [],
-    name: { ar: "وقف مرخّص", en: "Waqf Murakhkhas", ms: "Waqf Murakhkhas" },
+    name: { ar: "وقف مرخّص", en: "Waqf Murakhkhas", ms: "Waqaf Murakhkhas" },
     instruction: {
       en: "Permissible to stop only due to the length of the verse — stopping here is a concession, not ideal.",
-      ms: "Dibenarkan berhenti hanya kerana panjang ayat — berhenti di sini adalah kelonggaran, bukan ideal.",
+      ms: "Boleh berhenti sebab ayat panjang — tapi ini kelonggaran je.",
     },
   },
   {
     char: "قلی",
     mushafChars: ["ۗ"], // ۗ ARABIC SMALL HIGH LIGATURE QAF WITH LAM WITH ALEF MAKSURA
-    name: { ar: "الوقف أولى", en: "Al-Waqf al-Awla (Stop Preferred)", ms: "Berhenti Lebih Utama (Al-Waqf Awla)" },
+    name: { ar: "الوقف أولى", en: "Al-Waqf al-Awla (Stop Preferred)", ms: "Berhenti Lebih Utama (Al-Waqaf Awla)" },
     instruction: {
       en: "Stopping is preferred over continuing.",
-      ms: "Berhenti lebih diutamakan daripada meneruskan.",
+      ms: "Lebih baik berhenti.",
     },
   },
   {
@@ -513,16 +513,16 @@ export const WAQF_SIGNS: WaqfSign[] = [
     name: { ar: "الوصل أولى", en: "Al-Wasl al-Awla (Continue Preferred)", ms: "Teruskan Lebih Utama (Al-Wasl Awla)" },
     instruction: {
       en: "Continuing without stopping is preferred.",
-      ms: "Meneruskan tanpa berhenti lebih diutamakan.",
+      ms: "Lebih baik sambung terus.",
     },
   },
   {
     char: "لا",
     mushafChars: ["ۙ"], // ۙ ARABIC SMALL HIGH LAM ALEF
-    name: { ar: "لا تقف", en: "Lā Taqif (Do Not Stop)", ms: "Jangan Berhenti (La Taqif / Waqf Mamnu')" },
+    name: { ar: "لا تقف", en: "Lā Taqif (Do Not Stop)", ms: "Jangan Berhenti (La Taqif / Waqaf Mamnu')" },
     instruction: {
       en: "Do not stop here. Stopping will distort the meaning of the verse.",
-      ms: "Jangan berhenti di sini. Berhenti akan memesongkan makna ayat.",
+      ms: "Jangan berhenti — nanti makna lari.",
     },
   },
   {
@@ -531,16 +531,16 @@ export const WAQF_SIGNS: WaqfSign[] = [
     name: { ar: "السكتة", en: "Saktah", ms: "Saktah" },
     instruction: {
       en: "A brief silent pause — stop the sound without taking a new breath, then continue.",
-      ms: "Berhenti seketika tanpa bunyi — hentikan bacaan tanpa mengambil nafas baharu, kemudian sambung.",
+      ms: "Jeda senyap sekejap — stop bunyi, tahan nafas, pastu sambung.",
     },
   },
   {
     char: "ۛ",
     mushafChars: ["ۛ"], // ۛ ARABIC SMALL HIGH THREE DOTS
-    name: { ar: "وقف المعانقة", en: "Waqf Mu'anaqah", ms: "Waqf Mu'anaqah" },
+    name: { ar: "وقف المعانقة", en: "Waqf Mu'anaqah", ms: "Waqaf Mu'anaqah" },
     instruction: {
       en: "This stop comes in pairs — stop at one ۛ or the other, but not both.",
-      ms: "Tanda berhenti ini datang berpasangan — berhenti pada satu ۛ atau yang lain, tetapi tidak kedua-duanya.",
+      ms: "Datang berpasangan — pilih satu je nak berhenti, jangan dua-dua.",
     },
   },
   {
@@ -579,7 +579,7 @@ export function categoryLabel(
     qalqalah: { en: "Qalqalah (Echoing)", ms: "Qalqalah (Lantunan)" },
     ghunna: { en: "Ghunna (Nasalization)", ms: "Ghunnah (Dengung)" },
     hamza_lam: { en: "Hamza & Lam", ms: "Hamzah & Lam" },
-    waqf: { en: "Stop Signs (Waqf)", ms: "Tanda Berhenti (Waqf)" },
+    waqf: { en: "Stop Signs (Waqf)", ms: "Tanda Berhenti (Waqaf)" },
   };
   return labels[cat][lang];
 }

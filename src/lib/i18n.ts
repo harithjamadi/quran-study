@@ -302,7 +302,7 @@ export const UI_STRINGS = {
     dash_in_quran_short: "dalam Al-Quran",
     dash_milestone: "Sasaran seterusnya",
     dash_review_mistakes: "Semak Kesilapan",
-    dash_drill_weak: "Latih {count} perkataan lemah",
+    dash_drill_weak: "Latih tubi {count} perkataan lemah",
     dash_view_quest: "Misi",
     dash_view_list: "Senarai",
     dash_quest_mubarak: "Misi Surah",

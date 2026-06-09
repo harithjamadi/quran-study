@@ -302,7 +302,7 @@ function SessionHeader({
             </span>
           )}
           {combo >= 3 && (
-            <span className="flex items-center gap-1 text-orange-500 font-bold animate-bounce italic">
+            <span className="flex items-center gap-1 text-orange-500 font-bold animate-pulse-soft italic">
               <svg viewBox="0 0 24 24" width="14" height="14" fill="currentColor">
                 <path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z" />
               </svg>

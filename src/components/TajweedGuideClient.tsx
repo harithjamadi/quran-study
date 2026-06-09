@@ -137,8 +137,8 @@ export function TajweedGuideClient() {
       {/* Weak-rule callout — only when the user has practiced enough to give signal */}
       {weakestRule && (
         <section
-          className="card p-5 border-l-4 flex items-start gap-4"
-          style={{ borderLeftColor: weakestRule.rule.color }}
+          className="card p-5 flex items-start gap-4"
+          style={{ borderColor: `color-mix(in srgb, ${weakestRule.rule.color} 40%, var(--border))` }}
         >
           <span
             className="w-10 h-10 rounded-full shrink-0 grid place-items-center text-white text-lg font-black"

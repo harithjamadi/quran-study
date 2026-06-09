@@ -292,7 +292,7 @@ export function LemmaContext({ card }: { card: LemmaMeta }) {
         )}
 
         {insightText && (
-          <div className="rounded-2xl border border-[color:var(--gold)]/30 p-5 bg-[color:var(--gold)]/5 border-l-4 border-l-[color:var(--gold)]">
+          <div className="rounded-2xl border border-[color:var(--gold)]/40 p-5 bg-[color:var(--gold-soft)]/40">
             <div className="flex items-center gap-2 mb-2">
               <span className="text-lg">💡</span>
               <p className="text-[10px] uppercase tracking-widest text-[color:var(--gold)] font-black">

@@ -110,9 +110,23 @@ export function SettingsPanel() {
             ? "Apabila aktif, setiap huruf dipaparkan mengikut peraturan tajweed yang dilakarkan. Tap huruf berwarna untuk baca penerangannya. Tersedia untuk semua 114 Surah."
             : "When on, each letter is color-coded by its tajweed rule. Tap any colored letter to read its description and how to pronounce it. Available for all 114 Surahs."}
         </p>
+        {s.tajweedMode && (
+          <div className="pt-3 mt-3 border-t border-[color:var(--border)]">
+            <Toggle
+              label={language === "ms" ? "Pudar Automatik (Visual Scaffolding)" : "Auto-fade (Visual Scaffolding)"}
+              value={s.visualScaffolding}
+              onChange={s.setVisualScaffolding}
+            />
+            <p className="text-xs text-[color:var(--muted)] mt-2">
+              {language === "ms"
+                ? "Pudarkan warna untuk peraturan yang anda telah kuasai (ketepatan >80% dalam Cabaran Tajweed)."
+                : "Fade colors for rules you have mastered (>80% accuracy in Tajweed Quests)."}
+            </p>
+          </div>
+        )}
         <a
           href="/learn/tajweed"
-          className="inline-flex items-center gap-1 text-sm text-[color:var(--accent-strong)] hover:underline font-medium"
+          className="inline-flex items-center gap-1 text-sm text-[color:var(--accent-strong)] hover:underline font-medium mt-3 block"
         >
           {language === "ms" ? "Panduan Tajweed →" : "Open Tajweed Guide →"}
         </a>

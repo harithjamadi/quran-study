@@ -21,6 +21,8 @@ interface SettingsState {
   highlightCurrentVerse: boolean;
   wordStudyMode: boolean;
   tajweedMode: boolean;
+  /** Automatically fade colors for Tajweed rules the user has mastered (>= 80%) */
+  visualScaffolding: boolean;
   /** Mushaf reader text-size multiplier applied on top of the auto-fit size. */
   mushafScale: number;
   /** Line-height for the Mushaf page (vertical air between lines). */
@@ -38,6 +40,7 @@ interface SettingsState {
   setHighlightCurrentVerse: (v: boolean) => void;
   setWordStudyMode: (v: boolean) => void;
   setTajweedMode: (v: boolean) => void;
+  setVisualScaffolding: (v: boolean) => void;
   setMushafScale: (n: number) => void;
   setMushafLineSpacing: (n: number) => void;
   setMushafEdition: (e: MushafEdition) => void;
@@ -56,6 +59,7 @@ const DEFAULTS = {
   highlightCurrentVerse: true,
   wordStudyMode: true,
   tajweedMode: false,
+  visualScaffolding: false,
   mushafScale: 1,
   mushafLineSpacing: 1.9,
   mushafEdition: "madani" as MushafEdition,
@@ -78,6 +82,7 @@ export const useSettings = create<SettingsState>()(
       setHighlightCurrentVerse: (highlightCurrentVerse) => set({ highlightCurrentVerse }),
       setWordStudyMode: (wordStudyMode) => set({ wordStudyMode }),
       setTajweedMode: (tajweedMode) => set({ tajweedMode }),
+      setVisualScaffolding: (visualScaffolding) => set({ visualScaffolding }),
       setMushafScale: (mushafScale) =>
         set({ mushafScale: Math.min(1.8, Math.max(0.8, mushafScale)) }),
       setMushafLineSpacing: (mushafLineSpacing) =>

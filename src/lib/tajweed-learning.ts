@@ -198,6 +198,13 @@ export type TajweedStage =
       correctLetter: string;
       options: string[];
     }
+  // 1★ Recognize – audio-only rule identification
+  | {
+      kind: "hear-the-rule";
+      hit: RuleHit;
+      surahNumber: number;
+      options: TajweedRule[];
+    }
   // 2★ Understand
   | {
       kind: "condition-match";
@@ -217,6 +224,14 @@ export type TajweedStage =
       // Each rule-bearing segment must be dropped in the bucket of its category
       buckets: TajweedCategory[];
       items: { segmentIdx: number; category: TajweedCategory }[];
+    }
+  // 2★ Understand – fill-in-blank distinguishing confused rule pairs
+  | {
+      kind: "confused-pairs";
+      pairA: TajweedRule;
+      pairB: TajweedRule;
+      /** Two distractor rules for the word bank */
+      distractors: [TajweedRule, TajweedRule];
     }
   // 3★ Apply
   | {
@@ -244,6 +259,33 @@ export type TajweedStage =
       targetRule: TajweedRule;
       // For scoring: indexes that bear the target rule (correct taps).
       targetSegmentIdxs: number[];
+    }
+  // 3★ Apply – audio-based rule sorting
+  | {
+      kind: "sound-sorter";
+      surahNumber: number;
+      /** 3-4 items from distinct ayahs for the user to classify */
+      items: {
+        ayah: number;
+        segmentIdx: number;
+        segments: TajweedSegment[];
+        correctRule: TajweedRule;
+      }[];
+      /** The rule buckets the user sorts into */
+      buckets: TajweedRule[];
+    }
+  // 3★ Apply – full-ayah progressive reveal (tap each segment, pick rule, color reveals)
+  | {
+      kind: "rule-whisperer";
+      ayah: number;
+      surahNumber: number;
+      segments: TajweedSegment[];
+      /** Every rule-bearing segment with its correct rule and 4 MCQ options */
+      ruleSegments: Array<{
+        segmentIdx: number;
+        rule: TajweedRule;
+        options: TajweedRule[];
+      }>;
     };
 
 export interface TajweedQuest {
@@ -253,6 +295,21 @@ export interface TajweedQuest {
   /** Distinct rules featured in the memorize/intro stage. */
   featuredRules: TajweedRule[];
 }
+
+/* ── Confused pairs ─────────────────────────────────────────────────────── */
+
+/**
+ * Pairs of rules beginners routinely confuse. Each pair is injected as a
+ * "confused-pairs" stage at difficulty 2 when both codes are present in the surah.
+ */
+export const CONFUSED_PAIRS: Array<{ codeA: string; codeB: string }> = [
+  { codeA: "a", codeB: "u" },  // Idgham bil Ghunna vs Idgham bila Ghunna
+  { codeA: "f", codeB: "a" },  // Ikhfa vs Idgham bil Ghunna
+  { codeA: "f", codeB: "i" },  // Ikhfa vs Iqlab
+  { codeA: "c", codeB: "w" },  // Ikhfa Shafawi vs Idgham Shafawi
+  { codeA: "n", codeB: "o" },  // Madd Tabee'i vs Madd Muttasil/Munfasil
+  { codeA: "n", codeB: "m" },  // Madd Tabee'i vs Madd Lazim
+];
 
 /* ── Quest generator ────────────────────────────────────────────────────── */
 
@@ -285,14 +342,25 @@ export function generateTajweedQuest(
 
   if (difficulty === 1) {
     /* ── 1★ Recognize ── */
-    // 3× rule-picker (verse shown, target colored, pick rule name).
-    const pickerHits = pickN(allHits, 3, rng);
+    // 2× rule-picker (verse shown, target colored, pick rule name).
+    const pickerHits = pickN(allHits, 2, rng);
     for (const hit of pickerHits) {
       stages.push({
         kind: "rule-picker",
         hit,
         options: buildRuleOptions(hit.rule, 4, rng, surahRules),
         monochrome: false,
+      });
+    }
+    // 1× hear-the-rule: audio plays, text hidden, user names the rule.
+    const hearHits = allHits.filter((h) => !pickerHits.some((p) => p.ayah === h.ayah));
+    const hearHit = shuffleSeeded(hearHits, rng)[0] ?? pickerHits[0];
+    if (hearHit) {
+      stages.push({
+        kind: "hear-the-rule",
+        hit: hearHit,
+        surahNumber,
+        options: buildRuleOptions(hearHit.rule, 4, rng, surahRules),
       });
     }
     // 1× color-match across an ayah that has at least 2 distinct rule-segments.
@@ -360,6 +428,25 @@ export function generateTajweedQuest(
         options: buildRuleOptions(hit.rule, 4, rng, surahRules),
         monochrome: true,
       });
+    }
+    // 1× confused-pairs: pick the first pair where both codes appear in this surah.
+    const surahCodes = new Set(allHits.map((h) => h.code));
+    const pair = CONFUSED_PAIRS.find(
+      (p) => surahCodes.has(p.codeA) && surahCodes.has(p.codeB)
+    );
+    if (pair) {
+      const ruleA = TAJWEED_RULES[pair.codeA];
+      const ruleB = TAJWEED_RULES[pair.codeB];
+      if (ruleA && ruleB) {
+        // Pick 2 distractors not from this pair
+        const dPool = Object.values(TAJWEED_RULES).filter(
+          (r) => r.code !== pair.codeA && r.code !== pair.codeB
+        );
+        const [d1, d2] = pickN(dPool, 2, rng) as [TajweedRule, TajweedRule];
+        if (d1 && d2) {
+          stages.push({ kind: "confused-pairs", pairA: ruleA, pairB: ruleB, distractors: [d1, d2] });
+        }
+      }
     }
     // 1× rule-sort across an ayah with multiple categories
     const sortVerse = findVerseWithCategories(verseViews, 2);
@@ -457,6 +544,62 @@ export function generateTajweedQuest(
         correctCount: c.count,
         options: shuffleSeeded(Array.from(choices), rng),
       });
+    }
+    // 1× sound-sorter: hear each segment's verse, sort it into the right rule bucket
+    {
+      // Pick up to 4 hits from distinct ayahs so each item plays a different verse
+      const ayahsSeen = new Set<number>();
+      const sortHits: RuleHit[] = [];
+      for (const h of shuffleSeeded(allHits, rng)) {
+        if (sortHits.length >= 4) break;
+        if (ayahsSeen.has(h.ayah)) continue;
+        ayahsSeen.add(h.ayah);
+        sortHits.push(h);
+      }
+      // Need at least 2 items with ≥2 distinct rules to make a sorting challenge
+      const distinctRules = new Map<string, TajweedRule>();
+      for (const h of sortHits) distinctRules.set(h.code, h.rule);
+      if (sortHits.length >= 2 && distinctRules.size >= 2) {
+        stages.push({
+          kind: "sound-sorter",
+          surahNumber,
+          items: sortHits.map((h) => ({
+            ayah: h.ayah,
+            segmentIdx: h.segmentIdx,
+            segments: h.ayahSegments,
+            correctRule: h.rule,
+          })),
+          buckets: Array.from(distinctRules.values()),
+        });
+      }
+    }
+    // 1× rule-whisperer: full ayah monochrome, tap each segment and name its rule.
+    const whispererVerse = verseViews
+      .filter((v) => countRuleSegments(v) >= 3)
+      .sort((a, b) => countRuleSegments(b) - countRuleSegments(a))[0]
+      ?? findVerseWithSegments(verseViews, 2);
+    if (whispererVerse) {
+      const ruleSegs = whispererVerse.segments
+        .map((seg, idx) => {
+          if (!seg.code) return null;
+          const rule = getTajweedRule(seg.code);
+          if (!rule) return null;
+          return { segmentIdx: idx, rule };
+        })
+        .filter((x): x is { segmentIdx: number; rule: TajweedRule } => x !== null)
+        .slice(0, 6);
+      if (ruleSegs.length >= 2) {
+        stages.push({
+          kind: "rule-whisperer",
+          ayah: whispererVerse.ayah,
+          surahNumber,
+          segments: whispererVerse.segments,
+          ruleSegments: ruleSegs.map((s) => ({
+            ...s,
+            options: buildRuleOptions(s.rule, 4, rng, surahRules),
+          })),
+        });
+      }
     }
     // 1× audio-tap: hear the verse, tap when target rule occurs
     const audioVerse = findVerseWithSegments(verseViews, 2);

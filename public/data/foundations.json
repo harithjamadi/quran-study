@@ -1,0 +1,154 @@
+{
+  "lessons": [
+    {
+      "id": "alphabet",
+      "title": { "en": "The Arabic Alphabet", "ms": "Huruf Hijaiyah" },
+      "subtitle": { "en": "28 letters, each with a unique sound and place of articulation", "ms": "28 huruf, setiap satu mempunyai bunyi dan tempat sebutan yang unik" },
+      "icon": "أ",
+      "letters": [
+        { "letter": "ا", "isolated": "ا", "name": { "en": "Alif", "ms": "Alif" }, "translit": "ā", "makhraj": "jawf", "example": { "arabic": "أَحَد", "translit": "aḥad", "meaning": { "en": "One", "ms": "Satu" } }, "tip": { "en": "The longest vowel — hold it 2 counts", "ms": "Vokal paling panjang — tahan 2 harakat" } },
+        { "letter": "ب", "isolated": "ب", "name": { "en": "Ba", "ms": "Ba" }, "translit": "b", "makhraj": "lips", "example": { "arabic": "بَيْت", "translit": "bayt", "meaning": { "en": "House", "ms": "Rumah" } }, "tip": { "en": "Both lips close completely, then release", "ms": "Kedua-dua bibir menutup sepenuhnya kemudian terbuka" } },
+        { "letter": "ت", "isolated": "ت", "name": { "en": "Ta", "ms": "Ta" }, "translit": "t", "makhraj": "tongue-tip-teeth", "example": { "arabic": "تَوْبَة", "translit": "tawbah", "meaning": { "en": "Repentance", "ms": "Taubat" } }, "tip": { "en": "Tongue tip touches the upper front teeth", "ms": "Hujung lidah menyentuh gigi hadapan atas" } },
+        { "letter": "ث", "isolated": "ث", "name": { "en": "Tha", "ms": "Tha" }, "translit": "th", "makhraj": "tongue-tip-teeth", "example": { "arabic": "ثَمَرَة", "translit": "thamarah", "meaning": { "en": "Fruit", "ms": "Buah" } }, "tip": { "en": "Tongue tip between the teeth — like 'th' in 'think'", "ms": "Hujung lidah di antara gigi — seperti 'th' dalam bahasa Inggeris" } },
+        { "letter": "ج", "isolated": "ج", "name": { "en": "Jeem", "ms": "Jim" }, "translit": "j", "makhraj": "tongue-mid", "example": { "arabic": "جَنَّة", "translit": "jannah", "meaning": { "en": "Paradise", "ms": "Syurga" } }, "tip": { "en": "Middle of tongue meets the hard palate", "ms": "Tengah lidah bertemu lelangit keras" } },
+        { "letter": "ح", "isolated": "ح", "name": { "en": "Ha", "ms": "Ha" }, "translit": "ḥ", "makhraj": "throat-mid", "example": { "arabic": "حَمْد", "translit": "ḥamd", "meaning": { "en": "Praise", "ms": "Pujian" } }, "tip": { "en": "Breathed from the middle throat — no voice, just breath", "ms": "Dihembus dari tengah tekak — tiada suara, hanya nafas" } },
+        { "letter": "خ", "isolated": "خ", "name": { "en": "Kha", "ms": "Kha" }, "translit": "kh", "makhraj": "throat-front", "example": { "arabic": "خَيْر", "translit": "khayr", "meaning": { "en": "Goodness", "ms": "Kebaikan" } }, "tip": { "en": "Back of the throat — like clearing your throat gently", "ms": "Belakang tekak — seperti membersihkan tekak dengan lembut" } },
+        { "letter": "د", "isolated": "د", "name": { "en": "Dal", "ms": "Dal" }, "translit": "d", "makhraj": "tongue-tip-gum", "example": { "arabic": "دِين", "translit": "dīn", "meaning": { "en": "Religion", "ms": "Agama" } }, "tip": { "en": "Tongue tip touches the gum ridge behind upper teeth", "ms": "Hujung lidah menyentuh gusi di belakang gigi atas" } },
+        { "letter": "ذ", "isolated": "ذ", "name": { "en": "Dhal", "ms": "Zal" }, "translit": "dh", "makhraj": "tongue-tip-teeth", "example": { "arabic": "ذِكْر", "translit": "dhikr", "meaning": { "en": "Remembrance", "ms": "Zikir" } }, "tip": { "en": "Tongue tip between the teeth — voiced version of Tha", "ms": "Hujung lidah di antara gigi — versi bersuara bagi Tha" } },
+        { "letter": "ر", "isolated": "ر", "name": { "en": "Ra", "ms": "Ra" }, "translit": "r", "makhraj": "tongue-tip-gum", "example": { "arabic": "رَحْمَة", "translit": "raḥmah", "meaning": { "en": "Mercy", "ms": "Rahmat" } }, "tip": { "en": "Single tap of the tongue tip — not a rolled R", "ms": "Sentuhan tunggal hujung lidah — bukan R berganda" } },
+        { "letter": "ز", "isolated": "ز", "name": { "en": "Zayn", "ms": "Zayn" }, "translit": "z", "makhraj": "tongue-tip-teeth", "example": { "arabic": "زَكَاة", "translit": "zakāh", "meaning": { "en": "Almsgiving", "ms": "Zakat" } }, "tip": { "en": "Like the English 'z' but from the tongue tip near the teeth", "ms": "Seperti 'z' bahasa Inggeris tetapi dari hujung lidah berhampiran gigi" } },
+        { "letter": "س", "isolated": "س", "name": { "en": "Seen", "ms": "Sin" }, "translit": "s", "makhraj": "tongue-tip-gum", "example": { "arabic": "سَلَام", "translit": "salām", "meaning": { "en": "Peace", "ms": "Salam" } }, "tip": { "en": "Tongue tip near the gum — a clean 's' sound", "ms": "Hujung lidah berhampiran gusi — bunyi 's' yang bersih" } },
+        { "letter": "ش", "isolated": "ش", "name": { "en": "Sheen", "ms": "Syin" }, "translit": "sh", "makhraj": "tongue-mid", "example": { "arabic": "شَمْس", "translit": "shams", "meaning": { "en": "Sun", "ms": "Matahari" } }, "tip": { "en": "Middle of tongue — like 'sh' in 'show'", "ms": "Tengah lidah — seperti 'sy' dalam 'syurga'" } },
+        { "letter": "ص", "isolated": "ص", "name": { "en": "Sad", "ms": "Sad" }, "translit": "ṣ", "makhraj": "tongue-tip-gum", "example": { "arabic": "صَبْر", "translit": "ṣabr", "meaning": { "en": "Patience", "ms": "Sabar" } }, "tip": { "en": "Heavy 's' — tongue pressed down, mouth slightly open", "ms": "Bunyi 's' berat — lidah ditekan ke bawah, mulut sedikit terbuka" } },
+        { "letter": "ض", "isolated": "ض", "name": { "en": "Dad", "ms": "Dhad" }, "translit": "ḍ", "makhraj": "tongue-sides", "example": { "arabic": "ضِيَاء", "translit": "ḍiyā'", "meaning": { "en": "Light", "ms": "Cahaya" } }, "tip": { "en": "Sides of tongue against upper molars — unique to Arabic", "ms": "Tepi lidah mengenai gigi geraham atas — unik dalam bahasa Arab" } },
+        { "letter": "ط", "isolated": "ط", "name": { "en": "Ta (heavy)", "ms": "To" }, "translit": "ṭ", "makhraj": "tongue-tip-gum", "example": { "arabic": "طَرِيق", "translit": "ṭarīq", "meaning": { "en": "Path", "ms": "Jalan" } }, "tip": { "en": "Heavy 't' — tongue pressed firmly, deep sound", "ms": "Bunyi 't' berat — lidah ditekan kuat, bunyi dalam" } },
+        { "letter": "ظ", "isolated": "ظ", "name": { "en": "Tha (heavy)", "ms": "Zho" }, "translit": "ẓ", "makhraj": "tongue-tip-teeth", "example": { "arabic": "ظُلْم", "translit": "ẓulm", "meaning": { "en": "Oppression", "ms": "Kezaliman" } }, "tip": { "en": "Heavy interdental — tongue between teeth with deep resonance", "ms": "Antara gigi berat — lidah di antara gigi dengan resonans dalam" } },
+        { "letter": "ع", "isolated": "ع", "name": { "en": "'Ayn", "ms": "'Ain" }, "translit": "'", "makhraj": "throat-mid", "example": { "arabic": "عِلْم", "translit": "'ilm", "meaning": { "en": "Knowledge", "ms": "Ilmu" } }, "tip": { "en": "Constriction deep in the throat — a voiced squeeze", "ms": "Penyempitan dalam di tekak — tekanan bersuara" } },
+        { "letter": "غ", "isolated": "غ", "name": { "en": "Ghayn", "ms": "Ghain" }, "translit": "gh", "makhraj": "throat-front", "example": { "arabic": "غَفُور", "translit": "ghafūr", "meaning": { "en": "Forgiving", "ms": "Maha Pengampun" } }, "tip": { "en": "Back of throat — like a soft gargling sound", "ms": "Belakang tekak — seperti bunyi gurgling yang lembut" } },
+        { "letter": "ف", "isolated": "ف", "name": { "en": "Fa", "ms": "Fa" }, "translit": "f", "makhraj": "lip-teeth", "example": { "arabic": "فَتْح", "translit": "fatḥ", "meaning": { "en": "Opening", "ms": "Pembukaan" } }, "tip": { "en": "Lower lip touches the upper front teeth — like 'f'", "ms": "Bibir bawah menyentuh gigi hadapan atas — seperti 'f'" } },
+        { "letter": "ق", "isolated": "ق", "name": { "en": "Qaf", "ms": "Qaf" }, "translit": "q", "makhraj": "tongue-back", "example": { "arabic": "قُرْآن", "translit": "qur'ān", "meaning": { "en": "Quran", "ms": "Quran" } }, "tip": { "en": "Very back of tongue against the soft palate — deeper than 'k'", "ms": "Belakang lidah mengenai lelangit lembut — lebih dalam daripada 'k'" } },
+        { "letter": "ك", "isolated": "ك", "name": { "en": "Kaf", "ms": "Kaf" }, "translit": "k", "makhraj": "tongue-back", "example": { "arabic": "كِتَاب", "translit": "kitāb", "meaning": { "en": "Book", "ms": "Kitab" } }, "tip": { "en": "Back of tongue against the soft palate — like English 'k'", "ms": "Belakang lidah mengenai lelangit lembut — seperti 'k' bahasa Inggeris" } },
+        { "letter": "ل", "isolated": "ل", "name": { "en": "Lam", "ms": "Lam" }, "translit": "l", "makhraj": "tongue-sides", "example": { "arabic": "لَيْل", "translit": "layl", "meaning": { "en": "Night", "ms": "Malam" } }, "tip": { "en": "Tongue tip touches gum ridge, air flows along the sides", "ms": "Hujung lidah menyentuh gusi, udara mengalir di tepi lidah" } },
+        { "letter": "م", "isolated": "م", "name": { "en": "Meem", "ms": "Mim" }, "translit": "m", "makhraj": "lips", "example": { "arabic": "مَاء", "translit": "mā'", "meaning": { "en": "Water", "ms": "Air" } }, "tip": { "en": "Lips closed, hum through the nose", "ms": "Bibir tertutup, dengungkan melalui hidung" } },
+        { "letter": "ن", "isolated": "ن", "name": { "en": "Nun", "ms": "Nun" }, "translit": "n", "makhraj": "tongue-tip-gum", "example": { "arabic": "نُور", "translit": "nūr", "meaning": { "en": "Light", "ms": "Cahaya" } }, "tip": { "en": "Tongue tip at the gum ridge — nasal resonance like 'n'", "ms": "Hujung lidah pada gusi — resonans nasal seperti 'n'" } },
+        { "letter": "ه", "isolated": "ه", "name": { "en": "Ha (soft)", "ms": "Ha (lembut)" }, "translit": "h", "makhraj": "throat-deep", "example": { "arabic": "هُدَى", "translit": "hudā", "meaning": { "en": "Guidance", "ms": "Hidayah" } }, "tip": { "en": "Soft breath from deep in the throat — softer than Ḥa", "ms": "Nafas lembut dari dalam tekak — lebih lembut daripada Ha" } },
+        { "letter": "و", "isolated": "و", "name": { "en": "Waw", "ms": "Wau" }, "translit": "w/ū", "makhraj": "lips", "example": { "arabic": "وَقْت", "translit": "waqt", "meaning": { "en": "Time", "ms": "Waktu" } }, "tip": { "en": "Lips form a small circle — also the long 'oo' vowel", "ms": "Bibir membentuk bulatan kecil — juga vokal panjang 'oo'" } },
+        { "letter": "ي", "isolated": "ي", "name": { "en": "Ya", "ms": "Ya" }, "translit": "y/ī", "makhraj": "tongue-mid", "example": { "arabic": "يَوْم", "translit": "yawm", "meaning": { "en": "Day", "ms": "Hari" } }, "tip": { "en": "Middle of tongue rises — also the long 'ee' vowel", "ms": "Tengah lidah terangkat — juga vokal panjang 'ee'" } }
+      ]
+    },
+    {
+      "id": "harakat",
+      "title": { "en": "Short Vowels (Ḥarakāt)", "ms": "Baris (Harakat)" },
+      "subtitle": { "en": "Three small marks that give every letter a sound", "ms": "Tiga tanda kecil yang memberi setiap huruf bunyi" },
+      "icon": "◌َ",
+      "items": [
+        {
+          "id": "fatha",
+          "name": { "en": "Fatḥah", "ms": "Fathah" },
+          "mark": "◌َ",
+          "sound": "a",
+          "description": { "en": "A small diagonal stroke above the letter. Gives an 'a' sound as in 'cat'.", "ms": "Garis condong kecil di atas huruf. Memberi bunyi 'a' seperti dalam 'ada'." },
+          "example": { "arabic": "بَ", "translit": "ba", "word": { "arabic": "كَتَبَ", "translit": "kataba", "meaning": { "en": "He wrote", "ms": "Dia menulis" } } },
+          "color": "#F59E0B"
+        },
+        {
+          "id": "kasra",
+          "name": { "en": "Kasrah", "ms": "Kasrah" },
+          "mark": "◌ِ",
+          "sound": "i",
+          "description": { "en": "A small diagonal stroke below the letter. Gives an 'i' sound as in 'bit'.", "ms": "Garis condong kecil di bawah huruf. Memberi bunyi 'i' seperti dalam 'ini'." },
+          "example": { "arabic": "بِ", "translit": "bi", "word": { "arabic": "كِتَاب", "translit": "kitāb", "meaning": { "en": "Book", "ms": "Kitab" } } },
+          "color": "#3B82F6"
+        },
+        {
+          "id": "damma",
+          "name": { "en": "Ḍammah", "ms": "Dhammah" },
+          "mark": "◌ُ",
+          "sound": "u",
+          "description": { "en": "A small waw-like shape above the letter. Gives a 'u' sound as in 'put'.", "ms": "Bentuk seperti wau kecil di atas huruf. Memberi bunyi 'u' seperti dalam 'unta'." },
+          "example": { "arabic": "بُ", "translit": "bu", "word": { "arabic": "كُلّ", "translit": "kull", "meaning": { "en": "Every / All", "ms": "Setiap / Semua" } } },
+          "color": "#22C55E"
+        }
+      ]
+    },
+    {
+      "id": "tanween",
+      "title": { "en": "Tanween (Double Vowels)", "ms": "Tanwin" },
+      "subtitle": { "en": "Doubled marks that add an 'n' sound — used on indefinite nouns", "ms": "Tanda berganda yang menambah bunyi 'n' — digunakan pada kata nama tak tentu" },
+      "icon": "◌ً",
+      "items": [
+        {
+          "id": "fathatan",
+          "name": { "en": "Fatḥatān", "ms": "Fathatan" },
+          "mark": "◌ً",
+          "sound": "an",
+          "description": { "en": "Two fatḥahs — pronounced 'an'. Often written with a silent alif: اً.", "ms": "Dua fathah — disebut 'an'. Sering ditulis dengan alif senyap: اً." },
+          "example": { "arabic": "كِتَابًا", "translit": "kitāban", "meaning": { "en": "a book (accusative)", "ms": "sebuah kitab (akusatif)" } },
+          "color": "#F59E0B"
+        },
+        {
+          "id": "kasratan",
+          "name": { "en": "Kasratān", "ms": "Kasratan" },
+          "mark": "◌ٍ",
+          "sound": "in",
+          "description": { "en": "Two kasrahs — pronounced 'in'. Found at the end of indefinite nouns in genitive case.", "ms": "Dua kasrah — disebut 'in'. Terdapat di hujung kata nama tak tentu dalam kes genitif." },
+          "example": { "arabic": "كِتَابٍ", "translit": "kitābin", "meaning": { "en": "a book (genitive)", "ms": "sebuah kitab (genitif)" } },
+          "color": "#3B82F6"
+        },
+        {
+          "id": "dammatan",
+          "name": { "en": "Ḍammatān", "ms": "Dhammatan" },
+          "mark": "◌ٌ",
+          "sound": "un",
+          "description": { "en": "Two ḍammahs — pronounced 'un'. Found at the end of indefinite nouns in nominative case.", "ms": "Dua dhammah — disebut 'un'. Terdapat di hujung kata nama tak tentu dalam kes nominatif." },
+          "example": { "arabic": "كِتَابٌ", "translit": "kitābun", "meaning": { "en": "a book (nominative)", "ms": "sebuah kitab (nominatif)" } },
+          "color": "#22C55E"
+        }
+      ]
+    },
+    {
+      "id": "sukun",
+      "title": { "en": "Sukun — The Resting Letter", "ms": "Sukun — Huruf Berehat" },
+      "subtitle": { "en": "A small circle marking a letter that carries no vowel sound", "ms": "Bulatan kecil yang menandakan huruf tanpa bunyi vokal" },
+      "icon": "◌ْ",
+      "items": [
+        {
+          "id": "sukun",
+          "name": { "en": "Sukun", "ms": "Sukun" },
+          "mark": "◌ْ",
+          "sound": "silent",
+          "description": { "en": "A small open circle (°) above the letter. The letter has no vowel — its sound is cut off. In recitation, this creates the characteristic stop/echo of Qalqalah letters.", "ms": "Bulatan kecil (°) di atas huruf. Huruf ini tiada vokal — bunyinya terputus. Dalam bacaan, ini mewujudkan bunyi terhenti/gema ciri huruf Qalqalah." },
+          "example": { "arabic": "مَكْتَب", "translit": "mak-tab", "meaning": { "en": "Office / Desk", "ms": "Pejabat / Meja" } },
+          "tips": [
+            { "en": "The letter with sukun is joined to the vowelled letter before it", "ms": "Huruf bersukun disambungkan kepada huruf bervokal sebelumnya" },
+            { "en": "Qalqalah letters (ق ط ب ج د) with sukun create an echo", "ms": "Huruf Qalqalah (ق ط ب ج د) bersukun mewujudkan gema" },
+            { "en": "Noon (ن) and Meem (م) with sukun trigger special Tajweed rules", "ms": "Nun (ن) dan Mim (م) bersukun mencetuskan hukum Tajweed khas" }
+          ],
+          "color": "#9CA3AF"
+        }
+      ]
+    },
+    {
+      "id": "shadda",
+      "title": { "en": "Shaddah — The Doubled Letter", "ms": "Syaddah — Huruf Berganda" },
+      "subtitle": { "en": "A mark that doubles the letter's sound — two letters for the price of one", "ms": "Tanda yang menggandakan bunyi huruf — dua huruf dengan satu tanda" },
+      "icon": "◌ّ",
+      "items": [
+        {
+          "id": "shadda",
+          "name": { "en": "Shaddah", "ms": "Syaddah" },
+          "mark": "◌ّ",
+          "sound": "double",
+          "description": { "en": "A small 'w' shape (ّ) above the letter. It means the letter is written once but pronounced twice — first with sukun, then with its vowel. Critical in Ghunna: when ن or م has shaddah, it triggers a 2-count nasal sound.", "ms": "Bentuk 'w' kecil (ّ) di atas huruf. Bermakna huruf ditulis sekali tetapi disebut dua kali — pertama dengan sukun, kemudian dengan vokalnya. Penting dalam Ghunnah: apabila ن atau م bersyaddah, ia mencetuskan bunyi nasal 2 harakat." },
+          "example": { "arabic": "إِنَّ", "translit": "inna", "meaning": { "en": "Indeed / Verily", "ms": "Sesungguhnya" } },
+          "tips": [
+            { "en": "The letter before shaddah always has sukun (implied)", "ms": "Huruf sebelum syaddah sentiasa bersukun (tersirat)" },
+            { "en": "شَدَّ (shadda) itself means 'to tighten' — imagine squeezing the letter", "ms": "شَدَّ (shadda) sendiri bermakna 'mengetat' — bayangkan menekan huruf" },
+            { "en": "ن ّ and م ّ require Ghunna (2-count nasal resonance)", "ms": "ن ّ dan م ّ memerlukan Ghunnah (resonans nasal 2 harakat)" }
+          ],
+          "color": "#8B5CF6"
+        }
+      ]
+    }
+  ]
+}
