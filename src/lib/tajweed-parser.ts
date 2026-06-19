@@ -81,3 +81,13 @@ export function parseTajweedVerse(raw: string): TajweedSegment[] {
 
   return segments;
 }
+
+/**
+ * Reduce a tajweed-annotated verse string to plain Arabic by concatenating the
+ * text of every segment (tagged or not). Used to build the recognition corpus.
+ */
+export function stripTajweedAnnotations(raw: string): string {
+  return parseTajweedVerse(raw)
+    .map((s) => s.text)
+    .join("");
+}
