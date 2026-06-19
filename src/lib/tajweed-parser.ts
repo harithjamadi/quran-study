@@ -91,3 +91,18 @@ export function stripTajweedAnnotations(raw: string): string {
     .map((s) => s.text)
     .join("");
 }
+
+/**
+ * For each segment, the 1-based index of the word it begins in. Words are
+ * delimited by spaces in the concatenated verse text. Used to highlight a
+ * matched word range across the rule-coloured segments.
+ */
+export function segmentWordStarts(segments: TajweedSegment[]): number[] {
+  const starts: number[] = [];
+  let word = 1;
+  for (const seg of segments) {
+    starts.push(word);
+    word += (seg.text.match(/ /g) ?? []).length;
+  }
+  return starts;
+}

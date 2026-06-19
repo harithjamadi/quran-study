@@ -97,6 +97,7 @@ export function RecognizeClient() {
             ayahNumber={ref.ayah}
             arabicFallback={result!.text}
             fontSize={32}
+            highlightWords={result!.matchedRange}
           />
         </section>
       )}

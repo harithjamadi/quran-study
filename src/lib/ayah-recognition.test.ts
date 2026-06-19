@@ -27,6 +27,11 @@ describe("recognizeAyah", () => {
     expect(r?.key).toBe("1:2");
   });
 
+  it("reports the matched word range within the ayah (1-based)", () => {
+    expect(recognizeAyah(index, "رب العالمين")?.matchedRange).toEqual([3, 4]);
+    expect(recognizeAyah(index, "الحمد لله رب العالمين")?.matchedRange).toEqual([1, 4]);
+  });
+
   it("returns null for non-Quranic gibberish", () => {
     expect(recognizeAyah(index, "xyzzy plugh")).toBeNull();
   });

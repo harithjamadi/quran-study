@@ -5,6 +5,7 @@ import { createPortal } from "react-dom";
 import {
   loadTajweedSurah,
   parseTajweedVerse,
+  segmentWordStarts,
   type TajweedSegment,
 } from "@/lib/tajweed-parser";
 import {
@@ -14,7 +15,7 @@ import {
   type TajweedRule,
   type WaqfSign,
 } from "@/lib/tajweed";
-import { toArabicDigits } from "@/lib/format";
+import { toArabicDigits, classNames } from "@/lib/format";
 import { useLearning } from "@/store/learning";
 
 interface Props {
@@ -22,7 +23,12 @@ interface Props {
   ayahNumber: number;
   arabicFallback: string;
   fontSize: number;
+  /** 1-based [start, end] word range to highlight (e.g. a matched snippet). */
+  highlightWords?: readonly [number, number] | null;
 }
+
+/** Tailwind classes for the matched-snippet highlight. */
+const HIGHLIGHT_CLASS = "rounded-[3px] bg-[color:var(--gold)]/20";
 
 interface ClickedSegment {
   rule: TajweedRule | null;
@@ -55,6 +61,7 @@ export function TajweedText({
   ayahNumber,
   arabicFallback,
   fontSize,
+  highlightWords,
 }: Props) {
   const [segments, setSegments] = useState<TajweedSegment[] | null>(null);
   const [clicked, setClicked] = useState<ClickedSegment | null>(null);
@@ -86,6 +93,21 @@ export function TajweedText({
     }
     return Object.values(TAJWEED_RULES).filter((r) => codes.has(r.code));
   }, [segments]);
+
+  // 1-based word index each segment begins in — for highlighting a matched span.
+  const wordStarts = useMemo(
+    () => (segments ? segmentWordStarts(segments) : []),
+    [segments]
+  );
+
+  // True when segment `idx` overlaps the highlight word range. A segment spans
+  // words [start .. start + (spaces in its text)].
+  const isHighlighted = (idx: number, text: string): boolean => {
+    if (!highlightWords) return false;
+    const start = wordStarts[idx];
+    const end = start + (text.match(/ /g)?.length ?? 0);
+    return start <= highlightWords[1] && end >= highlightWords[0];
+  };
 
   // Fallback while loading or if no tajweed data exists for this surah
   if (!segments) {
@@ -147,7 +169,10 @@ export function TajweedText({
                   tabIndex={0}
                   onClick={(e) => handleWaqfClick(waqf, seg.text, e)}
                   onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") handleWaqfClick(waqf, seg.text, e as unknown as React.MouseEvent<HTMLElement>); }}
-                  className="cursor-pointer hover:opacity-70 transition-opacity underline decoration-dotted decoration-[color:var(--gold)]"
+                  className={classNames(
+                    "cursor-pointer hover:opacity-70 transition-opacity underline decoration-dotted decoration-[color:var(--gold)]",
+                    isHighlighted(idx, seg.text) && HIGHLIGHT_CLASS
+                  )}
                   title={waqf.name[language]}
                 >
                   {hasMuanaqah
@@ -169,12 +194,24 @@ export function TajweedText({
                 </span>
               );
             }
-            return <Fragment key={idx}>{seg.text}</Fragment>;
+            return isHighlighted(idx, seg.text) ? (
+              <span key={idx} className={HIGHLIGHT_CLASS}>
+                {seg.text}
+              </span>
+            ) : (
+              <Fragment key={idx}>{seg.text}</Fragment>
+            );
           }
 
           const rule = getTajweedRule(seg.code);
           if (!rule) {
-            return <Fragment key={idx}>{seg.text}</Fragment>;
+            return isHighlighted(idx, seg.text) ? (
+              <span key={idx} className={HIGHLIGHT_CLASS}>
+                {seg.text}
+              </span>
+            ) : (
+              <Fragment key={idx}>{seg.text}</Fragment>
+            );
           }
 
           return (
@@ -185,7 +222,10 @@ export function TajweedText({
               tabIndex={0}
               onClick={(e) => handleSegmentClick(seg, e)}
               onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") handleSegmentClick(seg, e as unknown as React.MouseEvent<HTMLElement>); }}
-              className="cursor-pointer hover:opacity-75 transition-opacity"
+              className={classNames(
+                "cursor-pointer hover:opacity-75 transition-opacity",
+                isHighlighted(idx, seg.text) && HIGHLIGHT_CLASS
+              )}
               style={{ color: rule.color }}
               aria-label={`${rule.name[language]}: ${seg.text}`}
               title={rule.name[language]}

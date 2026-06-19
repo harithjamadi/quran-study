@@ -19,6 +19,9 @@ export interface RecognitionResult {
   confidence: number;
   matchedTerms: number;
   queryTerms: number;
+  /** 1-based [start, end] word range within the ayah that the query covered,
+   *  for highlighting the matched snippet. Null when no query word is located. */
+  matchedRange: readonly [number, number] | null;
 }
 
 type IndexedAyah = AyahEntry & { rasm: string };
@@ -52,6 +55,20 @@ export function recognizeAyah(
 
   const top = hits[0];
   const matchedTerms = Object.keys(top.match).length;
+
+  // Locate the query's words within the ayah to highlight the matched snippet.
+  // Compare with alif removed: Uthmani long vowels use a superscript (dagger)
+  // alif that rasm strips, while typed queries use a full alif — dropping every
+  // alif makes the two spellings converge (e.g. العلمين ≈ العالمين).
+  const noAlif = (s: string) => s.replace(/ا/g, "");
+  const ayahWords = toRasm(top.text as string).split(/\s+/).filter(Boolean).map(noAlif);
+  const positions = tokenize(rasm)
+    .map((w) => ayahWords.indexOf(noAlif(w)))
+    .filter((i) => i >= 0);
+  const matchedRange: readonly [number, number] | null = positions.length
+    ? [Math.min(...positions) + 1, Math.max(...positions) + 1]
+    : null;
+
   return {
     key: top.id as string,
     text: top.text as string,
@@ -59,6 +76,7 @@ export function recognizeAyah(
     confidence: Math.min(1, matchedTerms / queryTerms),
     matchedTerms,
     queryTerms,
+    matchedRange,
   };
 }
 
