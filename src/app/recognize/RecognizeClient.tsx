@@ -4,6 +4,8 @@ import { useState } from "react";
 import { loadAyahIndex, recognizeAyah, type RecognitionResult } from "@/lib/ayah-recognition";
 import { parseAyahRef } from "@/lib/format";
 import { TajweedText } from "@/components/TajweedText";
+import { CameraCapture } from "@/components/CameraCapture";
+import { stubOcrEngine } from "@/lib/ocr";
 import { useLearning } from "@/store/learning";
 
 const T = {
@@ -17,6 +19,13 @@ const T = {
     en: "Couldn't read that clearly. Try a longer or cleaner fragment.",
     ms: "Tidak dapat dibaca dengan jelas. Cuba petikan yang lebih panjang atau jelas.",
   },
+  camera: { en: "Use camera", ms: "Guna kamera" },
+  startCamera: { en: "Start camera", ms: "Mula kamera" },
+  capture: { en: "Capture", ms: "Tangkap" },
+  ocrPending: {
+    en: "Camera text recognition isn't available yet — type or paste for now.",
+    ms: "Pengecaman teks kamera belum tersedia — taip atau tampal buat masa ini.",
+  },
 } as const;
 
 const MIN_CONFIDENCE = 0.5;
@@ -26,10 +35,19 @@ export function RecognizeClient() {
   const [input, setInput] = useState("");
   const [result, setResult] = useState<RecognitionResult | null>(null);
   const [searched, setSearched] = useState(false);
+  const [cameraMode, setCameraMode] = useState(false);
 
   async function handleRecognize() {
     const index = await loadAyahIndex();
     setResult(index ? recognizeAyah(index, input) : null);
+    setSearched(true);
+  }
+
+  async function handleCapture(image: ImageData) {
+    const text = await stubOcrEngine.recognize(image);
+    setInput(text);
+    const index = await loadAyahIndex();
+    setResult(index && text ? recognizeAyah(index, text) : null);
     setSearched(true);
   }
 
@@ -53,6 +71,23 @@ export function RecognizeClient() {
       >
         {T.button[language]}
       </button>
+      <button
+        onClick={() => setCameraMode((v) => !v)}
+        className="ml-2 rounded-xl border border-[color:var(--border)] px-4 py-2 text-sm font-semibold text-[color:var(--foreground)]"
+      >
+        {T.camera[language]}
+      </button>
+
+      {cameraMode && (
+        <div className="space-y-2">
+          <CameraCapture
+            onCapture={handleCapture}
+            labelStart={T.startCamera[language]}
+            labelCapture={T.capture[language]}
+          />
+          <p className="text-xs text-[color:var(--muted)]">{T.ocrPending[language]}</p>
+        </div>
+      )}
 
       {ref && (
         <section className="rounded-2xl border border-[color:var(--border)] bg-[color:var(--surface)] p-4">
