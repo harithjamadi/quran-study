@@ -1,5 +1,11 @@
-import { describe, it, expect } from "vitest";
-import { buildAyahIndex, recognizeAyah, type AyahEntry } from "./ayah-recognition";
+import { describe, it, expect, afterEach, vi } from "vitest";
+import {
+  buildAyahIndex,
+  recognizeAyah,
+  loadAyahIndex,
+  _resetAyahIndexCache,
+  type AyahEntry,
+} from "./ayah-recognition";
 
 const CORPUS: AyahEntry[] = [
   { key: "1:1", text: "بِسْمِ ٱللَّهِ ٱلرَّحْمَـٰنِ ٱلرَّحِيمِ" },
@@ -23,5 +29,25 @@ describe("recognizeAyah", () => {
 
   it("returns null for non-Quranic gibberish", () => {
     expect(recognizeAyah(index, "xyzzy plugh")).toBeNull();
+  });
+});
+
+describe("loadAyahIndex", () => {
+  afterEach(() => {
+    _resetAyahIndexCache();
+    vi.restoreAllMocks();
+  });
+
+  it("fetches the corpus once and builds a queryable index", async () => {
+    const corpus = [{ key: "112:1", text: "قُلْ هُوَ ٱللَّهُ أَحَدٌ" }];
+    const fetchMock = vi
+      .spyOn(globalThis, "fetch")
+      .mockResolvedValue(new Response(JSON.stringify(corpus)));
+
+    const index = await loadAyahIndex();
+    await loadAyahIndex(); // second call should not re-fetch
+
+    expect(fetchMock).toHaveBeenCalledTimes(1);
+    expect(recognizeAyah(index!, "قل هو الله احد")?.key).toBe("112:1");
   });
 });

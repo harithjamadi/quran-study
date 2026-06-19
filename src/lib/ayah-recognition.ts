@@ -61,3 +61,19 @@ export function recognizeAyah(
     queryTerms,
   };
 }
+
+let indexPromise: Promise<MiniSearch<IndexedAyah> | null> | null = null;
+
+export function loadAyahIndex(): Promise<MiniSearch<IndexedAyah> | null> {
+  if (!indexPromise) {
+    indexPromise = fetch("/data/corpus/ayat.json")
+      .then((res) => (res.ok ? (res.json() as Promise<AyahEntry[]>) : null))
+      .then((corpus) => (corpus ? buildAyahIndex(corpus) : null))
+      .catch(() => null);
+  }
+  return indexPromise;
+}
+
+export function _resetAyahIndexCache(): void {
+  indexPromise = null;
+}
