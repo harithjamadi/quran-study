@@ -18,6 +18,7 @@ export function Nav() {
     { href: "/learn", label: t.nav_learn },
     { href: "/surahs", label: t.nav_read },
     { href: "/mushaf", label: language === "ms" ? "Mushaf" : "Mushaf" },
+    { href: "/recognize", label: language === "ms" ? "Kenal Pasti" : "Recognize" },
     { href: "/analytics", label: language === "ms" ? "Analitik" : "Stats" },
     { href: "/search", label: t.nav_search },
     { href: "/bookmarks", label: t.nav_bookmarks },

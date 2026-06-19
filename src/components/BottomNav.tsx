@@ -60,6 +60,7 @@ export function BottomNav() {
     dot?: boolean;
   }[] = [
     { href: "/mushaf", label: "Mushaf", icon: IconMushaf },
+    { href: "/recognize", label: language === "ms" ? "Kenal Pasti" : "Recognize", icon: IconScan },
     { href: "/analytics", label: t.nav_stats, icon: IconChart },
     { href: "/bookmarks", label: t.nav_bookmarks, icon: IconBookmark },
     { href: "/changelog", label: t.nav_changelog, icon: IconSparkle, dot: showUpdateDot },
@@ -265,6 +266,15 @@ function IconMushaf({ active }: { active: boolean }) {
     <svg viewBox="0 0 24 24" width="19" height="19" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
       <path d="M4 5.5A1.5 1.5 0 0 1 5.5 4H18a2 2 0 0 1 2 2v13a1 1 0 0 1-1 1H6a2 2 0 0 1-2-2V5.5Z" fill={active ? "currentColor" : "none"} fillOpacity={active ? 0.14 : 1} />
       <path d="M8 8h8M8 11h8M8 14h5" />
+    </svg>
+  );
+}
+
+function IconScan({ active }: { active: boolean }) {
+  return (
+    <svg viewBox="0 0 24 24" width="19" height="19" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
+      <path d="M4 8V6a2 2 0 0 1 2-2h2M16 4h2a2 2 0 0 1 2 2v2M20 16v2a2 2 0 0 1-2 2h-2M8 20H6a2 2 0 0 1-2-2v-2" />
+      <rect x="8" y="9" width="8" height="6" rx="1" fill={active ? "currentColor" : "none"} fillOpacity={active ? 0.14 : 1} />
     </svg>
   );
 }
