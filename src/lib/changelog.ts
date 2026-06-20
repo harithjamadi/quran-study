@@ -29,6 +29,23 @@ export interface Release {
 /** Newest first. The first entry's version is the current app version. */
 export const RELEASES: Release[] = [
   {
+    version: "0.10.1",
+    date: "2026-06-20",
+    title: { en: "Truer Mushaf pages", ms: "Halaman Mushaf lebih tulen" },
+    entries: [
+      {
+        type: "improved",
+        en: "The Mushaf now reads like a real printed page — every line is justified edge-to-edge and each page is the same size, so the text no longer drifts or changes size as you turn pages. A surah's short closing line sits centred, just as in print.",
+        ms: "Mushaf kini kelihatan seperti halaman bercetak sebenar — setiap baris dijajarkan dari hujung ke hujung dan setiap halaman sama saiz, jadi teks tidak lagi beralih atau bertukar saiz semasa anda menyelak. Baris penutup pendek sesuatu surah berada di tengah, seperti dalam cetakan.",
+      },
+      {
+        type: "fixed",
+        en: "Fixed pages where the basmalah sits inside the surah title band (such as An-Nisāʾ) spilling past the 15 lines and shrinking the whole page. The install prompt no longer covers the reader, and page turns now follow your device's reduce-motion setting.",
+        ms: "Membetulkan halaman yang basmalah berada dalam jalur tajuk surah (seperti An-Nisāʾ) terlebih daripada 15 baris dan mengecilkan seluruh halaman. Gesaan pemasangan tidak lagi menutup pembaca, dan selakan halaman kini mengikut tetapan kurangkan-gerakan peranti anda.",
+      },
+    ],
+  },
+  {
     version: "0.10.0",
     date: "2026-06-03",
     title: { en: "Mushaf reader", ms: "Pembaca Mushaf" },

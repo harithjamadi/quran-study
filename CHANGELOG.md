@@ -8,6 +8,20 @@ The user-facing version of this list lives in `src/lib/changelog.ts` and is
 shown in-app at `/changelog` (linked from the footer and the mobile "More"
 menu). Keep the two in sync when cutting a release.
 
+## [0.10.1] — 2026-06-20
+
+### Fixed
+- **The Mushaf now renders as a real, justified page.** Each page is laid out as
+  an authentic 15-line grid built from the printed line numbers, so every line
+  fills the column edge-to-edge (a surah's short closing line stays centred, as in
+  print) and each page is the same fixed-proportion sheet — no more centred-ragged
+  lines, and the text no longer changes size as you swipe. This also fixes a layout
+  bug that overflowed any page where the basmalah sits *inside* the surah title
+  band (e.g. An-Nisāʾ, p.77) to 16 lines, throwing off its sizing.
+- The PWA "Install Mubin" prompt no longer floats over the open reader.
+- Page turns now honour the system **reduce-motion** setting (they jump instead of
+  sliding).
+
 ## [0.10.0] — 2026-06-03
 
 ### Added

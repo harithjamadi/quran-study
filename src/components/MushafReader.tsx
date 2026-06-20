@@ -58,6 +58,16 @@ export function MushafReader({ initialPage }: Props) {
   // the page toggles total immersion (edge-to-edge, no chrome).
   const [hudVisible, setHudVisible] = useState(true);
 
+  // Honour the OS "reduce motion" setting: page turns jump instead of sliding.
+  const [reduceMotion, setReduceMotion] = useState(false);
+  useEffect(() => {
+    const mq = window.matchMedia("(prefers-reduced-motion: reduce)");
+    const update = () => setReduceMotion(mq.matches);
+    update();
+    mq.addEventListener("change", update);
+    return () => mq.removeEventListener("change", update);
+  }, []);
+
   // The reader is a full-screen overlay above the app chrome — lock the body so
   // nothing scrolls behind it, and flag immersion for any chrome that reacts.
   useEffect(() => {
@@ -136,6 +146,12 @@ export function MushafReader({ initialPage }: Props) {
         setDragX(0);
         return;
       }
+      // Reduced motion: swap pages immediately, no slide.
+      if (reduceMotion) {
+        setDragX(0);
+        go(target);
+        return;
+      }
       const width = viewportRef.current?.clientWidth ?? window.innerWidth;
       committingRef.current = true;
       setAnimating(true);
@@ -149,7 +165,7 @@ export function MushafReader({ initialPage }: Props) {
         committingRef.current = false;
       }, 260);
     },
-    [go, page]
+    [go, page, reduceMotion]
   );
 
   // ── Keyboard: → next, ← previous (matches the swipe mapping) ──
@@ -272,7 +288,7 @@ export function MushafReader({ initialPage }: Props) {
           className="mushaf-slide"
           style={{
             transform: `translateX(calc(-100% + ${dragX}px))`,
-            transition: animating ? "transform 240ms ease" : "none",
+            transition: animating && !reduceMotion ? "transform 240ms ease" : "none",
           }}
           aria-hidden
         >
@@ -282,7 +298,7 @@ export function MushafReader({ initialPage }: Props) {
           className="mushaf-slide"
           style={{
             transform: `translateX(${dragX}px)`,
-            transition: animating ? "transform 240ms ease" : "none",
+            transition: animating && !reduceMotion ? "transform 240ms ease" : "none",
           }}
         >
           {cur ? (
@@ -305,7 +321,7 @@ export function MushafReader({ initialPage }: Props) {
           className="mushaf-slide"
           style={{
             transform: `translateX(calc(100% + ${dragX}px))`,
-            transition: animating ? "transform 240ms ease" : "none",
+            transition: animating && !reduceMotion ? "transform 240ms ease" : "none",
           }}
           aria-hidden
         >

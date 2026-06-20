@@ -603,6 +603,12 @@ textarea:focus-visible {
   background-repeat: no-repeat;
 }
 
+/* The reader is a full-screen immersive surface — keep the PWA install nudge from
+   floating over the page. It returns the moment you leave the reader. */
+html.mushaf-immersive .pwa-install-prompt {
+  display: none;
+}
+
 .mushaf-viewport {
   position: relative;
   flex: 1;
@@ -657,41 +663,92 @@ textarea:focus-visible {
 .mushaf-canvas {
   width: 100%;
   height: 100%;
-  padding: clamp(0.75rem, 3vw, 2rem) clamp(0.85rem, 3.5vw, 2.25rem);
   display: flex;
-  flex-direction: column;
+  align-items: center;
   justify-content: center;
-  overflow-y: auto;
-  overflow-x: hidden;
+  padding: clamp(0.4rem, 2vw, 1.2rem);
+  overflow: hidden;
 }
 
-.mushaf-lines {
+/* The paper sheet — a fixed-proportion page that always fits the viewport, so
+   swiping feels like turning a real mushaf. Its pixel size is set in JS to keep
+   the printed page's proportion on any screen. */
+.mushaf-page {
+  position: relative;
   display: flex;
-  flex-direction: column;
-  justify-content: center;
-  width: 100%;
+  background: var(--surface-raised);
   color: var(--foreground);
+  border: 1px solid var(--border-strong);
+  border-radius: clamp(6px, 1.4vw, 14px);
+  box-shadow:
+    0 1px 2px rgba(0, 0, 0, 0.04),
+    0 14px 38px -14px rgba(0, 0, 0, 0.22);
+  padding: clamp(0.6rem, 2.6vw, 1.6rem) clamp(0.7rem, 3vw, 1.9rem);
+  overflow: hidden;
+}
+
+/* 15 evenly-spread rows fill the sheet's height; the font auto-fits so a full
+   line fills the width. Every page shares this rhythm → no size jitter. */
+.mushaf-grid {
+  display: grid;
+  flex: 1;
+  width: 100%;
+  min-width: 0;
   transition: opacity 160ms ease;
 }
+.mushaf-grid.is-centered-page {
+  grid-auto-rows: min-content;
+  align-content: center;
+  gap: 0.5em;
+}
 
-/* Even, centred line spacing — the font auto-fits so a full line fills the page
-   width (words sit at their justified gaps) and the 15 lines fill the height. */
-.mushaf-line {
-  display: block;
-  text-align: center;
-  line-height: var(--mushaf-lh, 1.9);
-  word-spacing: var(--mushaf-ws, normal);
-  letter-spacing: 0;
+.mushaf-row {
+  display: flex;
+  align-items: center;
+  min-width: 0;
+  min-height: 0;
 }
-.mushaf-line-inner {
-  display: inline-block;
+.mushaf-row-blank { visibility: hidden; }
+.mushaf-row-surah,
+.mushaf-row-bism { justify-content: center; }
+
+/* A line of the mushaf: words spread edge-to-edge (true justification). During
+   the measuring pass the line shrinks to its natural width so the fitter can
+   read it; for display it fills the column. */
+.mushaf-row-line {
+  display: flex;
+  flex-direction: row;
+  justify-content: center; /* default: short lines sit centred — no stretched gaps */
+  align-items: center;
+  width: 100%;
   white-space: nowrap;
+  line-height: var(--mushaf-lh, 1.5);
+  letter-spacing: 0;
+  gap: 0.5em;
 }
+/* Naturally near-full lines stretch edge-to-edge — true justification. */
+.mushaf-row-line.is-fill {
+  justify-content: space-between;
+  gap: 0;
+}
+/* Measuring pass: shrink each line to its natural width with a fixed gap so the
+   fitter reads consistent widths regardless of each line's display justification. */
+.mushaf-grid.is-measuring .mushaf-row-line {
+  width: max-content;
+  justify-content: flex-start;
+  gap: 0.5em;
+}
+.mushaf-grid.is-glyph.is-measuring .mushaf-row-line { gap: 0.28em; }
+/* QPC glyphs carry their own spacing: a hair of gap when centred/packed; the
+   justified (is-fill) lines get their spacing from space-between instead. */
+.mushaf-grid.is-glyph .mushaf-row-line { gap: 0.28em; }
+.mushaf-grid.is-glyph .mushaf-row-line.is-fill { gap: 0; }
 
 .mushaf-word {
   cursor: pointer;
   border-radius: 4px;
   transition: background-color 120ms ease, color 120ms ease;
+  white-space: nowrap;
 }
 .mushaf-word.mushaf-end { color: var(--accent-strong); }
 .mushaf-word:hover { color: var(--accent-strong); }
@@ -703,15 +760,17 @@ textarea:focus-visible {
 
 .mushaf-surah-header {
   display: flex;
+  flex-direction: column;
+  align-items: center;
   justify-content: center;
-  margin: 0.35em auto;
+  gap: 0.12em;
   width: 100%;
 }
 .mushaf-surah-frame {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  padding: 0.2em 2.2em;
+  padding: 0.1em 1.6em;
   border: 1.5px solid var(--accent);
   border-radius: 999px;
   background:
@@ -719,17 +778,25 @@ textarea:focus-visible {
     var(--surface-raised);
   color: var(--accent-strong);
   box-shadow: inset 0 0 0 3px var(--surface-raised), 0 1px 0 var(--border-strong);
+  max-width: 100%;
 }
 .mushaf-surah-frame .arabic {
-  font-size: clamp(1.05rem, 0.9rem + 1.2vw, 1.5rem);
-  line-height: 1.6;
+  font-size: 0.92em;
+  line-height: 1.45;
+  white-space: nowrap;
+}
+.mushaf-surah-bism {
+  color: var(--foreground-soft);
+  font-size: 0.66em;
+  line-height: 1.3;
+  white-space: nowrap;
 }
 .mushaf-bism {
   text-align: center;
+  width: 100%;
   color: var(--foreground-soft);
-  font-size: clamp(1.1rem, 0.9rem + 1.6vw, 1.7rem);
-  margin: 0.1em 0 0.3em;
-  line-height: 1.9;
+  font-size: 0.95em;
+  line-height: var(--mushaf-lh, 1.5);
 }
 
 .mushaf-ayah-num {

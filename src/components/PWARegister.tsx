@@ -121,7 +121,7 @@ export function PWARegister() {
   };
 
   return (
-    <div className="fixed bottom-4 left-4 right-4 sm:left-auto sm:right-4 sm:max-w-xs z-[60] rounded-2xl border border-[color:var(--border)] bg-[color:var(--surface)] shadow-2xl p-4 animate-pop">
+    <div className="pwa-install-prompt fixed bottom-4 left-4 right-4 sm:left-auto sm:right-4 sm:max-w-xs z-[60] rounded-2xl border border-[color:var(--border)] bg-[color:var(--surface)] shadow-2xl p-4 animate-pop">
       <div className="flex items-start gap-3">
         <div className="text-[color:var(--gold)] text-2xl shrink-0 mt-0.5" aria-hidden>
           ✦
