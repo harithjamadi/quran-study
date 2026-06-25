@@ -16,8 +16,14 @@ interface Props {
 /** Live camera preview with a single-shot capture that emits an ImageData frame. */
 export function CameraCapture({ onCapture, labelStart, labelCapture, errors }: Props) {
   const videoRef = useRef<HTMLVideoElement>(null);
+  // Hold the stream explicitly so cleanup never depends on reading it back off
+  // the <video> element — it's the single owner of the camera resource.
+  const streamRef = useRef<MediaStream | null>(null);
   const [streaming, setStreaming] = useState(false);
   const [starting, setStarting] = useState(false);
+  // True once the first frame's dimensions are known — gates capture so a tap
+  // can't be a silent no-op while the preview is still black.
+  const [ready, setReady] = useState(false);
   const [error, setError] = useState<CameraError | null>(null);
 
   async function start() {
@@ -35,6 +41,7 @@ export function CameraCapture({ onCapture, labelStart, labelCapture, errors }: P
     try {
       const stream = await media.getUserMedia({ video: { facingMode: "environment" } });
       if (videoRef.current) {
+        streamRef.current = stream;
         videoRef.current.srcObject = stream;
         await videoRef.current.play();
         setStreaming(true);
@@ -69,10 +76,9 @@ export function CameraCapture({ onCapture, labelStart, labelCapture, errors }: P
   }
 
   useEffect(() => {
-    const video = videoRef.current;
     return () => {
-      const stream = video?.srcObject as MediaStream | null;
-      stream?.getTracks().forEach((t) => t.stop());
+      streamRef.current?.getTracks().forEach((t) => t.stop());
+      streamRef.current = null;
     };
   }, []);
 
@@ -83,6 +89,7 @@ export function CameraCapture({ onCapture, labelStart, labelCapture, errors }: P
           ref={videoRef}
           className="h-full w-full object-cover"
           aria-label="Camera preview"
+          onLoadedMetadata={() => setReady(true)}
           playsInline
           muted
         />
@@ -107,7 +114,7 @@ export function CameraCapture({ onCapture, labelStart, labelCapture, errors }: P
           {labelStart}
         </button>
       ) : (
-        <button onClick={capture} className="btn-primary">
+        <button onClick={capture} disabled={!ready} className="btn-primary">
           {labelCapture}
         </button>
       )}

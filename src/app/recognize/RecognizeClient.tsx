@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { loadAyahIndex, recognizeAyah, type RecognitionResult } from "@/lib/ayah-recognition";
 import { parseAyahRef, classNames } from "@/lib/format";
 import { getSurah } from "@/data/surahs";
@@ -59,15 +59,20 @@ export function RecognizeClient() {
   const [searched, setSearched] = useState(false);
   const [loading, setLoading] = useState(false);
   const [cameraMode, setCameraMode] = useState(false);
+  // Monotonic run id: a newer recognition supersedes any in-flight one so a
+  // slow earlier run can't commit a stale result over a fresher one.
+  const runRef = useRef(0);
 
   async function runRecognition(text: string) {
+    const runId = ++runRef.current;
     setLoading(true);
     try {
       const index = await loadAyahIndex();
+      if (runId !== runRef.current) return; // superseded by a newer run
       setResult(index && text.trim() ? recognizeAyah(index, text) : null);
       setSearched(true);
     } finally {
-      setLoading(false);
+      if (runId === runRef.current) setLoading(false);
     }
   }
 
@@ -86,6 +91,9 @@ export function RecognizeClient() {
 
   async function handleCapture(image: ImageData) {
     const text = await stubOcrEngine.recognize(image);
+    // No text yet (the OCR engine is still a stub) — leave the "not available"
+    // hint in place rather than flashing the red "couldn't read" error.
+    if (!text.trim()) return;
     setInput(text);
     await runRecognition(text);
   }
