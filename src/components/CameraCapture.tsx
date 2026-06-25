@@ -3,7 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 
 /** Why the camera couldn't open — each maps to a different fix for the user. */
-export type CameraError = "insecure" | "denied" | "unavailable";
+export type CameraError = "insecure" | "denied" | "unavailable" | "busy";
 
 interface Props {
   onCapture: (image: ImageData) => void;
@@ -46,6 +46,8 @@ export function CameraCapture({ onCapture, labelStart, labelCapture, errors }: P
       const name = (e as DOMException)?.name;
       if (name === "NotAllowedError" || name === "SecurityError") setError("denied");
       else if (name === "NotFoundError" || name === "OverconstrainedError") setError("unavailable");
+      // The camera exists but couldn't be started — usually another app/tab holds it.
+      else if (name === "NotReadableError" || name === "TrackStartError") setError("busy");
       else setError(window.isSecureContext ? "unavailable" : "insecure");
     } finally {
       setStarting(false);
@@ -54,7 +56,9 @@ export function CameraCapture({ onCapture, labelStart, labelCapture, errors }: P
 
   function capture() {
     const video = videoRef.current;
-    if (!video) return;
+    // videoWidth/Height are 0 until the first frame's metadata lands; capturing
+    // then would build a 0×0 canvas and make getImageData throw IndexSizeError.
+    if (!video || !video.videoWidth || !video.videoHeight) return;
     const canvas = document.createElement("canvas");
     canvas.width = video.videoWidth;
     canvas.height = video.videoHeight;
@@ -99,18 +103,11 @@ export function CameraCapture({ onCapture, labelStart, labelCapture, errors }: P
         )}
       </div>
       {!streaming ? (
-        <button
-          onClick={start}
-          disabled={starting}
-          className="touch-target inline-flex items-center gap-2 rounded-full bg-[color:var(--accent)] px-6 py-2.5 text-sm font-semibold text-white transition-all hover:bg-[color:var(--accent-strong)] hover:shadow-[var(--shadow-glow)] active:scale-95 disabled:opacity-40 disabled:pointer-events-none"
-        >
+        <button onClick={start} disabled={starting} className="btn-primary">
           {labelStart}
         </button>
       ) : (
-        <button
-          onClick={capture}
-          className="touch-target inline-flex items-center gap-2 rounded-full bg-[color:var(--accent)] px-6 py-2.5 text-sm font-semibold text-white transition-all hover:bg-[color:var(--accent-strong)] hover:shadow-[var(--shadow-glow)] active:scale-95"
-        >
+        <button onClick={capture} className="btn-primary">
           {labelCapture}
         </button>
       )}

@@ -278,6 +278,29 @@ h1, h2, h3, .display {
 }
 
 /* ============================================================
+   Buttons
+   ============================================================ */
+
+/* Primary pill — the app's main call-to-action. <button> elements pick up the
+   ≥44px touch target automatically from the pointer:coarse rule further down. */
+.btn-primary {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.625rem 1.5rem;
+  border-radius: 999px;
+  background: var(--accent);
+  color: #fff;
+  font-size: var(--text-sm);
+  font-weight: 600;
+  cursor: pointer;
+  transition: background-color 200ms ease, box-shadow 200ms ease, transform 200ms ease;
+}
+.btn-primary:hover { background: var(--accent-strong); box-shadow: var(--shadow-glow); }
+.btn-primary:active { transform: scale(0.95); }
+.btn-primary:disabled { opacity: 0.4; pointer-events: none; }
+
+/* ============================================================
    Focus, selection, scrollbar
    ============================================================ */
 

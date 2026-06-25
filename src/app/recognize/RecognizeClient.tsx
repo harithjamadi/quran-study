@@ -44,6 +44,10 @@ const T = {
     en: "No camera is available on this device.",
     ms: "Tiada kamera tersedia pada peranti ini.",
   },
+  cameraBusy: {
+    en: "The camera is in use by another app. Close it and try again.",
+    ms: "Kamera sedang digunakan oleh aplikasi lain. Tutup aplikasi itu dan cuba lagi.",
+  },
 } as const;
 
 const MIN_CONFIDENCE = 0.5;
@@ -119,7 +123,7 @@ export function RecognizeClient() {
           <button
             onClick={handleRecognize}
             disabled={!input.trim() || loading}
-            className="touch-target inline-flex items-center gap-2 rounded-full bg-[color:var(--accent)] px-6 py-2.5 text-sm font-semibold text-white transition-all hover:bg-[color:var(--accent-strong)] hover:shadow-[var(--shadow-glow)] active:scale-95 disabled:opacity-40 disabled:pointer-events-none"
+            className="btn-primary"
           >
             {loading && (
               <span
@@ -157,6 +161,7 @@ export function RecognizeClient() {
                 insecure: T.cameraInsecure[language],
                 denied: T.cameraDenied[language],
                 unavailable: T.cameraUnavailable[language],
+                busy: T.cameraBusy[language],
               }}
             />
             <p className="text-xs text-[color:var(--muted)]">{T.ocrPending[language]}</p>
@@ -165,13 +170,15 @@ export function RecognizeClient() {
       </div>
 
       <div aria-live="polite">
-        {ref && surah && (
+        {ref && (
           <section className="card-raised p-4 sm:p-5 space-y-3 animate-fade-up">
             <div className="flex items-baseline justify-between gap-3">
-              <h2 className="display text-[length:var(--text-lg)]" style={{ fontWeight: 600 }}>
-                {surah.englishName}
-              </h2>
-              <span className="font-mono text-xs tabular-nums text-[color:var(--muted)]">
+              {surah && (
+                <h2 className="display text-[length:var(--text-lg)]" style={{ fontWeight: 600 }}>
+                  {surah.englishName}
+                </h2>
+              )}
+              <span className="ml-auto font-mono text-xs tabular-nums text-[color:var(--muted)]">
                 {result!.key}
               </span>
             </div>
