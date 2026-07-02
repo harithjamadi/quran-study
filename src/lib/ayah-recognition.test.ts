@@ -32,6 +32,27 @@ describe("recognizeAyah", () => {
     expect(recognizeAyah(index, "الحمد لله رب العالمين")?.matchedRange).toEqual([1, 4]);
   });
 
+  it("anchors repeated words to the aligned occurrence, not the first", () => {
+    // 112:4 has لم twice after rasm; a naive per-word indexOf would pin both
+    // query words to the first occurrence. The window alignment must not.
+    const repeatIndex = buildAyahIndex([
+      { key: "94:5", text: "فَإِنَّ مَعَ ٱلْعُسْرِ يُسْرًا" },
+      { key: "94:6", text: "إِنَّ مَعَ ٱلْعُسْرِ يُسْرًا" },
+      { key: "109:2", text: "لَآ أَعْبُدُ مَا تَعْبُدُونَ" },
+      { key: "109:4", text: "وَلَآ أَنَا۠ عَابِدٌ مَّا عَبَدتُّمْ" },
+    ]);
+    // Tail fragment of 94:5 — words 2..4, not re-anchored to word 1.
+    const r = recognizeAyah(repeatIndex, "مع العسر يسرا");
+    expect(r?.matchedRange).toEqual([2, 4]);
+  });
+
+  it("confidence is matchedTerms/queryTerms (boundary for the UI gate)", () => {
+    // Two-word query with one word matched sits exactly at 0.5.
+    const r = recognizeAyah(index, "قل زخرف");
+    expect(r?.key).toBe("112:1");
+    expect(r?.confidence).toBe(0.5);
+  });
+
   it("returns null for non-Quranic gibberish", () => {
     expect(recognizeAyah(index, "xyzzy plugh")).toBeNull();
   });

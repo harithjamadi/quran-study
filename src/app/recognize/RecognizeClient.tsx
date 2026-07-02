@@ -50,6 +50,12 @@ const T = {
   },
 } as const;
 
+/**
+ * Minimum matchedTerms/queryTerms ratio to show a result. At 0.5 a majority of
+ * the typed words must appear in the top hit — below that, minisearch's OR
+ * matching surfaces verses that share only a stray particle, which look like
+ * confident wrong answers. Single-word queries always pass (1/1).
+ */
 const MIN_CONFIDENCE = 0.5;
 
 export function RecognizeClient() {
@@ -98,7 +104,9 @@ export function RecognizeClient() {
     await runRecognition(text);
   }
 
-  const ref = result && result.confidence >= MIN_CONFIDENCE ? parseAyahRef(result.key) : null;
+  // Bind the narrowed value once so the JSX below never needs `result!`.
+  const matched = result && result.confidence >= MIN_CONFIDENCE ? result : null;
+  const ref = matched ? parseAyahRef(matched.key) : null;
   const surah = ref ? getSurah(ref.surah) : null;
 
   return (
@@ -177,35 +185,43 @@ export function RecognizeClient() {
         )}
       </div>
 
-      <div aria-live="polite">
-        {ref && (
-          <section className="card-raised p-4 sm:p-5 space-y-3 animate-fade-up">
-            <div className="flex items-baseline justify-between gap-3">
-              {surah && (
-                <h2 className="display text-[length:var(--text-lg)]" style={{ fontWeight: 600 }}>
-                  {surah.englishName}
-                </h2>
-              )}
-              <span className="ml-auto font-mono text-xs tabular-nums text-[color:var(--muted)]">
-                {result!.key}
-              </span>
-            </div>
-            <TajweedText
-              surahNumber={ref.surah}
-              ayahNumber={ref.ayah}
-              arabicFallback={result!.text}
-              fontSize={32}
-              highlightWords={result!.matchedRange}
-            />
-          </section>
+      {/* Concise live announcements only — the rich result (full verse +
+          Tajweed legend) stays outside so screen readers aren't read the
+          entire ayah verbatim on every recognition. */}
+      <div aria-live="polite" className="sr-only">
+        {searched && !loading && matched && ref && (
+          <span>{surah ? `${surah.englishName} ${matched.key}` : matched.key}</span>
         )}
-
-        {searched && !ref && !loading && (
-          <p className="rounded-[var(--radius)] border border-[color:var(--border)] bg-[color:var(--surface)] p-4 text-sm text-[color:var(--muted-strong)]">
-            {T.notFound[language]}
-          </p>
-        )}
+        {searched && !loading && !matched && <span>{T.notFound[language]}</span>}
       </div>
+
+      {matched && ref && (
+        <section className="card-raised p-4 sm:p-5 space-y-3 animate-fade-up">
+          <div className="flex items-baseline justify-between gap-3">
+            {surah && (
+              <h2 className="display text-[length:var(--text-lg)]" style={{ fontWeight: 600 }}>
+                {surah.englishName}
+              </h2>
+            )}
+            <span className="ml-auto font-mono text-xs tabular-nums text-[color:var(--muted)]">
+              {matched.key}
+            </span>
+          </div>
+          <TajweedText
+            surahNumber={ref.surah}
+            ayahNumber={ref.ayah}
+            arabicFallback={matched.text}
+            fontSize={32}
+            highlightWords={matched.matchedRange}
+          />
+        </section>
+      )}
+
+      {searched && !matched && !loading && (
+        <p className="rounded-[var(--radius)] border border-[color:var(--border)] bg-[color:var(--surface)] p-4 text-sm text-[color:var(--muted-strong)]">
+          {T.notFound[language]}
+        </p>
+      )}
     </div>
   );
 }

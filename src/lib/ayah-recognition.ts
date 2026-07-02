@@ -61,13 +61,37 @@ export function recognizeAyah(
   // alif that rasm strips, while typed queries use a full alif — dropping every
   // alif makes the two spellings converge (e.g. العلمين ≈ العالمين).
   const noAlif = (s: string) => s.replace(/ا/g, "");
+  const queryWords = tokenize(rasm).map(noAlif);
   const ayahWords = toRasm(top.text as string).split(/\s+/).filter(Boolean).map(noAlif);
-  const positions = tokenize(rasm)
-    .map((w) => ayahWords.indexOf(noAlif(w)))
-    .filter((i) => i >= 0);
-  const matchedRange: readonly [number, number] | null = positions.length
-    ? [Math.min(...positions) + 1, Math.max(...positions) + 1]
-    : null;
+  // A query is (almost always) a contiguous fragment of the ayah, so slide a
+  // query-length window across it and keep the alignment with the most
+  // per-position matches. Unlike a per-word indexOf, this anchors repeated
+  // short words (الله, من, في …) to the correct occurrence.
+  let bestStart = -1;
+  let bestMatches = 0;
+  for (let start = 0; start < ayahWords.length; start++) {
+    let matches = 0;
+    for (let i = 0; i < queryWords.length && start + i < ayahWords.length; i++) {
+      if (ayahWords[start + i] === queryWords[i]) matches++;
+    }
+    if (matches > bestMatches) {
+      bestMatches = matches;
+      bestStart = start;
+    }
+  }
+  let matchedRange: readonly [number, number] | null = null;
+  if (bestStart >= 0) {
+    // Trim the window to the first/last words that actually matched.
+    let first = -1;
+    let last = -1;
+    for (let i = 0; i < queryWords.length && bestStart + i < ayahWords.length; i++) {
+      if (ayahWords[bestStart + i] === queryWords[i]) {
+        if (first < 0) first = bestStart + i;
+        last = bestStart + i;
+      }
+    }
+    if (first >= 0) matchedRange = [first + 1, last + 1];
+  }
 
   return {
     key: top.id as string,
