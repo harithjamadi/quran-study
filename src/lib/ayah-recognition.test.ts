@@ -56,6 +56,14 @@ describe("recognizeAyah", () => {
   it("returns null for non-Quranic gibberish", () => {
     expect(recognizeAyah(index, "xyzzy plugh")).toBeNull();
   });
+
+  it("splits words that OCR/typing merged together (closed-corpus word-break)", () => {
+    // OCR frequently drops the inter-word space: ربالعالمين, اللهاحد.
+    expect(recognizeAyah(index, "الحمد لله ربالعالمين")?.key).toBe("1:2");
+    const r = recognizeAyah(index, "قل هو اللهاحد");
+    expect(r?.key).toBe("112:1");
+    expect(r?.confidence).toBeGreaterThanOrEqual(0.75);
+  });
 });
 
 describe("loadAyahIndex", () => {

@@ -28,7 +28,21 @@ type IndexedAyah = AyahEntry & { rasm: string };
 
 const tokenize = (s: string): string[] => s.split(/\s+/).filter(Boolean);
 
-export function buildAyahIndex(corpus: AyahEntry[]): MiniSearch<IndexedAyah> {
+// Uthmani long vowels use a superscript (dagger) alif that rasm strips, while
+// typed/OCR text uses a full alif — dropping every alif converges the two
+// spellings (e.g. العلمين ≈ العالمين).
+const noAlif = (s: string) => s.replace(/ا/g, "");
+
+/** The search index plus the corpus's rasm vocabulary — the vocabulary lets
+ *  recognizeAyah split words that OCR or hurried typing merged together. */
+export interface AyahIndex {
+  search: MiniSearch<IndexedAyah>;
+  vocab: Set<string>;
+  /** vocab with every alif dropped, folding dagger-alif spelling differences. */
+  vocabNoAlif: Set<string>;
+}
+
+export function buildAyahIndex(corpus: AyahEntry[]): AyahIndex {
   const index = new MiniSearch<IndexedAyah>({
     idField: "key",
     fields: ["rasm"],
@@ -38,30 +52,68 @@ export function buildAyahIndex(corpus: AyahEntry[]): MiniSearch<IndexedAyah> {
     processTerm: (t) => t,
     searchOptions: { fuzzy: 0.2, prefix: true, combineWith: "OR" },
   });
-  index.addAll(corpus.map((a) => ({ ...a, rasm: toRasm(a.text) })));
-  return index;
+  const vocab = new Set<string>();
+  const vocabNoAlif = new Set<string>();
+  const indexed = corpus.map((a) => {
+    const rasm = toRasm(a.text);
+    for (const w of tokenize(rasm)) {
+      vocab.add(w);
+      vocabNoAlif.add(noAlif(w));
+    }
+    return { ...a, rasm };
+  });
+  index.addAll(indexed);
+  return { search: index, vocab, vocabNoAlif };
+}
+
+/**
+ * Split a token the corpus has never seen into known corpus words — OCR (and
+ * fast typing) frequently drops the space between Arabic words (e.g.
+ * ربالعالمين → رب العالمين). Longest-known-head first, at most `depth` parts.
+ *
+ * Exact vocabulary membership is tried first; only if no exact segmentation
+ * exists is the check retried alif-folded (العالمين ≈ corpus العلمين). The
+ * folded check alone is too loose — e.g. اللها folds to لله and steals the
+ * alif from أحد — so it is a fallback, not the default.
+ */
+function splitWith(token: string, known: (w: string) => boolean, depth: number): string[] | null {
+  if (known(token)) return [token];
+  if (depth === 1 || token.length < 4) return null;
+  for (let i = token.length - 2; i >= 2; i--) {
+    const head = token.slice(0, i);
+    if (!known(head)) continue;
+    const rest = splitWith(token.slice(i), known, depth - 1);
+    if (rest) return [head, ...rest];
+  }
+  return null;
+}
+
+function splitMerged(token: string, idx: AyahIndex, depth = 3): string[] | null {
+  const exact = (w: string) => idx.vocab.has(w);
+  const folded = (w: string) => idx.vocab.has(w) || idx.vocabNoAlif.has(noAlif(w));
+  return splitWith(token, exact, depth) ?? splitWith(token, folded, depth);
 }
 
 export function recognizeAyah(
-  index: MiniSearch<IndexedAyah>,
+  ayahIndex: AyahIndex,
   query: string
 ): RecognitionResult | null {
-  const rasm = toRasm(query);
-  const queryTerms = tokenize(rasm).length;
+  const { search } = ayahIndex;
+  const rawTokens = tokenize(toRasm(query));
+  const tokens = rawTokens.flatMap((t) => splitMerged(t, ayahIndex) ?? [t]);
+  const rasm = tokens.join(" ");
+  const queryTerms = tokens.length;
   if (queryTerms === 0) return null;
 
-  const hits = index.search(rasm);
+  const hits = search.search(rasm);
   if (hits.length === 0) return null;
 
   const top = hits[0];
   const matchedTerms = Object.keys(top.match).length;
 
-  // Locate the query's words within the ayah to highlight the matched snippet.
-  // Compare with alif removed: Uthmani long vowels use a superscript (dagger)
-  // alif that rasm strips, while typed queries use a full alif — dropping every
-  // alif makes the two spellings converge (e.g. العلمين ≈ العالمين).
-  const noAlif = (s: string) => s.replace(/ا/g, "");
-  const queryWords = tokenize(rasm).map(noAlif);
+  // Locate the query's words within the ayah to highlight the matched
+  // snippet, comparing alif-folded (see noAlif above).
+  const queryWords = tokens.map(noAlif);
   const ayahWords = toRasm(top.text as string).split(/\s+/).filter(Boolean).map(noAlif);
   // A query is (almost always) a contiguous fragment of the ayah, so slide a
   // query-length window across it and keep the alignment with the most
@@ -104,9 +156,9 @@ export function recognizeAyah(
   };
 }
 
-let indexPromise: Promise<MiniSearch<IndexedAyah> | null> | null = null;
+let indexPromise: Promise<AyahIndex | null> | null = null;
 
-export function loadAyahIndex(): Promise<MiniSearch<IndexedAyah> | null> {
+export function loadAyahIndex(): Promise<AyahIndex | null> {
   if (!indexPromise) {
     indexPromise = fetch("/data/corpus/ayat.json")
       .then((res) => (res.ok ? (res.json() as Promise<AyahEntry[]>) : null))
