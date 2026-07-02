@@ -39,6 +39,11 @@ export const RELEASES: Release[] = [
         ms: "Tab Wirid baharu: baca Al-Ma'thurat (zikir pagi dan petang sughra) dan ayat-ayat perlindungan Manzil, masing-masing dengan terjemahan penuh, sumber hadis, dan pembilang gaya tasbih yang menjejak kemajuan hari ini pada peranti anda.",
       },
       {
+        type: "added",
+        en: "Recognize can now read images (beta): snap a photo or upload a screenshot of clear Arabic print and the exact verse is found — all recognition runs on your device, so images never leave it. It also forgives words typed or scanned without spaces (e.g. ربالعالمين). Ornate mushaf script isn't reliably read yet; typing remains most accurate.",
+        ms: "Kenal Pasti kini boleh membaca imej (beta): ambil gambar atau muat naik tangkapan skrin cetakan Arab yang jelas dan ayat yang tepat akan ditemui — semua pengecaman berjalan pada peranti anda, jadi imej tidak sesekali meninggalkannya. Ia juga memaafkan perkataan yang ditaip atau diimbas tanpa jarak (cth. ربالعالمين). Skrip mushaf berhias belum dapat dibaca dengan tepat; menaip kekal paling tepat.",
+      },
+      {
         type: "improved",
         en: "A calmer, easier navigation: the bottom bar now carries the four daily journeys (Home, Learn, Read, Wirid), search lives one tap away in the top corner of every screen, and secondary tools are gathered under More.",
         ms: "Navigasi lebih tenang dan mudah: bar bawah kini membawa empat perjalanan harian (Utama, Belajar, Baca, Wirid), carian berada satu ketikan sahaja di penjuru atas setiap skrin, dan alatan sekunder dihimpunkan di bawah Lagi.",

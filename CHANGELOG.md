@@ -23,6 +23,17 @@ menu). Keep the two in sync when cutting a release.
   - **Manzil** — the classical 33-passage protection compilation, Al-Fatiha
     through An-Nas.
 
+- **Camera/upload OCR for Recognize (beta).** The `/recognize` OCR seam is now
+  live: tesseract.js (WASM, Arabic LSTM) runs fully on-device with self-hosted
+  traineddata (`public/ocr/tessdata`), lazy-loaded on first use and cached in
+  IndexedDB. Validated against real rendered verses
+  (`scripts/validate-ocr*.mjs`): 5/5 top-1 retrieval on clear plain naskh
+  print; ornate KFGQPC mushaf script is not reliably readable with stock
+  models (~3/14) and stays flagged as the fine-tuned-model milestone. The
+  retrieval layer gained closed-corpus word-break (splits merged words like
+  ربالعالمين — OCR's dominant error) with alif-folded fallback, which also
+  helps typed input. New "Upload image" path alongside the camera.
+
 ### Changed
 - **Calmer navigation.** The mobile bottom bar now carries the four daily
   journeys — Home, Learn, Read, Wirid — with Search moved to a persistent icon

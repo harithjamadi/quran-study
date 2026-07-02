@@ -1,8 +1,9 @@
 /**
- * OCR seam for the camera path. The real Arabic OCR model (a separate Python/ML
- * track, P3) will implement OcrEngine and run on-device via ONNX/WASM. Until
- * then, stubOcrEngine is a no-op placeholder so the camera UI and recognition
- * flow can be built and tested independently of the model.
+ * OCR seam for the camera/upload path. The live engine is tesseract.js
+ * running on-device (see ocr-tesseract.ts for accuracy envelope: solid on
+ * plain naskh print, weak on ornate mushaf script pending the fine-tuned
+ * Uthmanic model). The stub remains for tests and as the interface's
+ * reference no-op.
  */
 export interface OcrEngine {
   recognize(image: ImageData): Promise<string>;

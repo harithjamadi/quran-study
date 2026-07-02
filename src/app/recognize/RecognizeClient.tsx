@@ -6,7 +6,7 @@ import { parseAyahRef, classNames } from "@/lib/format";
 import { getSurah } from "@/data/surahs";
 import { TajweedText } from "@/components/TajweedText";
 import { CameraCapture } from "@/components/CameraCapture";
-import { stubOcrEngine } from "@/lib/ocr";
+import { tesseractOcrEngine } from "@/lib/ocr-tesseract";
 import { useLearning } from "@/store/learning";
 
 const T = {
@@ -28,9 +28,19 @@ const T = {
   cameraClose: { en: "Close camera", ms: "Tutup kamera" },
   startCamera: { en: "Start camera", ms: "Mula kamera" },
   capture: { en: "Capture", ms: "Tangkap" },
-  ocrPending: {
-    en: "Camera text recognition isn't available yet — type or paste for now.",
-    ms: "Pengecaman teks kamera belum tersedia — taip atau tampal buat masa ini.",
+  upload: { en: "Upload image", ms: "Muat naik imej" },
+  ocrHint: {
+    en: "Beta — reads clear, plain Arabic print best (books, screenshots). Ornate mushaf script often isn't recognized yet; typing is most reliable. Images never leave your device.",
+    ms: "Beta — paling tepat untuk cetakan Arab biasa yang jelas (buku, tangkapan skrin). Skrip mushaf berhias selalunya belum dikenali; menaip paling boleh diharap. Imej tidak sesekali meninggalkan peranti anda.",
+  },
+  ocrReading: { en: "Reading the image…", ms: "Membaca imej…" },
+  ocrFirstUse: {
+    en: "Preparing text recognition (first time only, ~5 MB)…",
+    ms: "Menyediakan pengecaman teks (kali pertama sahaja, ~5 MB)…",
+  },
+  ocrEmpty: {
+    en: "Couldn't find readable Arabic text in that image. Get closer, fill the frame with one or two lines, and avoid glare.",
+    ms: "Tiada teks Arab yang boleh dibaca dalam imej itu. Dekatkan kamera, penuhkan bingkai dengan satu dua baris, dan elakkan silau.",
   },
   cameraInsecure: {
     en: "The camera needs a secure connection. Open this page on https:// or http://localhost.",
@@ -65,6 +75,11 @@ export function RecognizeClient() {
   const [searched, setSearched] = useState(false);
   const [loading, setLoading] = useState(false);
   const [cameraMode, setCameraMode] = useState(false);
+  // "first-use" while the ~5 MB engine+model download, "reading" per image.
+  const [ocrPhase, setOcrPhase] = useState<"idle" | "first-use" | "reading">("idle");
+  const [ocrEmpty, setOcrEmpty] = useState(false);
+  const ocrWarmRef = useRef(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
   // Monotonic run id: a newer recognition supersedes any in-flight one so a
   // slow earlier run can't commit a stale result over a fresher one.
   const runRef = useRef(0);
@@ -96,12 +111,39 @@ export function RecognizeClient() {
   }
 
   async function handleCapture(image: ImageData) {
-    const text = await stubOcrEngine.recognize(image);
-    // No text yet (the OCR engine is still a stub) — leave the "not available"
-    // hint in place rather than flashing the red "couldn't read" error.
-    if (!text.trim()) return;
-    setInput(text);
-    await runRecognition(text);
+    if (ocrPhase !== "idle") return; // one image at a time
+    setOcrEmpty(false);
+    setOcrPhase(ocrWarmRef.current ? "reading" : "first-use");
+    try {
+      const text = await tesseractOcrEngine.recognize(image);
+      ocrWarmRef.current = true;
+      if (!text.trim()) {
+        // Distinguish "no Arabic found in the image" from the retrieval
+        // engine's "no matching verse" — different fixes for the user.
+        setOcrEmpty(true);
+        return;
+      }
+      setInput(text);
+      await runRecognition(text);
+    } finally {
+      setOcrPhase("idle");
+    }
+  }
+
+  async function handleUpload(file: File | undefined) {
+    if (!file) return;
+    try {
+      const bitmap = await createImageBitmap(file);
+      const canvas = document.createElement("canvas");
+      canvas.width = bitmap.width;
+      canvas.height = bitmap.height;
+      const ctx = canvas.getContext("2d");
+      if (!ctx) return;
+      ctx.drawImage(bitmap, 0, 0);
+      await handleCapture(ctx.getImageData(0, 0, canvas.width, canvas.height));
+    } catch {
+      setOcrEmpty(true); // unreadable/unsupported image file
+    }
   }
 
   // Bind the narrowed value once so the JSX below never needs `result!`.
@@ -165,7 +207,45 @@ export function RecognizeClient() {
             </svg>
             {cameraMode ? T.cameraClose[language] : T.camera[language]}
           </button>
+          <button
+            onClick={() => fileInputRef.current?.click()}
+            disabled={ocrPhase !== "idle"}
+            className="touch-target inline-flex items-center gap-2 rounded-full border border-[color:var(--border-strong)] px-6 py-2.5 text-sm font-semibold text-[color:var(--foreground)] transition-colors hover:border-[color:var(--accent)] disabled:opacity-60"
+          >
+            <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
+              <rect x="3.5" y="4.5" width="17" height="15" rx="2" />
+              <circle cx="9" cy="10" r="1.6" />
+              <path d="m4.5 17 4.5-4 3.5 3 3-2.5 4 3.5" />
+            </svg>
+            {T.upload[language]}
+          </button>
+          <input
+            ref={fileInputRef}
+            type="file"
+            accept="image/*"
+            className="sr-only"
+            aria-label={T.upload[language]}
+            onChange={(e) => {
+              void handleUpload(e.target.files?.[0]);
+              e.target.value = ""; // allow re-picking the same file
+            }}
+          />
         </div>
+
+        {ocrPhase !== "idle" && (
+          <p aria-live="polite" className="flex items-center gap-2 text-xs text-[color:var(--muted-strong)]">
+            <span
+              aria-hidden
+              className="h-3 w-3 rounded-full border-2 border-[color:var(--accent)]/30 border-t-[color:var(--accent)] animate-spin"
+            />
+            {ocrPhase === "first-use" ? T.ocrFirstUse[language] : T.ocrReading[language]}
+          </p>
+        )}
+        {ocrEmpty && ocrPhase === "idle" && (
+          <p className="rounded-[var(--radius)] border border-[color:var(--border)] bg-[color:var(--surface-raised)] p-3 text-xs text-[color:var(--muted-strong)]">
+            {T.ocrEmpty[language]}
+          </p>
+        )}
 
         {cameraMode && (
           <div className="space-y-2 pt-1">
@@ -180,9 +260,9 @@ export function RecognizeClient() {
                 busy: T.cameraBusy[language],
               }}
             />
-            <p className="text-xs text-[color:var(--muted)]">{T.ocrPending[language]}</p>
           </div>
         )}
+        <p className="text-xs text-[color:var(--muted)]">{T.ocrHint[language]}</p>
       </div>
 
       {/* Concise live announcements only — the rich result (full verse +
