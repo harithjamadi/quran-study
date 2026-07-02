@@ -8,7 +8,13 @@ export default function sitemap(): MetadataRoute.Sitemap {
   const root: MetadataRoute.Sitemap = [
     { url: `${SITE}/`, lastModified: now, changeFrequency: "weekly", priority: 1 },
     { url: `${SITE}/surahs`, lastModified: now, changeFrequency: "monthly", priority: 0.9 },
+    { url: `${SITE}/learn`, lastModified: now, changeFrequency: "monthly", priority: 0.8 },
+    { url: `${SITE}/mushaf`, lastModified: now, changeFrequency: "monthly", priority: 0.8 },
+    { url: `${SITE}/wirid`, lastModified: now, changeFrequency: "monthly", priority: 0.8 },
+    { url: `${SITE}/wirid/mathurat`, lastModified: now, changeFrequency: "monthly", priority: 0.7 },
+    { url: `${SITE}/wirid/manzil`, lastModified: now, changeFrequency: "monthly", priority: 0.7 },
     { url: `${SITE}/search`, lastModified: now, changeFrequency: "monthly", priority: 0.5 },
+    { url: `${SITE}/recognize`, lastModified: now, changeFrequency: "monthly", priority: 0.4 },
     { url: `${SITE}/bookmarks`, lastModified: now, changeFrequency: "monthly", priority: 0.3 },
     { url: `${SITE}/settings`, lastModified: now, changeFrequency: "monthly", priority: 0.2 },
   ];
