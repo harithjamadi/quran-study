@@ -13,14 +13,15 @@ export function Nav() {
   const setHasSeenTutorial = useLearning((s) => s.setHasSeenTutorial);
   const t = UI_STRINGS[language];
 
+  // Primary journeys only — secondary tools (Recognize, Changelog) live on
+  // the Search page and Footer so the bar stays scannable.
   const items = [
     { href: "/", label: t.nav_home },
     { href: "/learn", label: t.nav_learn },
     { href: "/surahs", label: t.nav_read },
-    { href: "/mushaf", label: language === "ms" ? "Mushaf" : "Mushaf" },
-    { href: "/recognize", label: language === "ms" ? "Kenal Pasti" : "Recognize" },
-    { href: "/analytics", label: language === "ms" ? "Analitik" : "Stats" },
-    { href: "/search", label: t.nav_search },
+    { href: "/mushaf", label: "Mushaf" },
+    { href: "/wirid", label: t.nav_wirid },
+    { href: "/analytics", label: t.nav_stats },
     { href: "/bookmarks", label: t.nav_bookmarks },
     { href: "/settings", label: t.nav_settings },
   ];
@@ -76,6 +77,25 @@ export function Nav() {
             );
           })}
         </ul>
+
+        {/* Search is an icon so it's one tap away on every screen size —
+            on mobile the bottom bar no longer carries it. */}
+        <Link
+          href="/search"
+          aria-label={t.nav_search}
+          title={t.nav_search}
+          className={classNames(
+            "ml-auto md:ml-0 inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-full transition-colors hover:bg-[color:var(--border)]/40",
+            pathname.startsWith("/search")
+              ? "text-[color:var(--accent-strong)]"
+              : "text-[color:var(--muted)] hover:text-[color:var(--foreground)]"
+          )}
+        >
+          <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
+            <circle cx="11" cy="11" r="7" />
+            <path d="m20 20-3.2-3.2" />
+          </svg>
+        </Link>
 
         <button
           type="button"

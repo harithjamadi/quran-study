@@ -6,6 +6,7 @@ export const UI_STRINGS = {
     nav_home: "Home",
     nav_learn: "Learn",
     nav_read: "Read",
+    nav_wirid: "Wirid",
     nav_search: "Search",
     nav_bookmarks: "Bookmarks",
     nav_settings: "Settings",
@@ -27,7 +28,7 @@ export const UI_STRINGS = {
     tut_read_title: "Read & tap any word",
     tut_read_body: "Open any surah from the Read tab. Tap any Arabic word to reveal its meaning, root, and every other verse it appears in.",
     tut_nav_title: "Find your way",
-    tut_nav_body: "Use the bar along the bottom to move around: Home, Learn, Read, Search — and More for your bookmarks, stats, and settings.",
+    tut_nav_body: "Use the bar along the bottom to move around: Home, Learn, Read, Wirid — and More for search, bookmarks, stats, and settings.",
 
     // Home
     home_hero_title: "Understand the Quran, one word at a time",
@@ -242,6 +243,7 @@ export const UI_STRINGS = {
     nav_home: "Utama",
     nav_learn: "Belajar",
     nav_read: "Baca",
+    nav_wirid: "Wirid",
     nav_search: "Cari",
     nav_bookmarks: "Penanda",
     nav_settings: "Tetapan",
@@ -263,7 +265,7 @@ export const UI_STRINGS = {
     tut_read_title: "Baca & tekan kata",
     tut_read_body: "Buka mana-mana surah dari tab Baca. Tekan mana-mana kata Arab untuk lihat maksud, akar, dan setiap ayat lain yang menggunakannya.",
     tut_nav_title: "Cari arah anda",
-    tut_nav_body: "Guna bar di bahagian bawah untuk bergerak: Utama, Belajar, Baca, Cari — dan Lagi untuk penanda, statistik, dan tetapan.",
+    tut_nav_body: "Guna bar di bahagian bawah untuk bergerak: Utama, Belajar, Baca, Wirid — dan Lagi untuk carian, penanda, statistik, dan tetapan.",
 
     // Home
     home_hero_title: "Fahami Al-Quran, kata demi kata",
