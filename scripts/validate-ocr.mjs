@@ -5,7 +5,7 @@
  *
  * Fetches real rendered ayah images (cdn.islamic.network, Uthmani script),
  * runs them through tesseract.js with the same traineddata the app self-hosts
- * (public/ocr/tessdata/ara.traineddata), then feeds the OCR output through
+ * (public/ocr/tessdata/v1/ara.traineddata), then feeds the OCR output through
  * the same rasm-normalize + MiniSearch retrieval the app uses, and reports
  * top-1 retrieval accuracy. The bar: OCR only has to get enough of the
  * consonant skeleton right for the closed-corpus retrieval to land on the
@@ -137,7 +137,7 @@ async function main() {
 
   console.log(`lang=${LANG} scale=${SCALE} psm=${PSM_MODE}`);
   const worker = await createWorker(LANG, 1, {
-    langPath: path.join(root, "public", "ocr", "tessdata"),
+    langPath: path.join(root, "public", "ocr", "tessdata", "v1"),
     gzip: false,
     cachePath: cacheDir,
   });

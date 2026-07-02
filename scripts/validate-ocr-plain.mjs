@@ -70,7 +70,7 @@ async function main() {
     tokenize(rasm).flatMap((t) => splitMerged(t) ?? [t]).join(" ");
 
   const worker = await createWorker(LANG, 1, {
-    langPath: path.join(root, "public", "ocr", "tessdata"),
+    langPath: path.join(root, "public", "ocr", "tessdata", "v1"),
     gzip: false,
     cachePath: path.join(root, ".cache", "ocr-validate"),
   });

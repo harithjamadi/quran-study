@@ -42,6 +42,10 @@ const T = {
     en: "Couldn't find readable Arabic text in that image. Get closer, fill the frame with one or two lines, and avoid glare.",
     ms: "Tiada teks Arab yang boleh dibaca dalam imej itu. Dekatkan kamera, penuhkan bingkai dengan satu dua baris, dan elakkan silau.",
   },
+  ocrBadFile: {
+    en: "Couldn't open that image file. Try a JPG or PNG photo instead.",
+    ms: "Fail imej itu tidak dapat dibuka. Cuba foto JPG atau PNG.",
+  },
   cameraInsecure: {
     en: "The camera needs a secure connection. Open this page on https:// or http://localhost.",
     ms: "Kamera memerlukan sambungan selamat. Buka halaman ini melalui https:// atau http://localhost.",
@@ -77,7 +81,7 @@ export function RecognizeClient() {
   const [cameraMode, setCameraMode] = useState(false);
   // "first-use" while the ~5 MB engine+model download, "reading" per image.
   const [ocrPhase, setOcrPhase] = useState<"idle" | "first-use" | "reading">("idle");
-  const [ocrEmpty, setOcrEmpty] = useState(false);
+  const [ocrNotice, setOcrNotice] = useState<"empty" | "bad-file" | null>(null);
   const ocrWarmRef = useRef(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
   // Monotonic run id: a newer recognition supersedes any in-flight one so a
@@ -112,7 +116,7 @@ export function RecognizeClient() {
 
   async function handleCapture(image: ImageData) {
     if (ocrPhase !== "idle") return; // one image at a time
-    setOcrEmpty(false);
+    setOcrNotice(null);
     setOcrPhase(ocrWarmRef.current ? "reading" : "first-use");
     try {
       const text = await tesseractOcrEngine.recognize(image);
@@ -120,7 +124,7 @@ export function RecognizeClient() {
       if (!text.trim()) {
         // Distinguish "no Arabic found in the image" from the retrieval
         // engine's "no matching verse" — different fixes for the user.
-        setOcrEmpty(true);
+        setOcrNotice("empty");
         return;
       }
       setInput(text);
@@ -130,19 +134,49 @@ export function RecognizeClient() {
     }
   }
 
+  // Longest side we materialise from an upload. Phone cameras produce
+  // 12–48 MP images; drawing those full-size would allocate hundreds of MB
+  // of canvas memory and crash mobile tabs. OCR needs nowhere near that.
+  const MAX_UPLOAD_DIMENSION = 2400;
+
+  /** Decode an uploaded photo honouring EXIF rotation. Prefer
+   *  createImageBitmap (off-main-thread), fall back to an <img> decode for
+   *  browsers that reject the options bag or the file format. */
+  async function decodeUpload(file: File): Promise<ImageBitmap | HTMLImageElement> {
+    try {
+      return await createImageBitmap(file, { imageOrientation: "from-image" });
+    } catch {
+      const url = URL.createObjectURL(file);
+      try {
+        const img = new Image();
+        img.src = url;
+        await img.decode();
+        return img;
+      } finally {
+        URL.revokeObjectURL(url);
+      }
+    }
+  }
+
   async function handleUpload(file: File | undefined) {
     if (!file) return;
+    setOcrNotice(null);
     try {
-      const bitmap = await createImageBitmap(file);
+      const source = await decodeUpload(file);
+      const width = "naturalWidth" in source ? source.naturalWidth : source.width;
+      const height = "naturalHeight" in source ? source.naturalHeight : source.height;
+      const scale = Math.min(1, MAX_UPLOAD_DIMENSION / Math.max(width, height));
       const canvas = document.createElement("canvas");
-      canvas.width = bitmap.width;
-      canvas.height = bitmap.height;
+      canvas.width = Math.max(1, Math.round(width * scale));
+      canvas.height = Math.max(1, Math.round(height * scale));
       const ctx = canvas.getContext("2d");
       if (!ctx) return;
-      ctx.drawImage(bitmap, 0, 0);
+      ctx.imageSmoothingQuality = "high";
+      ctx.drawImage(source, 0, 0, canvas.width, canvas.height);
+      if (source instanceof ImageBitmap) source.close(); // release bitmap memory promptly
       await handleCapture(ctx.getImageData(0, 0, canvas.width, canvas.height));
     } catch {
-      setOcrEmpty(true); // unreadable/unsupported image file
+      setOcrNotice("bad-file"); // undecodable/unsupported image file
     }
   }
 
@@ -241,9 +275,9 @@ export function RecognizeClient() {
             {ocrPhase === "first-use" ? T.ocrFirstUse[language] : T.ocrReading[language]}
           </p>
         )}
-        {ocrEmpty && ocrPhase === "idle" && (
+        {ocrNotice && ocrPhase === "idle" && (
           <p className="rounded-[var(--radius)] border border-[color:var(--border)] bg-[color:var(--surface-raised)] p-3 text-xs text-[color:var(--muted-strong)]">
-            {T.ocrEmpty[language]}
+            {ocrNotice === "empty" ? T.ocrEmpty[language] : T.ocrBadFile[language]}
           </p>
         )}
 

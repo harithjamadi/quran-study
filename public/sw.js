@@ -13,7 +13,7 @@
 // worker; the `activate` step then purges every older cache, self-healing any
 // device stuck on a previous version.
 
-const CACHE_VERSION = "v2";
+const CACHE_VERSION = "v3";
 const CACHE = `mubin-${CACHE_VERSION}`;
 
 // Only stable, non-hashed static files. Never precache HTML routes.
@@ -53,6 +53,12 @@ self.addEventListener("fetch", (event) => {
 
   // Pass-through for cross-origin (audio CDN, translation API).
   if (url.origin !== self.location.origin) return;
+
+  // OCR engine/model (~4 MB each): version-stamped URLs served with
+  // long-lived immutable headers, and tesseract keeps its own IndexedDB
+  // cache for the model. Duplicating them into Cache Storage would only
+  // burn the quota browsers grant us on mobile — let HTTP caching own them.
+  if (url.pathname.startsWith("/ocr/")) return;
 
   // Stale-while-revalidate for static Quran data + API roots.
   if (url.pathname.startsWith("/data/") || url.pathname.startsWith("/api/roots/")) {

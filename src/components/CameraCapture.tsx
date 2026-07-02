@@ -39,7 +39,12 @@ export function CameraCapture({ onCapture, labelStart, labelCapture, errors }: P
       return;
     }
     try {
-      const stream = await media.getUserMedia({ video: { facingMode: "environment" } });
+      // `ideal` resolution hints only — browsers pick the nearest supported
+      // mode instead of failing. Default streams are often 640×480, which
+      // starves OCR of pixels; ~1080p reads small print reliably.
+      const stream = await media.getUserMedia({
+        video: { facingMode: "environment", width: { ideal: 1920 }, height: { ideal: 1080 } },
+      });
       if (videoRef.current) {
         streamRef.current = stream;
         videoRef.current.srcObject = stream;
