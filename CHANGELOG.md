@@ -8,6 +8,42 @@ The user-facing version of this list lives in `src/lib/changelog.ts` and is
 shown in-app at `/changelog` (linked from the footer and the mobile "More"
 menu). Keep the two in sync when cutting a release.
 
+## [0.11.0] — 2026-07-02
+
+### Added
+- **Wirid** (`/wirid`). Daily remembrance routines with translation, hadith
+  sources, and a tasbih-style tap counter whose progress resets each day and
+  never leaves the device:
+  - **Al-Ma'thurat (sughra)** — the morning/evening adhkar compilation. The
+    Quranic passages (Al-Fatiha, al-Baqarah openings, Ayat al-Kursi, the
+    closing ayat, and the three Quls) are fetched from the same cached
+    alquran.cloud editions as the reader; only the Sunnah supplications are
+    embedded. A segmented toggle switches morning/evening wording and defaults
+    to the local time of day.
+  - **Manzil** — the classical 33-passage protection compilation, Al-Fatiha
+    through An-Nas.
+
+### Changed
+- **Calmer navigation.** The mobile bottom bar now carries the four daily
+  journeys — Home, Learn, Read, Wirid — with Search moved to a persistent icon
+  in the top header (visible on every screen size) and into the More sheet.
+  The desktop nav drops Recognize (now cross-linked from the Search page,
+  where it belongs conceptually) and gains Wirid.
+- The sitemap now covers `/learn`, `/mushaf`, `/wirid` and `/recognize`.
+
+### Fixed
+- Ayah recognition highlight now aligns the query as a contiguous window, so
+  verses that repeat a word highlight the right occurrence.
+- The recognition result is announced to screen readers as a short status
+  ("Al-Baqarah 2:255") instead of reading the whole verse and Tajweed legend.
+- Removed `result!` non-null assertions and documented the 0.5 confidence
+  threshold with a boundary test.
+
+### Performance
+- Deleted an unreferenced 8 MB `favicon.png` from `src/app`.
+- `APP_VERSION` moved to its own module so the footer and version store no
+  longer pull the entire bilingual changelog into every page's client bundle.
+
 ## [0.10.1] — 2026-06-20
 
 ### Fixed

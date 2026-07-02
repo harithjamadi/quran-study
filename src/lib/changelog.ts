@@ -29,6 +29,33 @@ export interface Release {
 /** Newest first. The first entry's version is the current app version. */
 export const RELEASES: Release[] = [
   {
+    version: "0.11.0",
+    date: "2026-07-02",
+    title: { en: "Wirid — daily adhkar", ms: "Wirid — zikir harian" },
+    entries: [
+      {
+        type: "added",
+        en: "A new Wirid tab: recite Al-Ma'thurat (the sughra morning and evening adhkar) and the Manzil protection verses, each with full translation, hadith sources, and a tasbih-style tap counter that tracks today's progress on your device.",
+        ms: "Tab Wirid baharu: baca Al-Ma'thurat (zikir pagi dan petang sughra) dan ayat-ayat perlindungan Manzil, masing-masing dengan terjemahan penuh, sumber hadis, dan pembilang gaya tasbih yang menjejak kemajuan hari ini pada peranti anda.",
+      },
+      {
+        type: "improved",
+        en: "A calmer, easier navigation: the bottom bar now carries the four daily journeys (Home, Learn, Read, Wirid), search lives one tap away in the top corner of every screen, and secondary tools are gathered under More.",
+        ms: "Navigasi lebih tenang dan mudah: bar bawah kini membawa empat perjalanan harian (Utama, Belajar, Baca, Wirid), carian berada satu ketikan sahaja di penjuru atas setiap skrin, dan alatan sekunder dihimpunkan di bawah Lagi.",
+      },
+      {
+        type: "improved",
+        en: "The app loads lighter — an unused 8 MB image was removed and the version history no longer ships with every page.",
+        ms: "Aplikasi dimuat lebih ringan — imej 8 MB yang tidak digunakan telah dibuang dan sejarah versi tidak lagi dihantar bersama setiap halaman.",
+      },
+      {
+        type: "fixed",
+        en: "Ayah recognition now highlights the correct words when a verse repeats the same word, and screen readers hear a short announcement instead of the whole verse.",
+        ms: "Pengecaman ayat kini menyerlahkan perkataan yang betul apabila sesuatu ayat mengulang perkataan yang sama, dan pembaca skrin mendengar pengumuman ringkas dan bukannya keseluruhan ayat.",
+      },
+    ],
+  },
+  {
     version: "0.10.1",
     date: "2026-06-20",
     title: { en: "Truer Mushaf pages", ms: "Halaman Mushaf lebih tulen" },
@@ -432,20 +459,7 @@ export const RELEASES: Release[] = [
   },
 ];
 
-/** Current app version — always the newest release. */
-export const APP_VERSION = RELEASES[0].version;
-
-/**
- * Compare two dotted version strings. Returns a negative number if `a < b`,
- * positive if `a > b`, and 0 if equal. Tolerant of differing segment counts.
- */
-export function compareVersions(a: string, b: string): number {
-  const pa = a.split(".").map((n) => parseInt(n, 10) || 0);
-  const pb = b.split(".").map((n) => parseInt(n, 10) || 0);
-  const len = Math.max(pa.length, pb.length);
-  for (let i = 0; i < len; i++) {
-    const diff = (pa[i] ?? 0) - (pb[i] ?? 0);
-    if (diff !== 0) return diff;
-  }
-  return 0;
-}
+// APP_VERSION lives in its own tiny module so every-page consumers (footer,
+// version store) don't pull this whole release history into their bundle.
+// changelog.test.ts pins RELEASES[0].version to it.
+export { APP_VERSION, compareVersions } from "@/lib/app-version";
