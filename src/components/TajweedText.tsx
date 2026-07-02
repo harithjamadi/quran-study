@@ -66,7 +66,6 @@ export function TajweedText({
   const [segments, setSegments] = useState<TajweedSegment[] | null>(null);
   const [clicked, setClicked] = useState<ClickedSegment | null>(null);
   const language = useLearning((s) => s.language);
-  const ruleMastery = useLearning((s) => s.ruleMastery ?? {});
 
   useEffect(() => {
     let active = true;

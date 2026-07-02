@@ -165,7 +165,7 @@ function HarakatLesson({ lesson, language }: { lesson: Lesson; language: "en" | 
                 {item.mark}
               </div>
               <p className="font-bold text-sm">{item.name[language]}</p>
-              <p className="text-xs text-[color:var(--muted)] mt-0.5 font-mono">"—{item.sound}"</p>
+              <p className="text-xs text-[color:var(--muted)] mt-0.5 font-mono">&ldquo;—{item.sound}&rdquo;</p>
             </button>
           );
         })}
@@ -229,7 +229,7 @@ function GenericLesson({ lesson, language }: { lesson: Lesson; language: "en" | 
             <div>
               <p className="text-sm italic text-[color:var(--muted)]">{item.example.translit}</p>
               {"meaning" in item.example && item.example.meaning && (
-                <p className="text-xs mt-0.5">— {(item.example as any).meaning[language]}</p>
+                <p className="text-xs mt-0.5">— {item.example.meaning[language]}</p>
               )}
             </div>
           </div>

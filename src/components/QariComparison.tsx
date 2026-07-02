@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useRef, useState } from "react";
 import Link from "next/link";
 import { useLearning } from "@/store/learning";
 import { classNames } from "@/lib/format";
@@ -70,26 +70,35 @@ const EXAMPLES: Example[] = [
 
 function useAudioPair(urlA: string, urlB: string) {
   const [playing, setPlaying] = useState<0 | 1 | null>(null);
-  const [audios] = useState<[HTMLAudioElement | null, HTMLAudioElement | null]>([null, null]);
+  // Mutable holder for the two lazily-created players — a ref, not state,
+  // because we mutate it and never want a re-render from it.
+  const audiosRef = useRef<[HTMLAudioElement | null, HTMLAudioElement | null]>([null, null]);
 
   function play(idx: 0 | 1) {
+    const audios = audiosRef.current;
     const url = idx === 0 ? urlA : urlB;
     const other = idx === 0 ? 1 : 0;
 
     // Stop the other
-    if (audios[other]) { audios[other]!.pause(); audios[other]!.currentTime = 0; }
+    const otherAudio = audios[other];
+    if (otherAudio) {
+      otherAudio.pause();
+      otherAudio.currentTime = 0;
+    }
 
-    if (!audios[idx]) {
-      (audios as unknown as HTMLAudioElement[])[idx] = new Audio(url);
-      audios[idx]!.addEventListener("ended", () => setPlaying(null));
+    let audio = audios[idx];
+    if (!audio) {
+      audio = new Audio(url);
+      audio.addEventListener("ended", () => setPlaying(null));
+      audios[idx] = audio;
     }
 
     if (playing === idx) {
-      audios[idx]!.pause();
+      audio.pause();
       setPlaying(null);
     } else {
-      audios[idx]!.src = url;
-      audios[idx]!.play().catch(() => undefined);
+      audio.src = url;
+      audio.play().catch(() => undefined);
       setPlaying(idx);
     }
   }

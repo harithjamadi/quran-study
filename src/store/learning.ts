@@ -431,7 +431,22 @@ export const useLearning = create<LearningState>()(
       name: "mubin.learning.v2",
       version: 4,
       migrate: (persisted: unknown, fromVersion: number) => {
-        const state = persisted as any;
+        // Loosely-typed view of whatever old shape is in localStorage — the
+        // fields below are the only ones the migrations touch.
+        interface LegacyLemma {
+          stability?: number;
+          streak?: number;
+          successes?: number;
+          intervalDays?: number;
+          nextReview?: number;
+          lastReview?: number;
+          lapses?: number;
+        }
+        const state = persisted as Record<string, unknown> & {
+          surahStars?: Record<number, number>;
+          perfectSurahs?: number[];
+          lemmas?: Record<string, LegacyLemma>;
+        };
 
         // v0 → v1: perfectSurahs[] → surahStars map
         const surahStars = state.surahStars ?? {};
@@ -445,9 +460,10 @@ export const useLearning = create<LearningState>()(
         const migratedLemmas: Record<string, LemmaState> = {};
         const now = Date.now();
 
-        for (const [key, old] of Object.entries(rawLemmas) as any) {
+        for (const [key, old] of Object.entries(rawLemmas)) {
           if (old.stability) {
-            migratedLemmas[key] = old;
+            // Already FSRS-shaped — keep as-is.
+            migratedLemmas[key] = old as unknown as LemmaState;
           } else {
             const streak = old.streak ?? 0;
             const successes = old.successes ?? 0;

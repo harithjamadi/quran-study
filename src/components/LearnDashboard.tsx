@@ -165,7 +165,7 @@ export function LearnDashboard({ previewLemmas, coverage }: Props) {
 
         {/* Weak review — surfaces urgently only when needed */}
         {counts.weak > 0 && (
-          <WeakReviewCard count={counts.weak} language={language} t={t} />
+          <WeakReviewCard count={counts.weak} t={t} />
         )}
       </section>
 
@@ -542,7 +542,7 @@ function AnalyticsCard({ language }: { language: "en" | "ms" }) {
   );
 }
 
-function WeakReviewCard({ count, language, t }: { count: number; language: "en" | "ms"; t: typeof UI_STRINGS["en"] }) {
+function WeakReviewCard({ count, t }: { count: number; t: typeof UI_STRINGS["en"] }) {
   return (
     <Link
       href="/learn/session?mode=weak"
