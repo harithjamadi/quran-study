@@ -219,15 +219,37 @@ function QuranPassage({
       </div>
     );
   }
+  // In Al-Fatihah the basmalah IS ayah 1 — set it apart as the centred
+  // ornamental line a mushaf gives it (keeping its ayah marker), and let the
+  // passage flow from ayah 2. Every other surah-opening passage gets the
+  // unnumbered decorative basmalah, exactly like the surah reader (At-Tawbah,
+  // surah 9, traditionally opens without one).
+  const fatihahBasmalah =
+    item.surah === 1 && ayahs[0]?.numberInSurah === 1 ? ayahs[0] : null;
+  const decorativeBasmalah = item.from === 1 && item.surah !== 1 && item.surah !== 9;
+  const flow = fatihahBasmalah ? ayahs.slice(1) : ayahs;
   return (
     <>
+      {fatihahBasmalah && (
+        <p className="bismillah ornament mb-3" lang="ar" dir="rtl">
+          {fatihahBasmalah.arabic}
+          <span className="inline-block mx-1.5" aria-hidden>
+            ﴿{toArabicDigits(1)}﴾
+          </span>
+        </p>
+      )}
+      {decorativeBasmalah && (
+        <p className="bismillah ornament mb-3" lang="ar" dir="rtl">
+          بِسْمِ ٱللَّهِ ٱلرَّحْمَـٰنِ ٱلرَّحِيمِ
+        </p>
+      )}
       <p
         className="arabic text-right leading-[1.9] text-[color:var(--foreground)]"
         style={{ fontSize: `${arabicFontSize}px` }}
         lang="ar"
         dir="rtl"
       >
-        {ayahs.map((a) => (
+        {flow.map((a) => (
           <span key={a.numberInSurah}>
             {a.arabic}
             <span className="inline-block mx-1.5 text-[color:var(--gold)]" aria-hidden>
