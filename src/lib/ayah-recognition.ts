@@ -94,6 +94,143 @@ function splitMerged(token: string, idx: AyahIndex, depth = 3): string[] | null 
   return splitWith(token, exact, depth) ?? splitWith(token, folded, depth);
 }
 
+/** True when a and b are within one edit (substitute/insert/delete one
+ *  letter) — the typical damage a single OCR misread does to a word. */
+function withinOneEdit(a: string, b: string): boolean {
+  if (a === b) return true;
+  const la = a.length;
+  const lb = b.length;
+  if (Math.abs(la - lb) > 1) return false;
+  let i = 0;
+  let j = 0;
+  let edits = 0;
+  while (i < la && j < lb) {
+    if (a[i] === b[j]) {
+      i++;
+      j++;
+      continue;
+    }
+    if (++edits > 1) return false;
+    if (la === lb) {
+      i++;
+      j++;
+    } else if (la > lb) {
+      i++;
+    } else {
+      j++;
+    }
+  }
+  return edits + (la - i) + (lb - j) <= 1;
+}
+
+/** A one-letter-off match is real signal but weaker than an exact one —
+ *  weighting it below 1 keeps a decoy full of near-misses from outranking
+ *  the verse the user actually has in front of them. */
+const FUZZY_WEIGHT = 0.6;
+
+/** Match weight between a query word and an ayah word (both rasm, alif-
+ *  folded). Words shorter than 4 letters must match exactly: one edit on a
+ *  particle (من/عن, ثم/لم…) reaches a different common word, not noise. */
+function wordScore(a: string, b: string): number {
+  if (a === b) return 1;
+  if (a.length < 4 || b.length < 4) return 0;
+  return withinOneEdit(a, b) ? FUZZY_WEIGHT : 0;
+}
+
+/** Penalty for skipping a word (on either side) inside the aligned region.
+ *  Small enough that a wrongly-split token or an OCR phantom word doesn't
+ *  sink the true verse, large enough that contiguous matches still win. */
+const ALIGN_GAP = 0.2;
+
+/** Alignment of the query against one ayah: the DP score plus the 0-based
+ *  index range of the ayah words the optimal path actually matched
+ *  (first === -1 when nothing matched). */
+interface QueryAlignment {
+  score: number;
+  first: number;
+  last: number;
+}
+
+/**
+ * Order-preserving alignment of the query within an ayah — how well the
+ * query reads as a (noisy) contiguous fragment of it. Semi-global DP:
+ * ayah words before/after the matched region are free, but every skipped
+ * word inside it costs ALIGN_GAP on either side. Unlike a fixed sliding
+ * window, this stays anchored when a token was wrongly split or merged and
+ * the rest of the query shifts by a position. The same path that produces
+ * the ranking score yields the matched word range, so the highlighted
+ * snippet always agrees with why the verse was chosen.
+ */
+function alignQuery(queryWords: string[], ayahWords: string[]): QueryAlignment {
+  const m = queryWords.length;
+  const n = ayahWords.length;
+  const stride = n + 1;
+  const dp = new Float64Array((m + 1) * stride); // row 0: free leading ayah words
+  // Traceback moves: 0 = restart (score floored at 0), 1 = diagonal
+  // (query word i aligned to ayah word j), 2 = skip query word, 3 = skip
+  // ayah word.
+  const from = new Uint8Array((m + 1) * stride);
+  for (let i = 1; i <= m; i++) {
+    dp[i * stride] = dp[(i - 1) * stride] - ALIGN_GAP;
+    from[i * stride] = 2;
+    for (let j = 1; j <= n; j++) {
+      const w = wordScore(ayahWords[j - 1], queryWords[i - 1]);
+      const diag = dp[(i - 1) * stride + (j - 1)] + w;
+      const up = dp[(i - 1) * stride + j] - ALIGN_GAP;
+      const left = dp[i * stride + (j - 1)] - ALIGN_GAP;
+      let best = diag;
+      let move = 1;
+      if (up > best) {
+        best = up;
+        move = 2;
+      }
+      if (left > best) {
+        best = left;
+        move = 3;
+      }
+      if (best < 0) {
+        best = 0;
+        move = 0;
+      }
+      dp[i * stride + j] = best;
+      from[i * stride + j] = move;
+    }
+  }
+  let score = 0;
+  let endJ = 0; // free trailing ayah words: best cell anywhere in the last row
+  for (let j = 0; j <= n; j++) {
+    if (dp[m * stride + j] > score) {
+      score = dp[m * stride + j];
+      endJ = j;
+    }
+  }
+  let first = -1;
+  let last = -1;
+  for (let i = m, j = endJ; i > 0 && from[i * stride + j] !== 0; ) {
+    const move = from[i * stride + j];
+    if (move === 1) {
+      if (wordScore(ayahWords[j - 1], queryWords[i - 1]) > 0) {
+        first = j - 1;
+        if (last < 0) last = j - 1;
+      }
+      i--;
+      j--;
+    } else if (move === 2) {
+      i--;
+    } else {
+      j--;
+    }
+  }
+  return { score, first, last };
+}
+
+/** How deep into the BM25 ranking re-ranking looks. */
+const RERANK_K = 8;
+
+/** A lower-BM25 candidate must beat the incumbent's alignment by this much
+ *  to displace it — alignment ties resolve in favour of term rarity. */
+const RERANK_MARGIN = 0.25;
+
 export function recognizeAyah(
   ayahIndex: AyahIndex,
   query: string
@@ -108,42 +245,25 @@ export function recognizeAyah(
   const hits = search.search(rasm);
   if (hits.length === 0) return null;
 
-  const top = hits[0];
-  const matchedTerms = Object.keys(top.match).length;
-
-  // Locate the query's words within the ayah to highlight the matched
-  // snippet, comparing alif-folded (see noAlif above).
+  // BM25 treats the query as a bag of words, so with noisy OCR the top hit
+  // can be a verse that merely shares the query's rarest words. The query is
+  // (almost always) a contiguous fragment of ONE verse — re-rank the head of
+  // the ranking by how well the query aligns as an in-order fragment. The
+  // winning hit's alignment doubles as the highlight range.
   const queryWords = tokens.map(noAlif);
-  const ayahWords = toRasm(top.text as string).split(/\s+/).filter(Boolean).map(noAlif);
-  // A query is (almost always) a contiguous fragment of the ayah, so slide a
-  // query-length window across it and keep the alignment with the most
-  // per-position matches. Unlike a per-word indexOf, this anchors repeated
-  // short words (الله, من, في …) to the correct occurrence.
-  let bestStart = -1;
-  let bestMatches = 0;
-  for (let start = 0; start < ayahWords.length; start++) {
-    let matches = 0;
-    for (let i = 0; i < queryWords.length && start + i < ayahWords.length; i++) {
-      if (ayahWords[start + i] === queryWords[i]) matches++;
-    }
-    if (matches > bestMatches) {
-      bestMatches = matches;
-      bestStart = start;
+  const wordsOf = (text: string) => tokenize(toRasm(text)).map(noAlif);
+  let top = hits[0];
+  let topAlignment = alignQuery(queryWords, wordsOf(top.text as string));
+  for (const hit of hits.slice(1, RERANK_K)) {
+    const alignment = alignQuery(queryWords, wordsOf(hit.text as string));
+    if (alignment.score > topAlignment.score + RERANK_MARGIN) {
+      top = hit;
+      topAlignment = alignment;
     }
   }
-  let matchedRange: readonly [number, number] | null = null;
-  if (bestStart >= 0) {
-    // Trim the window to the first/last words that actually matched.
-    let first = -1;
-    let last = -1;
-    for (let i = 0; i < queryWords.length && bestStart + i < ayahWords.length; i++) {
-      if (ayahWords[bestStart + i] === queryWords[i]) {
-        if (first < 0) first = bestStart + i;
-        last = bestStart + i;
-      }
-    }
-    if (first >= 0) matchedRange = [first + 1, last + 1];
-  }
+  const matchedTerms = Object.keys(top.match).length;
+  const matchedRange: readonly [number, number] | null =
+    topAlignment.first >= 0 ? [topAlignment.first + 1, topAlignment.last + 1] : null;
 
   return {
     key: top.id as string,

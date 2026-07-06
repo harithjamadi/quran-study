@@ -1,4 +1,4 @@
-/**
+﻿/**
  * OCR pipeline validation — run manually, not part of CI (uses network).
  *
  *   node scripts/validate-ocr.mjs
@@ -12,11 +12,11 @@
  * correct verse — not to transcribe perfectly.
  */
 import { createWorker, PSM } from "tesseract.js";
-import MiniSearch from "minisearch";
 import { Jimp } from "jimp";
 import { readFile, writeFile, mkdir } from "fs/promises";
 import path from "path";
 import { fileURLToPath } from "url";
+import { buildRetrieval, onlyArabic } from "./lib/retrieval-mirror.mjs";
 
 // Knobs for A/B runs:  OCR_LANG=ara|ara_best  OCR_SCALE=1|2|3  OCR_PSM=6|7|3
 const LANG = process.env.OCR_LANG ?? "ara";
@@ -25,37 +25,6 @@ const PSM_MODE = process.env.OCR_PSM ?? PSM.SINGLE_BLOCK;
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const cacheDir = path.join(root, ".cache", "ocr-validate");
-
-/* ── same normalization as src/lib/arabic-normalize.ts ── */
-const MARKS = /[\u0610-\u061A\u064B-\u065F\u0670\u06D6-\u06ED]/g;
-const TATWEEL = /ـ/g;
-const FOLDS = [
-  [/[آأإٱ]/g, "ا"],
-  [/ؤ/g, "و"],
-  [/ئ/g, "ي"],
-  [/ى/g, "ي"],
-  [/ة/g, "ه"],
-];
-function toRasm(text) {
-  let out = text.normalize("NFC").replace(MARKS, "").replace(TATWEEL, "");
-  for (const [re, to] of FOLDS) out = out.replace(re, to);
-  return out.replace(/\s+/g, " ").trim();
-}
-
-/* ── same index config as src/lib/ayah-recognition.ts ── */
-const tokenize = (s) => s.split(/\s+/).filter(Boolean);
-function buildIndex(corpus) {
-  const index = new MiniSearch({
-    idField: "key",
-    fields: ["rasm"],
-    storeFields: ["key", "text"],
-    tokenize,
-    processTerm: (t) => t,
-    searchOptions: { fuzzy: 0.2, prefix: true, combineWith: "OR" },
-  });
-  index.addAll(corpus.map((a) => ({ ...a, rasm: toRasm(a.text) })));
-  return index;
-}
 
 /* Mix of short/long, common/rare, across the mushaf. */
 const CASES = [
@@ -78,9 +47,9 @@ async function fetchImage(key) {
   }
 }
 
-const onlyArabic = (s) => s.replace(/[^؀-ۿ\s]/g, " ").replace(/\s+/g, " ").trim();
-
-/** Mirror of the browser-side canvas preprocessing.
+/** Simple flatten + grayscale for the CDN renders (clean digital images —
+ *  the app's adaptive binarization targets uneven camera lighting, which
+ *  these never have, so it is not replicated here).
  *  Critical: these CDN renders are TRANSPARENT PNGs (dark glyphs, alpha-0
  *  background) — Leptonica drops alpha, so without flattening onto white
  *  first, tesseract effectively sees white-on-white. */
@@ -99,7 +68,7 @@ async function preprocess(buf, scale) {
 /** Simulate the real camera use case — a photo covering several consecutive
  *  lines — by stacking consecutive ayah renders into one image. Success =
  *  the top retrieval hits land inside the photographed passage. */
-async function stackedTest(index, worker, keys) {
+async function stackedTest(retrieval, worker, keys) {
   const imgs = [];
   for (const key of keys) imgs.push(await Jimp.read(await fetchImage(key)));
   const width = Math.max(...imgs.map((i) => i.width)) + 64;
@@ -116,7 +85,7 @@ async function stackedTest(index, worker, keys) {
   const start = Date.now();
   const { data } = await worker.recognize(buf);
   const text = onlyArabic(data.text);
-  const results = index.search(toRasm(text));
+  const { hits: results } = retrieval.recognize(text);
   const top3 = results.slice(0, 3).map((r) => r.id);
   const hit = top3.some((id) => keys.includes(id));
   console.log(
@@ -132,7 +101,7 @@ async function main() {
   const corpus = JSON.parse(
     await readFile(path.join(root, "public", "data", "corpus", "ayat.json"), "utf8")
   );
-  const index = buildIndex(corpus);
+  const retrieval = buildRetrieval(corpus);
   console.log(`corpus: ${corpus.length} ayat indexed`);
 
   console.log(`lang=${LANG} scale=${SCALE} psm=${PSM_MODE}`);
@@ -157,7 +126,7 @@ async function main() {
       ["36:1", "36:2", "36:3", "36:4"],
     ];
     for (const keys of stacks) {
-      if (await stackedTest(index, worker, keys)) stackHits++;
+      if (await stackedTest(retrieval, worker, keys)) stackHits++;
     }
     console.log(`\nstacked (multi-line photo simulation): ${stackHits}/${stacks.length}`);
     await worker.terminate();
@@ -173,11 +142,9 @@ async function main() {
     const text = onlyArabic(data.text);
     const ms = Date.now() - start;
 
-    const rasm = toRasm(text);
-    const results = index.search(rasm);
-    const top = results[0];
+    const { tokens, top } = retrieval.recognize(text);
     const matched = Object.keys(top?.match ?? {}).length;
-    const queryTerms = tokenize(rasm).length;
+    const queryTerms = tokens.length;
     const conf = queryTerms ? Math.min(1, matched / queryTerms) : 0;
     const ok = top?.id === key;
     if (ok) hits++;

@@ -57,6 +57,29 @@ describe("recognizeAyah", () => {
     expect(recognizeAyah(index, "xyzzy plugh")).toBeNull();
   });
 
+  it("re-ranks a bag-of-words BM25 winner below the verse the query reads as a fragment of", () => {
+    // The decoy (synthetic, key 0:0) packs the query's exact words into a
+    // 4-word "verse" — BM25's length normalization ranks it above the real
+    // Ayat al-Kursi. In-order alignment must put 2:255 back on top.
+    const flipIndex = buildAyahIndex([
+      {
+        key: "2:255",
+        text: "ٱللَّهُ لَآ إِلَـٰهَ إِلَّا هُوَ ٱلْحَىُّ ٱلْقَيُّومُ ۚ لَا تَأْخُذُهُۥ سِنَةٌ وَلَا نَوْمٌ ۚ لَّهُۥ مَا فِى ٱلسَّمَـٰوَٰتِ وَمَا فِى ٱلْأَرْضِ ۗ مَن ذَا ٱلَّذِى يَشْفَعُ عِندَهُۥٓ إِلَّا بِإِذْنِهِۦ ۚ يَعْلَمُ مَا بَيْنَ أَيْدِيهِمْ وَمَا خَلْفَهُمْ ۖ وَلَا يُحِيطُونَ بِشَىْءٍ مِّنْ عِلْمِهِۦٓ إِلَّا بِمَا شَآءَ ۚ وَسِعَ كُرْسِيُّهُ ٱلسَّمَـٰوَٰتِ وَٱلْأَرْضَ ۖ وَلَا يَـُٔودُهُۥ حِفْظُهُمَا ۚ وَهُوَ ٱلْعَلِىُّ ٱلْعَظِيمُ",
+      },
+      { key: "0:0", text: "كُرْسِيُّهُ وَسِعَ سِنَةٌ تَأْخُذُهُ" },
+      { key: "1:1", text: "بِسْمِ ٱللَّهِ ٱلرَّحْمَـٰنِ ٱلرَّحِيمِ" },
+      { key: "112:1", text: "قُلْ هُوَ ٱللَّهُ أَحَدٌ" },
+    ]);
+    expect(recognizeAyah(flipIndex, "تأخذه سنة وسع كرسيه")?.key).toBe("2:255");
+  });
+
+  it("tolerates a one-letter OCR misread in the highlighted range", () => {
+    // العالمين with ع misread as غ still matches and stays in the snippet.
+    const r = recognizeAyah(index, "رب الغالمين");
+    expect(r?.key).toBe("1:2");
+    expect(r?.matchedRange).toEqual([3, 4]);
+  });
+
   it("splits words that OCR/typing merged together (closed-corpus word-break)", () => {
     // OCR frequently drops the inter-word space: ربالعالمين, اللهاحد.
     expect(recognizeAyah(index, "الحمد لله ربالعالمين")?.key).toBe("1:2");
