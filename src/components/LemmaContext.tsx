@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import { useEffect, useState } from "react";
 import { getAyahWithEditions, searchQuran } from "@/lib/api";
@@ -63,7 +63,7 @@ const CORE_MEANINGS: Record<string, { en: string; ms: string }> = {
   "رأي": { en: "To see, think, consider, hold an opinion.", ms: "Lihat, fikir, anggap, pendapat." },
   "أتي": { en: "To come, arrive, bring, give.", ms: "Datang, sampai, bawa, beri." },
   "عمل": { en: "To do, act, work, perform, deed.", ms: "Buat, amal, kerja, perbuatan." },
-  "جعل": { en: "To make, set, appoint, create, put.", ms: "Jadikan, letak, lantik, cipta, sumbat." },
+  "جعل": { en: "To make, set, appoint, create, put.", ms: "Jadikan, letak, lantik, cipta." },
   "عَلَى": { en: "On, upon, above, over.", ms: "Atas, ke atas, terhadap." },
   "مِن": { en: "From, of, among, some of.", ms: "Dari, daripada, sebahagian dari." },
   "بِ": { en: "With, in, by, through.", ms: "Dengan, dalam, melalui." },

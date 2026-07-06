@@ -1,4 +1,4 @@
-/**
+﻿/**
  * Changelog — single source of truth for the app's version history.
  *
  * Drives both the in-app "What's New" page (/changelog) and the version shown
@@ -41,7 +41,7 @@ export const RELEASES: Release[] = [
       {
         type: "added",
         en: "Recognize can now read images (beta): snap a photo or upload a screenshot of clear Arabic print and the exact verse is found — all recognition runs on your device, so images never leave it. It also forgives words typed or scanned without spaces (e.g. ربالعالمين). Ornate mushaf script isn't reliably read yet; typing remains most accurate.",
-        ms: "Kenal Pasti kini boleh membaca imej (beta): ambil gambar atau muat naik tangkapan skrin cetakan Arab yang jelas dan ayat yang tepat akan ditemui — semua pengecaman berjalan pada peranti anda, jadi imej tidak sesekali meninggalkannya. Ia juga memaafkan perkataan yang ditaip atau diimbas tanpa jarak (cth. ربالعالمين). Skrip mushaf berhias belum dapat dibaca dengan tepat; menaip kekal paling tepat.",
+        ms: "Kenal Pasti kini boleh membaca imej (beta): ambil gambar atau muat naik tangkapan skrin cetakan Arab yang jelas dan ayat yang tepat akan ditemui — semua pengecaman berjalan pada peranti anda, jadi imej tidak pernah meninggalkannya. Ia juga dapat mengecam perkataan yang ditaip atau diimbas tanpa jarak (cth. ربالعالمين). Skrip mushaf berhias belum dapat dibaca dengan tepat; menaip kekal paling tepat.",
       },
       {
         type: "improved",
@@ -73,7 +73,7 @@ export const RELEASES: Release[] = [
       {
         type: "fixed",
         en: "Fixed pages where the basmalah sits inside the surah title band (such as An-Nisāʾ) spilling past the 15 lines and shrinking the whole page. The install prompt no longer covers the reader, and page turns now follow your device's reduce-motion setting.",
-        ms: "Membetulkan halaman yang basmalah berada dalam jalur tajuk surah (seperti An-Nisāʾ) terlebih daripada 15 baris dan mengecilkan seluruh halaman. Gesaan pemasangan tidak lagi menutup pembaca, dan selakan halaman kini mengikut tetapan kurangkan-gerakan peranti anda.",
+        ms: "Membetulkan halaman yang basmalah berada dalam jalur tajuk surah (seperti An-Nisāʾ) melebihi 15 baris dan mengecilkan seluruh halaman. Gesaan pemasangan tidak lagi menutup pembaca, dan selakan halaman kini mengikut tetapan kurang gerakan (reduce motion) peranti anda.",
       },
     ],
   },
@@ -97,12 +97,12 @@ export const RELEASES: Release[] = [
   {
     version: "0.9.1",
     date: "2026-06-02",
-    title: { en: "Per-verse tajweed legend", ms: "Legenda tajwid ikut ayat" },
+    title: { en: "Per-verse tajweed legend", ms: "Petunjuk warna tajwid ikut ayat" },
     entries: [
       {
         type: "improved",
         en: "The colour key under each verse now lists only the tajweed rules that actually appear in that verse — and every colour shown is now explained, including ones the old fixed key left out (like the purple idgham).",
-        ms: "Kunci warna di bawah setiap ayat kini menyenaraikan hanya hukum tajwid yang benar-benar ada dalam ayat itu — dan setiap warna yang dipaparkan kini diterangkan, termasuk yang tertinggal sebelum ini (seperti idgham ungu).",
+        ms: "Petunjuk warna di bawah setiap ayat kini menyenaraikan hanya hukum tajwid yang benar-benar ada dalam ayat itu — dan setiap warna yang dipaparkan kini diterangkan, termasuk yang tertinggal sebelum ini (seperti idgham ungu).",
       },
     ],
   },

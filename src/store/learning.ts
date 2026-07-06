@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import { create } from "zustand";
 import { persist, createJSONStorage } from "zustand/middleware";
@@ -45,8 +45,8 @@ export const BADGES: BadgeInfo[] = [
   {
     id: "first_star",
     name: { en: "First Steps", ms: "Langkah Pertama" },
-    description: { en: "Earned the first Tajweed quest star", ms: "Dapat bintang Cabaran Tajweed pertama" },
-    hint: { en: "Complete any Tajweed quest with ≥ 80% accuracy", ms: "Lengkapkan mana-mana Cabaran Tajweed dengan ketepatan ≥ 80%" },
+    description: { en: "Earned the first Tajweed quest star", ms: "Dapat bintang Cabaran Tajwid pertama" },
+    hint: { en: "Complete any Tajweed quest with ≥ 80% accuracy", ms: "Lengkapkan mana-mana Cabaran Tajwid dengan ketepatan ≥ 80%" },
     icon: "⭐",
   },
   {
@@ -59,36 +59,36 @@ export const BADGES: BadgeInfo[] = [
   {
     id: "qalqalah_king",
     name: { en: "Qalqalah King", ms: "Raja Qalqalah" },
-    description: { en: "Aced a Hard difficulty Tajweed quest with a perfect score", ms: "Markah sempurna pada Cabaran Tajweed tahap Susah" },
-    hint: { en: "Score 100% on a Hard (★★★) Tajweed quest", ms: "Markah 100% pada Cabaran Tajweed tahap Susah (★★★)" },
+    description: { en: "Aced a Hard difficulty Tajweed quest with a perfect score", ms: "Markah sempurna pada Cabaran Tajwid tahap Susah" },
+    hint: { en: "Score 100% on a Hard (★★★) Tajweed quest", ms: "Markah 100% pada Cabaran Tajwid tahap Susah (★★★)" },
     icon: "👑",
   },
   {
     id: "foundation_graduate",
     name: { en: "Foundation Graduate", ms: "Graduan Asas" },
-    description: { en: "Completed the entire Noorani Foundations track", ms: "Lengkapkan keseluruhan landasan Noorani Asas" },
-    hint: { en: "Finish all lessons in the Foundations track", ms: "Habiskan semua pelajaran dalam landasan Asas" },
+    description: { en: "Completed the entire Noorani Foundations track", ms: "Lengkapkan seluruh laluan Asas Noorani" },
+    hint: { en: "Finish all lessons in the Foundations track", ms: "Habiskan semua pelajaran dalam laluan Asas" },
     icon: "🎓",
   },
   {
     id: "perfect_reciter",
     name: { en: "Perfect Reciter", ms: "Pembaca Sempurna" },
-    description: { en: "Scored 100% on a Tajweed quest", ms: "Markah 100% pada Cabaran Tajweed" },
+    description: { en: "Scored 100% on a Tajweed quest", ms: "Markah 100% pada Cabaran Tajwid" },
     hint: { en: "Answer every question correctly in any quest", ms: "Jawab semua soalan dengan betul dalam mana-mana cabaran" },
     icon: "✨",
   },
   {
     id: "rule_explorer",
     name: { en: "Rule Explorer", ms: "Penjelajah Hukum" },
-    description: { en: "Got correct answers on 5 or more different Tajweed rule types", ms: "Dapat jawapan betul pada 5 jenis hukum Tajweed berbeza" },
+    description: { en: "Got correct answers on 5 or more different Tajweed rule types", ms: "Dapat jawapan betul pada 5 jenis hukum tajwid yang berbeza" },
     hint: { en: "Get at least one correct answer for 5 different rules", ms: "Dapat sekurang-kurangnya satu jawapan betul untuk 5 hukum berbeza" },
     icon: "🧭",
   },
   {
     id: "centurion",
     name: { en: "Centurion", ms: "Centurion" },
-    description: { en: "Answered 100 Tajweed practice questions", ms: "Jawab 100 soalan latihan Tajweed" },
-    hint: { en: "Answer 100 total Tajweed questions across all quests", ms: "Jawab 100 soalan Tajweed keseluruhannya merentas semua cabaran" },
+    description: { en: "Answered 100 Tajweed practice questions", ms: "Jawab 100 soalan latihan tajwid" },
+    hint: { en: "Answer 100 total Tajweed questions across all quests", ms: "Jawab 100 soalan tajwid kesemuanya dalam semua cabaran" },
     icon: "💯",
   },
   {

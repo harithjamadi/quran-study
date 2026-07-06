@@ -12,7 +12,7 @@ const T = {
   title: { en: "Daily remembrance", ms: "Zikir harian" },
   hint: {
     en: "Short, steady routines of dhikr and Quranic protection — the same texts read in homes and halaqahs every day.",
-    ms: "Rutin zikir dan perlindungan Al-Quran yang ringkas dan tekal — teks yang sama dibaca di rumah dan halaqah setiap hari.",
+    ms: "Rutin zikir dan perlindungan Al-Quran yang ringkas dan konsisten — teks yang sama dibaca di rumah dan halaqah setiap hari.",
   },
   mathurat_title: { en: "Al-Ma'thurat", ms: "Al-Ma'thurat" },
   mathurat_desc: {

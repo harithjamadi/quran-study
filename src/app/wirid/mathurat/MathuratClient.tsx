@@ -12,7 +12,7 @@ const T = {
   title: { en: "Al-Ma'thurat", ms: "Al-Ma'thurat" },
   hint: {
     en: "The sughra compilation of morning and evening remembrance — Quranic passages and authentic supplications. Tap the counter as you recite.",
-    ms: "Himpunan zikir pagi dan petang (sughra) — petikan Al-Quran dan doa-doa yang sahih. Ketik pembilang sambil anda membaca.",
+    ms: "Himpunan zikir pagi dan petang (sughra) — petikan Al-Quran dan doa-doa yang sahih. Ketik pembilang sambil membaca.",
   },
   morning: { en: "Morning", ms: "Pagi" },
   evening: { en: "Evening", ms: "Petang" },

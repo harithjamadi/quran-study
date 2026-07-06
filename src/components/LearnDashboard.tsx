@@ -573,9 +573,9 @@ const DAILY_INSIGHTS: Record<number, { en: string; ms: string }> = {
   2: { en: "Al-Baqarah has the highest density of Madd Muttasil in the Quran.", ms: "Al-Baqarah mempunyai ketumpatan Madd Muttasil tertinggi dalam Al-Quran." },
   18: { en: "Al-Kahf opens with three consecutive Madd Lazim letters — rare in the Quran.", ms: "Al-Kahf dibuka dengan tiga huruf Madd Lazim berturut-turut — jarang dalam Al-Quran." },
   36: { en: "Ya-Sin contains one of the most studied Ghunna sequences in tajweed education.", ms: "Ya-Sin mengandungi salah satu urutan Ghunnah yang paling banyak dikaji dalam pendidikan tajwid." },
-  55: { en: "Ar-Rahman's repeated refrain is a masterclass in Madd 'Aridh timing.", ms: "Refrain berulang dalam Ar-Rahman adalah contoh terbaik untuk masa Mad Aridh." },
-  67: { en: "Al-Mulk begins with back-to-back Qalqalah letters — ق and ب together.", ms: "Al-Mulk bermula dengan huruf Qalqalah berturut-turut — ق dan ب bersama-sama." },
-  112: { en: "Al-Ikhlas packs every category of noon-saakin rule into four verses.", ms: "Al-Ikhlas memuatkan setiap kategori hukum nun sakin dalam empat ayat." },
+  55: { en: "Ar-Rahman's repeated refrain is a masterclass in Madd 'Aridh timing.", ms: "Ayat yang berulang dalam Ar-Rahman ialah latihan terbaik untuk bacaan Madd 'Aridh." },
+  67: { en: "Al-Mulk begins with back-to-back Qalqalah letters — ق and ب together.", ms: "Al-Mulk bermula dengan huruf Qalqalah berturut-turut — ق dan ب." },
+  112: { en: "Al-Ikhlas packs every category of noon-saakin rule into four verses.", ms: "Al-Ikhlas memuatkan setiap kategori hukum nun mati dalam empat ayat sahaja." },
   114: { en: "An-Nas contains Idgham, Ikhfa, and Lam Shamsiyya within its six verses.", ms: "An-Nas mengandungi Idgham, Ikhfa, dan Lam Syamsiyyah dalam enam ayatnya." },
 };
 

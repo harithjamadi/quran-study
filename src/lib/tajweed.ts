@@ -1,4 +1,4 @@
-/**
+﻿/**
  * Tajweed rule metadata library.
  *
  * Codes come from the quran-tajweed edition served by alquran.cloud,
@@ -93,7 +93,7 @@ export const TAJWEED_RULES: Record<string, TajweedRule> = {
     letters: "ت ث د ذ ر ز س ش ص ض ط ظ ل ن",
     condition: {
       en: "The lam (ل) of the definite article ال when followed by a 'sun letter' (حروف شمسية). There are 14 sun letters.",
-      ms: "Lam (ل) dalam artikel penentu ال apabila diikuti oleh 'huruf syamsiyyah'. Terdapat 14 huruf syamsiyyah.",
+      ms: "Lam (ل) dalam alif lam (ال) apabila diikuti oleh 'huruf syamsiyyah'. Terdapat 14 huruf syamsiyyah.",
     },
     howToRead: {
       en: "Merge the lam silently into the following sun letter — the sun letter receives a shadda (doubling). Do not pronounce lam separately.",
@@ -191,7 +191,7 @@ export const TAJWEED_RULES: Record<string, TajweedRule> = {
     category: "hamza_lam",
     condition: {
       en: "An alif that comes after the plural waw (the waw meaning \"they / many\"), as in كَفَرُوا۟. In today's Mushaf it is marked with a small circle above it (the round zero, sifir mustadir: ۟). The same silent treatment applies to other written-but-unpronounced letters.",
-      ms: "Huruf Alif yang terletak selepas Waw Jamak (waw yang menunjukkan maksud \"mereka/ramai\"), seperti dalam كَفَرُوا۟. Dalam mushaf al-Quran hari ini, alif ini ditandakan dengan bulatan kecil di atasnya (sifir mustadir: ۟). Layanan senyap yang sama turut berlaku pada huruf lain yang ditulis tetapi tidak disebut.",
+      ms: "Huruf Alif yang terletak selepas Waw Jamak (waw yang menunjukkan maksud \"mereka/ramai\"), seperti dalam كَفَرُوا۟. Dalam mushaf al-Quran hari ini, alif ini ditandakan dengan bulatan kecil di atasnya (sifir mustadir: ۟). Hukum senyap yang sama turut berlaku pada huruf lain yang ditulis tetapi tidak disebut.",
     },
     howToRead: {
       en: "This alif is not pronounced at all — whether you continue (wasl) or stop (waqf). The sound ends on the waw's madd, so كَفَرُوا۟ is read \"kafaruu\".",
@@ -243,11 +243,11 @@ export const TAJWEED_RULES: Record<string, TajweedRule> = {
     letters: "ن م",
     condition: {
       en: "Occurs when noon (ن) or meem (م) carries a shadda (ّ), indicating it is doubled with nasalization.",
-      ms: "Berlaku apabila nun (ن) atau mim (م) membawa syaddah (ّ), menunjukkan ia digandakan dengan nasalisasi.",
+      ms: "Berlaku apabila nun (ن) atau mim (م) membawa syaddah (ّ), menandakan ia digandakan dengan dengung.",
     },
     howToRead: {
       en: "Allow the nasal sound to resonate through the nose for 2 counts. The nasal cavity is the primary resonator — do not close it.",
-      ms: "Biarkan bunyi nasal bergema melalui hidung selama 2 harakat. Rongga hidung adalah resonator utama — jangan tutupnya.",
+      ms: "Biarkan bunyi dengung mengalir melalui hidung selama 2 harakat. Rongga hidung adalah resonator utama — jangan tutupnya.",
     },
     examples: [
       { arabic: "إِنَّ", translit: "inna", note: { en: "ghunna held 2 counts on نّ", ms: "ghunnah ditahan 2 harakat pada نّ" }, ref: "2:6", highlight: [1, 1] },
@@ -265,11 +265,11 @@ export const TAJWEED_RULES: Record<string, TajweedRule> = {
     letters: "ل ر",
     condition: {
       en: "Occurs when a noon saakin or tanween is followed by lam (ل) or ra (ر) — the two Idgham bila Ghunna letters.",
-      ms: "Berlaku apabila nun saakin atau tanwin diikuti oleh lam (ل) atau ra (ر) — dua huruf Idgham Bila Ghunnah.",
+      ms: "Berlaku apabila nun sakinah atau tanwin diikuti oleh lam (ل) atau ra (ر) — dua huruf Idgham Bila Ghunnah.",
     },
     howToRead: {
       en: "Merge the noon/tanween completely into the following letter, which doubles. No nasal sound (ghunna) — the assimilation is clean and silent.",
-      ms: "Gabungkan nun/tanwin sepenuhnya ke dalam huruf berikutnya yang berganda. Tiada bunyi nasal (ghunnah) — asimilasi bersih dan senyap.",
+      ms: "Gabungkan nun/tanwin sepenuhnya ke dalam huruf berikutnya yang berganda. Tiada dengung (ghunnah) — penggabungan bersih dan senyap.",
     },
     examples: [
       { arabic: "مِن رَّبِّهِمْ", translit: "mir-rabbihim", note: { en: "noon merges into ر", ms: "nun digabung ke dalam ر" }, ref: "2:5", highlight: [4, 5] },
@@ -293,11 +293,11 @@ export const TAJWEED_RULES: Record<string, TajweedRule> = {
     },
     condition: {
       en: "Occurs when a noon saakin or tanween is followed by one of four letters: ya (ي), noon (ن), meem (م), or waw (و).",
-      ms: "Berlaku apabila nun saakin atau tanwin diikuti oleh salah satu daripada empat huruf: ya (ي), nun (ن), mim (م), atau waw (و).",
+      ms: "Berlaku apabila nun sakinah atau tanwin diikuti oleh salah satu daripada empat huruf: ya (ي), nun (ن), mim (م), atau waw (و).",
     },
     howToRead: {
       en: "Merge the noon/tanween into the following letter with a clear nasal sound (ghunna) for 2 counts. The two letters blend into one doubled letter with a nasal hum.",
-      ms: "Gabungkan nun/tanwin ke dalam huruf berikutnya dengan bunyi nasal (ghunnah) yang jelas selama 2 harakat. Kedua-dua huruf bergabung menjadi satu huruf berganda dengan dengung nasal.",
+      ms: "Gabungkan nun/tanwin ke dalam huruf berikutnya dengan dengung (ghunnah) yang jelas selama 2 harakat. Kedua-dua huruf bergabung menjadi satu huruf berganda dengan dengung.",
     },
     examples: [
       { arabic: "مَن يَقُولُ", translit: "may-yaqūl", note: { en: "noon merges into ي with ghunna", ms: "nun digabung ke dalam ي dengan ghunnah" }, ref: "2:8", highlight: [3, 4] },
@@ -323,11 +323,11 @@ export const TAJWEED_RULES: Record<string, TajweedRule> = {
     },
     condition: {
       en: "Occurs when a noon saakin or tanween is followed by any of the 15 Ikhfa letters (all letters not covered by Izhar, Idgham, or Iqlab).",
-      ms: "Berlaku apabila nun saakin atau tanwin diikuti oleh salah satu daripada 15 huruf Ikhfa (semua huruf yang tidak diliputi oleh Izhar, Idgham, atau Iqlab).",
+      ms: "Berlaku apabila nun sakinah atau tanwin diikuti oleh salah satu daripada 15 huruf Ikhfa (semua huruf yang tidak diliputi oleh Izhar, Idgham, atau Iqlab).",
     },
     howToRead: {
       en: "Conceal the noon/tanween between full pronunciation and complete assimilation. The tongue approaches but does not touch its articulation point. Hold a nasal sound for 2 counts.",
-      ms: "Sembunyikan nun/tanwin antara sebutan penuh dan asimilasi lengkap. Lidah mendekati tetapi tidak menyentuh titik sebutan. Tahan bunyi nasal selama 2 harakat.",
+      ms: "Sembunyikan nun/tanwin antara sebutan jelas (izhar) dan penggabungan penuh (idgham). Lidah mendekati tetapi tidak menyentuh titik sebutan. Tahan dengung selama 2 harakat.",
     },
     examples: [
       { arabic: "مِن قَبْلِكَ", translit: "min qablika", note: { en: "noon concealed before ق", ms: "nun disembunyikan sebelum ق" }, ref: "2:4", highlight: [8, 9] },
@@ -345,7 +345,7 @@ export const TAJWEED_RULES: Record<string, TajweedRule> = {
     letters: "ب",
     condition: {
       en: "Occurs when a noon saakin (نْ) or tanween is followed by the single letter ba (ب) — e.g. مِنۢ بَعْد, أَلِيمٌۢ بِ. A small meem (ۢ) is written above to mark it.",
-      ms: "Berlaku apabila nun sakin (نْ) atau tanwin diikuti oleh satu huruf sahaja, iaitu ba (ب) — contohnya مِنۢ بَعْد, أَلِيمٌۢ بِ. Mim kecil (ۢ) ditulis di atas sebagai tanda.",
+      ms: "Berlaku apabila nun sakinah (نْ) atau tanwin diikuti oleh satu huruf sahaja, iaitu ba (ب) — contohnya مِنۢ بَعْد, أَلِيمٌۢ بِ. Mim kecil (ۢ) ditulis di atas sebagai tanda.",
     },
     howToRead: {
       en: "Convert the noon/tanween into a hidden meem (م) sound with a nasal hum (ghunna) held for 2 counts, then pronounce the ba. The lips come together lightly for the meem without fully closing.",
@@ -367,11 +367,11 @@ export const TAJWEED_RULES: Record<string, TajweedRule> = {
     letters: "ب",
     condition: {
       en: "Occurs when a meem saakin (مْ) is followed by a ba (ب).",
-      ms: "Berlaku apabila mim saakin (مْ) diikuti oleh ba (ب).",
+      ms: "Berlaku apabila mim sakinah (مْ) diikuti oleh ba (ب).",
     },
     howToRead: {
       en: "Conceal the meem between the lips without fully closing them. Hold a nasal sound for 2 counts before pronouncing the ba.",
-      ms: "Sembunyikan mim antara bibir tanpa menutupnya sepenuhnya. Tahan bunyi nasal selama 2 harakat sebelum menyebut ba.",
+      ms: "Sembunyikan mim antara bibir tanpa menutupnya sepenuhnya. Tahan dengung selama 2 harakat sebelum menyebut ba.",
     },
     examples: [
       { arabic: "تَرْمِيهِم بِحِجَارَةٍ", translit: "tarmīhim bi-ḥijāra", note: { en: "meem concealed before ب", ms: "mim disembunyikan sebelum ب" }, ref: "105:4", highlight: [1, 2] },
@@ -387,11 +387,11 @@ export const TAJWEED_RULES: Record<string, TajweedRule> = {
     letters: "م",
     condition: {
       en: "Occurs when a meem saakin (مْ) is followed by another meem (م).",
-      ms: "Berlaku apabila mim saakin (مْ) diikuti oleh mim (م) yang lain.",
+      ms: "Berlaku apabila mim sakinah (مْ) diikuti oleh mim (م) yang lain.",
     },
     howToRead: {
       en: "Merge the two meems into one doubled meem with a clear nasal sound for 2 counts.",
-      ms: "Gabungkan dua mim menjadi satu mim berganda dengan bunyi nasal yang jelas selama 2 harakat.",
+      ms: "Gabungkan dua mim menjadi satu mim berganda dengan dengung yang jelas selama 2 harakat.",
     },
     examples: [
       { arabic: "أَطْعَمَهُم مِّن", translit: "aṭ'amahum-min", note: { en: "two meems merge with ghunna", ms: "dua mim bergabung dengan ghunnah" }, ref: "106:4", highlight: [2, 3] },
@@ -459,7 +459,7 @@ export const WAQF_SIGNS: WaqfSign[] = [
     name: { ar: "وقف لازم", en: "Waqf Lazim", ms: "Waqaf Lazim" },
     instruction: {
       en: "Must stop here. Continuing without stopping would change the meaning.",
-      ms: "Wajib berhenti — sambung je makna lari.",
+      ms: "Wajib berhenti — jika disambung, maknanya berubah.",
     },
   },
   {
@@ -477,7 +477,7 @@ export const WAQF_SIGNS: WaqfSign[] = [
     name: { ar: "وقف جائز", en: "Waqf Ja'iz", ms: "Waqaf Ja'iz" },
     instruction: {
       en: "Permissible to stop. Both stopping and continuing are acceptable.",
-      ms: "Boleh berhenti atau sambung — sama je.",
+      ms: "Boleh berhenti atau sambung — kedua-duanya betul.",
     },
   },
   {
@@ -486,7 +486,7 @@ export const WAQF_SIGNS: WaqfSign[] = [
     name: { ar: "وقف مجوّز", en: "Waqf Mujawwaz", ms: "Waqaf Mujawwaz" },
     instruction: {
       en: "Permissible to stop, though continuing is slightly preferred.",
-      ms: "Boleh berhenti, tapi lebih baik sambung.",
+      ms: "Boleh berhenti, tetapi lebih baik sambung.",
     },
   },
   {
@@ -495,7 +495,7 @@ export const WAQF_SIGNS: WaqfSign[] = [
     name: { ar: "وقف مرخّص", en: "Waqf Murakhkhas", ms: "Waqaf Murakhkhas" },
     instruction: {
       en: "Permissible to stop only due to the length of the verse — stopping here is a concession, not ideal.",
-      ms: "Boleh berhenti sebab ayat panjang — tapi ini kelonggaran je.",
+      ms: "Boleh berhenti kerana ayatnya panjang — sekadar kelonggaran.",
     },
   },
   {
@@ -522,7 +522,7 @@ export const WAQF_SIGNS: WaqfSign[] = [
     name: { ar: "لا تقف", en: "Lā Taqif (Do Not Stop)", ms: "Jangan Berhenti (La Taqif / Waqaf Mamnu')" },
     instruction: {
       en: "Do not stop here. Stopping will distort the meaning of the verse.",
-      ms: "Jangan berhenti — nanti makna lari.",
+      ms: "Jangan berhenti — maknanya akan lari.",
     },
   },
   {
@@ -531,7 +531,7 @@ export const WAQF_SIGNS: WaqfSign[] = [
     name: { ar: "السكتة", en: "Saktah", ms: "Saktah" },
     instruction: {
       en: "A brief silent pause — stop the sound without taking a new breath, then continue.",
-      ms: "Jeda senyap sekejap — stop bunyi, tahan nafas, pastu sambung.",
+      ms: "Henti bunyi seketika, tahan nafas, kemudian sambung.",
     },
   },
   {
@@ -540,7 +540,7 @@ export const WAQF_SIGNS: WaqfSign[] = [
     name: { ar: "وقف المعانقة", en: "Waqf Mu'anaqah", ms: "Waqaf Mu'anaqah" },
     instruction: {
       en: "This stop comes in pairs — stop at one ۛ or the other, but not both.",
-      ms: "Datang berpasangan — pilih satu je nak berhenti, jangan dua-dua.",
+      ms: "Datang berpasangan — berhenti pada salah satu sahaja, bukan kedua-duanya.",
     },
   },
   {
@@ -574,8 +574,8 @@ export function categoryLabel(
 ): string {
   const labels: Record<TajweedCategory, { en: string; ms: string }> = {
     madd: { en: "Madd (Prolongation)", ms: "Mad (Pemanjangan)" },
-    noon_tanween: { en: "Noon Saakin & Tanween", ms: "Nun Sakin & Tanwin" },
-    meem: { en: "Meem Saakin", ms: "Mim Sakin" },
+    noon_tanween: { en: "Noon Saakin & Tanween", ms: "Nun Sakinah & Tanwin" },
+    meem: { en: "Meem Saakin", ms: "Mim Sakinah" },
     qalqalah: { en: "Qalqalah (Echoing)", ms: "Qalqalah (Lantunan)" },
     ghunna: { en: "Ghunna (Nasalization)", ms: "Ghunnah (Dengung)" },
     hamza_lam: { en: "Hamza & Lam", ms: "Hamzah & Lam" },

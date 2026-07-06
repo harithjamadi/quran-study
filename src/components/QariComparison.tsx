@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import { useRef, useState } from "react";
 import Link from "next/link";
@@ -38,7 +38,7 @@ const EXAMPLES: Example[] = [
     surah: 112, ayah: 1,
     label: "Al-Ikhlas 112:1",
     rule: "Ghunna",
-    question: { en: "Which reciter holds the Ghunna on 'هُوَ' longer?", ms: "Pembaca mana yang menahan Ghunnah pada 'هُوَ' lebih lama?" },
+    question: { en: "Which reciter holds the Ghunna on 'هُوَ' longer?", ms: "Qari mana yang menahan Ghunnah pada 'هُوَ' lebih lama?" },
     correctReciter: 0,
     explanation: { en: "Abdul Baset (Mujawwad style) uses a more prolonged, ornamented Ghunna. Alafasy is cleaner but shorter.", ms: "Abdul Baset (gaya Mujawwad) menggunakan Ghunnah yang lebih panjang dan dihias. Alafasy lebih ringkas." },
   },
@@ -46,7 +46,7 @@ const EXAMPLES: Example[] = [
     surah: 113, ayah: 1,
     label: "Al-Falaq 113:1",
     rule: "Qalqalah",
-    question: { en: "Which reciter has a more pronounced Qalqalah on 'الْفَلَقِ'?", ms: "Pembaca mana yang lebih jelas Qalqalahnya pada 'الْفَلَقِ'?" },
+    question: { en: "Which reciter has a more pronounced Qalqalah on 'الْفَلَقِ'?", ms: "Qari mana yang lebih jelas Qalqalahnya pada 'الْفَلَقِ'?" },
     correctReciter: 0,
     explanation: { en: "The Mujawwad style of Abdul Baset emphasises the echoing bounce on ق at the waqf more clearly.", ms: "Gaya Mujawwad Abdul Baset lebih menekankan lantunan ق ketika waqf." },
   },
@@ -54,7 +54,7 @@ const EXAMPLES: Example[] = [
     surah: 114, ayah: 1,
     label: "An-Nas 114:1",
     rule: "Lam Shamsiyya",
-    question: { en: "Which reciter makes the Lam Shamsiyya (ٱلنَّاسِ) clearer through the shadda?", ms: "Pembaca mana yang lebih jelas Lam Syamsiyyah (ٱلنَّاسِ) melalui syaddah?" },
+    question: { en: "Which reciter makes the Lam Shamsiyya (ٱلنَّاسِ) clearer through the shadda?", ms: "Qari mana yang lebih jelas Lam Syamsiyyah (ٱلنَّاسِ) melalui syaddah?" },
     correctReciter: 1,
     explanation: { en: "Alafasy's crisp Hafs-style articulation makes the doubling of ن in ٱلنَّاسِ particularly clear.", ms: "Artikulasi Hafs Alafasy yang jelas menjadikan penggandaan ن dalam ٱلنَّاسِ sangat ketara." },
   },
@@ -62,7 +62,7 @@ const EXAMPLES: Example[] = [
     surah: 1, ayah: 2,
     label: "Al-Fatihah 1:2",
     rule: "Idgham bila Ghunna",
-    question: { en: "In 'رَبِّ ٱلْعَٰلَمِينَ', which reciter makes the Idgham on ل more audible?", ms: "Dalam 'رَبِّ ٱلْعَٰلَمِينَ', pembaca mana yang lebih jelas Idgham pada ل?" },
+    question: { en: "In 'رَبِّ ٱلْعَٰلَمِينَ', which reciter makes the Idgham on ل more audible?", ms: "Dalam 'رَبِّ ٱلْعَٰلَمِينَ', Qari mana yang lebih jelas Idgham pada ل?" },
     correctReciter: 0,
     explanation: { en: "Abdul Baset's Mujawwad style naturally extends the merging for dramatic effect.", ms: "Gaya Mujawwad Abdul Baset secara semula jadi memanjangkan penggabungan untuk kesan dramatik." },
   },

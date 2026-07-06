@@ -42,31 +42,31 @@ const CATEGORY_ORDER: TajweedCategory[] = [
 const CATEGORY_DESC: Record<TajweedCategory, Record<Language, string>> = {
   qalqalah: {
     en: "An echoing bounce produced on five specific letters when they carry sukun.",
-    ms: "Lantunan gema pada lima huruf tertentu apabila membawa sukun.",
+    ms: "Bunyi lantunan pada lima huruf tertentu apabila berbaris sukun (mati).",
   },
   madd: {
     en: "Prolongation rules governing how long vowel sounds are stretched (2, 4, 5, or 6 harakat).",
-    ms: "Peraturan pemanjangan yang mengawal tempoh bunyi vokal panjang (2, 4, 5, atau 6 harakat).",
+    ms: "Hukum pemanjangan bacaan — sama ada 2, 4, 5 atau 6 harakat.",
   },
   ghunna: {
     en: "A nasal hum through the nose when noon or meem is doubled (mushaddad).",
-    ms: "Dengung nasal melalui hidung apabila nun atau mim digandakan (musyaddad).",
+    ms: "Bunyi dengung apabila nun atau mim bersyaddah (musyaddad).",
   },
   noon_tanween: {
     en: "Rules for noon saakin and tanween when followed by specific letters.",
-    ms: "Peraturan untuk nun saakin dan tanwin apabila diikuti oleh huruf tertentu.",
+    ms: "Hukum nun mati dan tanwin apabila bertemu huruf-huruf tertentu.",
   },
   meem: {
     en: "Rules specifically for meem saakin — different articulation point from noon rules.",
-    ms: "Peraturan khusus untuk mim saakin — tempat sebutan berbeza dari peraturan nun.",
+    ms: "Hukum mim mati — makhrajnya berbeza daripada hukum nun.",
   },
   hamza_lam: {
     en: "Connecting hamzah and assimilating lam — often silent or merged in continuous recitation.",
-    ms: "Hamzah penghubung dan lam yang diserap — sering senyap atau digabungkan dalam bacaan berterusan.",
+    ms: "Hamzah wasal dan lam yang diserap — selalunya tidak disebut apabila bacaan bersambung.",
   },
   waqf: {
     en: "Stop signs written in the Mushaf to guide when and how to pause.",
-    ms: "Tanda berhenti dalam Mushaf untuk membimbing bila dan bagaimana perlu berhenti.",
+    ms: "Tanda waqaf dalam Mushaf — panduan bila dan bagaimana untuk berhenti.",
   },
 };
 

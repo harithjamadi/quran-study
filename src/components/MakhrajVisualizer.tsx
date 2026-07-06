@@ -33,12 +33,12 @@ type ZoneDef = {
 
 const ZONE_META: Record<string, ZoneDef> = {
   jawf: {
-    label: { en: "Open Space (Jawf)", ms: "Ruang Terbuka (Jauf)" },
+    label: { en: "Open Space (Jawf)", ms: "Rongga (Jauf)" },
     color: "#93C5FD",
     darkColor: "#60A5FA",
   },
   "throat-deep": {
-    label: { en: "Deep Throat", ms: "Tekak Dalam" },
+    label: { en: "Deep Throat", ms: "Pangkal Tekak" },
     color: "#F87171",
     darkColor: "#FCA5A5",
   },
@@ -48,12 +48,12 @@ const ZONE_META: Record<string, ZoneDef> = {
     darkColor: "#FDBA74",
   },
   "throat-front": {
-    label: { en: "Front Throat", ms: "Hadapan Tekak" },
+    label: { en: "Front Throat", ms: "Hujung Tekak" },
     color: "#FBBF24",
     darkColor: "#FDE68A",
   },
   "tongue-back": {
-    label: { en: "Back of Tongue", ms: "Belakang Lidah" },
+    label: { en: "Back of Tongue", ms: "Pangkal Lidah" },
     color: "#34D399",
     darkColor: "#6EE7B7",
   },

@@ -10,7 +10,7 @@ const T = {
   title: { en: "Manzil", ms: "Manzil" },
   hint: {
     en: "The classical compilation of 33 Quranic passages — from Al-Fatiha to An-Nas — recited daily for protection (ruqyah). Mark each passage as you read.",
-    ms: "Himpunan klasik 33 petikan Al-Quran — dari Al-Fatihah hingga An-Nas — dibaca setiap hari sebagai perlindungan (ruqyah). Tandakan setiap petikan sambil anda membaca.",
+    ms: "Himpunan klasik 33 petikan Al-Quran — dari Al-Fatihah hingga An-Nas — dibaca setiap hari sebagai perlindungan (ruqyah). Tandakan setiap petikan sambil membaca.",
   },
 } as const;
 

@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import { useState } from "react";
 import { useLearning } from "@/store/learning";
@@ -32,28 +32,28 @@ function buildQuestions(language: "en" | "ms"): Question[] {
   // Q3: action questions — "what do you do at ۘ ?"
   const actionMap: Record<string, { en: string; ms: string }[]> = {
     "م": [
-      { en: "Must stop — continuing changes the meaning", ms: "Wajib berhenti — sambung je makna lari" },
-      { en: "Continue without stopping", ms: "Sambung je, jangan berhenti" },
+      { en: "Must stop — continuing changes the meaning", ms: "Wajib berhenti — jika disambung, maknanya berubah" },
+      { en: "Continue without stopping", ms: "Terus sambung, jangan berhenti" },
       { en: "Stopping is preferred", ms: "Lebih baik berhenti" },
-      { en: "Brief silent pause, then continue", ms: "Jeda senyap sekejap, pastu sambung" },
+      { en: "Brief silent pause, then continue", ms: "Berhenti seketika tanpa nafas, kemudian sambung" },
     ],
     "لا": [
-      { en: "Do not stop — stopping distorts the meaning", ms: "Jangan berhenti — nanti makna lari" },
+      { en: "Do not stop — stopping distorts the meaning", ms: "Jangan berhenti — maknanya akan lari" },
       { en: "Must stop here", ms: "Wajib berhenti" },
-      { en: "Stopping is fine", ms: "Boleh berhenti je" },
+      { en: "Stopping is fine", ms: "Boleh berhenti" },
       { en: "Brief pause without breath", ms: "Jeda sekejap tanpa nafas" },
     ],
     "ج": [
-      { en: "May stop or continue — both are acceptable", ms: "Boleh berhenti atau sambung — sama je" },
+      { en: "May stop or continue — both are acceptable", ms: "Boleh berhenti atau sambung — kedua-duanya betul" },
       { en: "Must stop here", ms: "Wajib berhenti" },
-      { en: "Must never stop", ms: "Tak boleh berhenti langsung" },
-      { en: "Stop only at the end of the verse", ms: "Berhenti kat hujung ayat je" },
+      { en: "Must never stop", ms: "Tidak boleh berhenti langsung" },
+      { en: "Stop only at the end of the verse", ms: "Berhenti di hujung ayat sahaja" },
     ],
     "س": [
-      { en: "Brief silent pause — stop sound, keep breath, then continue", ms: "Jeda senyap — stop bunyi, tahan nafas, pastu sambung" },
-      { en: "Take a full breath, then continue", ms: "Tarik nafas penuh, pastu sambung" },
+      { en: "Brief silent pause — stop sound, keep breath, then continue", ms: "Henti bunyi seketika, tahan nafas, kemudian sambung" },
+      { en: "Take a full breath, then continue", ms: "Tarik nafas penuh, kemudian sambung" },
       { en: "Must stop completely here", ms: "Wajib berhenti sepenuhnya" },
-      { en: "Continue without any pause", ms: "Sambung je, takde jeda" },
+      { en: "Continue without any pause", ms: "Terus sambung tanpa jeda" },
     ],
   };
 

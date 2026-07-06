@@ -1,4 +1,4 @@
-// Curated Tadabbur (reflection) entries for the highest-impact Quranic roots.
+﻿// Curated Tadabbur (reflection) entries for the highest-impact Quranic roots.
 // Each entry pairs a *semantic field* (the range of meanings the root carries)
 // with a short *reflection* — a single contemplation prompt the reader can
 // sit with. Content is factual and pedagogical, not exegetical.
@@ -58,7 +58,7 @@ export const TADABBUR: Record<string, TadabburEntry> = {
     },
     reflection: {
       en: "Belief in the Quranic sense is not just mental assent — it shares its skeleton with security itself. To trust God is to be at rest.",
-      ms: "Iman dalam erti Quran bukan sekadar persetujuan akal — ia berkongsi tulang belakang dengan keamanan itu sendiri. Mempercayai Allah ialah berasa tenang.",
+      ms: "Iman dalam erti Quran bukan sekadar persetujuan akal — ia berakar pada rasa aman itu sendiri. Mempercayai Allah ialah berasa tenang.",
     },
   },
   "سلم": {
@@ -106,7 +106,7 @@ export const TADABBUR: Record<string, TadabburEntry> = {
     },
     reflection: {
       en: "The Quran's framing of shukr is relational: thanks is the natural reply to recognition. Notice how the opposite (kufr) shares grammar with denial, not silence.",
-      ms: "Pembingkaian shukr dalam Quran adalah hubungan: terima kasih ialah balasan semula jadi kepada pengiktirafan. Perhatikan bahawa lawannya (kufr) berkongsi tatabahasa dengan penafian, bukan kesenyapan.",
+      ms: "Dalam Al-Quran, shukr ialah hubungan: kesyukuran ialah balasan semula jadi apabila nikmat diiktiraf. Perhatikan bahawa lawannya (kufr) berkongsi tatabahasa dengan penafian, bukan kesenyapan.",
     },
   },
   "ذكر": {

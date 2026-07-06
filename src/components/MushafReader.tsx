@@ -825,17 +825,17 @@ const EDITIONS: EditionMeta[] = [
     meta: { en: "King Fahd Complex · 1405 AH · 15 lines", ms: "Kompleks Raja Fahd · 1405H · 15 baris" },
     desc: {
       en: "The page-accurate Madani print in authentic QPC glyphs — Ḥafṣ ʿan ʿĀṣim.",
-      ms: "Cetakan Madani tepat-halaman dengan glif QPC asli — Ḥafṣ ʿan ʿĀṣim.",
+      ms: "Cetakan Madani halaman demi halaman, dengan glif QPC asli — Ḥafṣ ʿan ʿĀṣim.",
     },
     sample: "بِسْمِ ٱللَّهِ ٱلرَّحْمَٰنِ ٱلرَّحِيمِ",
   },
   {
     id: "uthmani",
     name: { en: "Uthmani Script", ms: "Skrip Uthmani" },
-    meta: { en: "Flowing Uthmani · reflowable", ms: "Uthmani mengalir · boleh susun semula" },
+    meta: { en: "Flowing Uthmani · reflowable", ms: "Uthmani mengalir · ikut saiz skrin" },
     desc: {
       en: "Continuous Uthmani text that reflows to fit any screen size.",
-      ms: "Teks Uthmani berterusan yang menyesuaikan setiap saiz skrin.",
+      ms: "Teks Uthmani bersambung yang mengikut sebarang saiz skrin.",
     },
     sample: "بِسْمِ ٱللَّهِ ٱلرَّحْمَٰنِ ٱلرَّحِيمِ",
   },

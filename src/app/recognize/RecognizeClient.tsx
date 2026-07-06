@@ -23,7 +23,7 @@ const T = {
   searching: { en: "Searching…", ms: "Mencari…" },
   notFound: {
     en: "Couldn't read that clearly. Try a longer or cleaner fragment.",
-    ms: "Tidak dapat dibaca dengan jelas. Cuba petikan yang lebih panjang atau jelas.",
+    ms: "Tidak dapat dikenal pasti. Cuba petikan yang lebih panjang atau lebih jelas.",
   },
   camera: { en: "Use camera", ms: "Guna kamera" },
   cameraClose: { en: "Close camera", ms: "Tutup kamera" },
@@ -32,7 +32,7 @@ const T = {
   upload: { en: "Upload image", ms: "Muat naik imej" },
   ocrHint: {
     en: "Beta — reads clear, plain Arabic print best (books, screenshots). Ornate mushaf script often isn't recognized yet; typing is most reliable. Images never leave your device.",
-    ms: "Beta — paling tepat untuk cetakan Arab biasa yang jelas (buku, tangkapan skrin). Skrip mushaf berhias selalunya belum dikenali; menaip paling boleh diharap. Imej tidak sesekali meninggalkan peranti anda.",
+    ms: "Beta — paling tepat untuk cetakan Arab biasa yang jelas (buku, tangkapan skrin). Skrip mushaf berhias selalunya belum dapat dikenali; menaip paling tepat. Imej tidak pernah meninggalkan peranti anda.",
   },
   ocrReading: { en: "Reading the image…", ms: "Membaca imej…" },
   ocrFirstUse: {
