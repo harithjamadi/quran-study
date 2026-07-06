@@ -1,6 +1,7 @@
 "use client";
 
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
+import Link from "next/link";
 import { loadAyahIndex, recognizeAyah, type RecognitionResult } from "@/lib/ayah-recognition";
 import { parseAyahRef, classNames } from "@/lib/format";
 import { getSurah } from "@/data/surahs";
@@ -61,6 +62,11 @@ const T = {
   cameraBusy: {
     en: "The camera is in use by another app. Close it and try again.",
     ms: "Kamera sedang digunakan oleh aplikasi lain. Tutup aplikasi itu dan cuba lagi.",
+  },
+  readInContext: { en: "Read in context", ms: "Baca dalam konteks" },
+  closeMatch: {
+    en: "Close match — worth double-checking the verse.",
+    ms: "Padanan hampir — eloknya semak semula ayatnya.",
   },
 } as const;
 
@@ -184,6 +190,19 @@ export function RecognizeClient() {
   const matched = result && result.confidence >= MIN_CONFIDENCE ? result : null;
   const ref = matched ? parseAyahRef(matched.key) : null;
   const surah = ref ? getSurah(ref.surah) : null;
+
+  // On phones the result card can render below the fold (especially after an
+  // OCR run with the camera panel open) — bring it gently into view.
+  const resultRef = useRef<HTMLElement>(null);
+  const matchedKey = matched?.key;
+  useEffect(() => {
+    if (!matchedKey) return;
+    const reduced = window.matchMedia?.("(prefers-reduced-motion: reduce)").matches;
+    resultRef.current?.scrollIntoView?.({
+      behavior: reduced ? "auto" : "smooth",
+      block: "nearest",
+    });
+  }, [matchedKey]);
 
   return (
     <div className="mx-auto max-w-2xl space-y-6 animate-fade-up">
@@ -310,7 +329,7 @@ export function RecognizeClient() {
       </div>
 
       {matched && ref && (
-        <section className="card-raised p-4 sm:p-5 space-y-3 animate-fade-up">
+        <section ref={resultRef} className="card-raised p-4 sm:p-5 space-y-3 animate-fade-up">
           <div className="flex items-baseline justify-between gap-3">
             {surah && (
               <h2 className="display text-[length:var(--text-lg)]" style={{ fontWeight: 600 }}>
@@ -321,6 +340,9 @@ export function RecognizeClient() {
               {matched.key}
             </span>
           </div>
+          {matched.confidence < 0.7 && (
+            <p className="text-xs text-[color:var(--muted-strong)]">{T.closeMatch[language]}</p>
+          )}
           <TajweedText
             surahNumber={ref.surah}
             ayahNumber={ref.ayah}
@@ -328,6 +350,17 @@ export function RecognizeClient() {
             fontSize={32}
             highlightWords={matched.matchedRange}
           />
+          <div className="pt-1">
+            <Link
+              href={`/surah/${ref.surah}#v${ref.ayah}`}
+              className="inline-flex items-center gap-1.5 text-sm font-semibold text-[color:var(--accent-strong)] hover:underline"
+            >
+              {T.readInContext[language]}
+              <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
+                <path d="m9 6 6 6-6 6" />
+              </svg>
+            </Link>
+          </div>
         </section>
       )}
 
