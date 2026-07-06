@@ -81,3 +81,28 @@ export function parseTajweedVerse(raw: string): TajweedSegment[] {
 
   return segments;
 }
+
+/**
+ * Reduce a tajweed-annotated verse string to plain Arabic by concatenating the
+ * text of every segment (tagged or not). Used to build the recognition corpus.
+ */
+export function stripTajweedAnnotations(raw: string): string {
+  return parseTajweedVerse(raw)
+    .map((s) => s.text)
+    .join("");
+}
+
+/**
+ * For each segment, the 1-based index of the word it begins in. Words are
+ * delimited by spaces in the concatenated verse text. Used to highlight a
+ * matched word range across the rule-coloured segments.
+ */
+export function segmentWordStarts(segments: TajweedSegment[]): number[] {
+  const starts: number[] = [];
+  let word = 1;
+  for (const seg of segments) {
+    starts.push(word);
+    word += (seg.text.match(/ /g) ?? []).length;
+  }
+  return starts;
+}

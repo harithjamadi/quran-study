@@ -98,6 +98,21 @@ export function SearchClient({
         </button>
       </form>
 
+      {/* Cross-link to the sibling tool: Search finds verses by translation,
+          Recognize finds them from pasted/scanned Arabic. */}
+      <Link
+        href="/recognize"
+        className="inline-flex items-center gap-2 text-sm font-medium text-[color:var(--accent-strong)] hover:underline"
+      >
+        <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
+          <path d="M4 8V6a2 2 0 0 1 2-2h2M16 4h2a2 2 0 0 1 2 2v2M20 16v2a2 2 0 0 1-2 2h-2M8 20H6a2 2 0 0 1-2-2v-2" />
+          <rect x="8" y="9" width="8" height="6" rx="1" />
+        </svg>
+        {language === "ms"
+          ? "Ada teks Arab? Kenal pasti ayatnya →"
+          : "Have Arabic text? Recognize the exact ayah →"}
+      </Link>
+
       {error && <p className="text-sm text-[color:var(--danger)]">{error}</p>}
 
       {!error && query.trim() && !isPending && count > 0 && (

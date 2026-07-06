@@ -5,7 +5,7 @@ import Link from "next/link";
 import { useLearning } from "@/store/learning";
 import { useHydrated } from "@/lib/use-hydrated";
 import { UI_STRINGS } from "@/lib/i18n";
-import { APP_VERSION } from "@/lib/changelog";
+import { APP_VERSION } from "@/lib/app-version";
 import { useVersion, hasUnseenRelease } from "@/store/version";
 
 export function Footer() {

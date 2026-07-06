@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { useLearning, BADGES } from "@/store/learning";
 import { classNames } from "@/lib/format";
@@ -1481,7 +1481,7 @@ function RuleSortStage({
 /* ── Sound Sorter (3★) ───────────────────────────────────────────────── */
 
 function SoundSorterItem({
-  index, item, surahNumber, isSelected, assignedRule, submitted, language, buckets, onSelect,
+  index, item, surahNumber, isSelected, assignedRule, submitted, language, onSelect,
 }: {
   index: number;
   item: { ayah: number; segmentIdx: number; segments: TajweedSegment[]; correctRule: TajweedRule };
@@ -1490,7 +1490,6 @@ function SoundSorterItem({
   assignedRule: TajweedRule | undefined;
   submitted: boolean;
   language: "en" | "ms";
-  buckets: TajweedRule[];
   onSelect: (i: number) => void;
 }) {
   const { playing, isActive } = useVerseAudioState(surahNumber, item.ayah);
@@ -1608,7 +1607,6 @@ function SoundSorterStage({
             assignedRule={buckets.find((b) => b.code === assignments[i])}
             submitted={submitted}
             language={language}
-            buckets={buckets}
             onSelect={selectItem}
           />
         ))}
@@ -2181,55 +2179,8 @@ function ConfusedPairsStage({
   const isCorrectA = submitted && blanks[0] === pairA.code;
   const isCorrectB = submitted && blanks[1] === pairB.code;
 
-  function BlankSlot({ idx, rule, isCorrect }: { idx: 0 | 1; rule: TajweedRule; isCorrect: boolean }) {
-    const filled = blanks[idx];
-    const filledRule = filled ? [pairA, pairB, ...distractors].find((r) => r.code === filled) : null;
-    const isActive = activeSlot === idx;
-    return (
-      <div
-        className={classNames(
-          "rounded-2xl border-2 p-4 flex flex-col gap-2 cursor-pointer transition-all",
-          submitted && isCorrect && "border-[color:var(--accent)] bg-[color:var(--accent)]/8",
-          submitted && !isCorrect && "border-[color:var(--danger)] bg-[color:var(--danger)]/8",
-          !submitted && isActive && "border-[color:var(--gold)] bg-[color:var(--gold)]/10",
-          !submitted && !isActive && "border-[color:var(--border)] bg-[color:var(--surface)] hover:border-[color:var(--accent)]/50"
-        )}
-        onClick={() => !submitted && tapSlot(idx)}
-        role="button"
-        aria-label={`Slot ${idx + 1}`}
-      >
-        <p className="text-xs text-[color:var(--muted)] leading-snug line-clamp-3">
-          {rule.condition[language]}
-        </p>
-        <div
-          className={classNames(
-            "rounded-xl px-3 py-2 text-sm font-bold text-center min-h-[36px] flex items-center justify-center gap-2 transition-all",
-            filledRule
-              ? "bg-[color:var(--surface-raised)] border border-[color:var(--border-strong)]"
-              : "border-2 border-dashed border-[color:var(--border-strong)]"
-          )}
-        >
-          {filledRule ? (
-            <>
-              <span className="w-2.5 h-2.5 rounded-full shrink-0" style={{ backgroundColor: filledRule.color }} aria-hidden />
-              {filledRule.name[language]}
-            </>
-          ) : (
-            <span className="text-[color:var(--muted)] text-xs">
-              {isActive
-                ? language === "ms" ? "↓ Pilih nama" : "↓ Pick a name"
-                : language === "ms" ? "Ketik untuk isi" : "Tap to fill"}
-            </span>
-          )}
-        </div>
-        {submitted && !isCorrect && (
-          <p className="text-xs text-[color:var(--accent-strong)] font-semibold">
-            → {rule.name[language]}
-          </p>
-        )}
-      </div>
-    );
-  }
+  const findRule = (code: string | null) =>
+    code ? [pairA, pairB, ...distractors].find((r) => r.code === code) ?? null : null;
 
   return (
     <div className="card-raised p-6 sm:p-8 animate-fade-up space-y-5">
@@ -2245,8 +2196,26 @@ function ConfusedPairsStage({
       </div>
 
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-        <BlankSlot idx={0} rule={pairA} isCorrect={isCorrectA} />
-        <BlankSlot idx={1} rule={pairB} isCorrect={isCorrectB} />
+        <ConfusedBlankSlot
+          idx={0}
+          rule={pairA}
+          isCorrect={isCorrectA}
+          filledRule={findRule(blanks[0])}
+          isActive={activeSlot === 0}
+          submitted={submitted}
+          language={language}
+          onTap={() => tapSlot(0)}
+        />
+        <ConfusedBlankSlot
+          idx={1}
+          rule={pairB}
+          isCorrect={isCorrectB}
+          filledRule={findRule(blanks[1])}
+          isActive={activeSlot === 1}
+          submitted={submitted}
+          language={language}
+          onTap={() => tapSlot(1)}
+        />
       </div>
 
       <div>
@@ -2292,6 +2261,73 @@ function ConfusedPairsStage({
       >
         {language === "ms" ? "SEMAK" : "CHECK"} →
       </button>
+    </div>
+  );
+}
+
+/** One fill-in slot of the Confused Pairs stage. Top-level (not nested in the
+ *  stage) so React doesn't remount it — and reset its DOM — on every render. */
+function ConfusedBlankSlot({
+  idx,
+  rule,
+  isCorrect,
+  filledRule,
+  isActive,
+  submitted,
+  language,
+  onTap,
+}: {
+  idx: 0 | 1;
+  rule: TajweedRule;
+  isCorrect: boolean;
+  filledRule: TajweedRule | null;
+  isActive: boolean;
+  submitted: boolean;
+  language: "en" | "ms";
+  onTap: () => void;
+}) {
+  return (
+    <div
+      className={classNames(
+        "rounded-2xl border-2 p-4 flex flex-col gap-2 cursor-pointer transition-all",
+        submitted && isCorrect && "border-[color:var(--accent)] bg-[color:var(--accent)]/8",
+        submitted && !isCorrect && "border-[color:var(--danger)] bg-[color:var(--danger)]/8",
+        !submitted && isActive && "border-[color:var(--gold)] bg-[color:var(--gold)]/10",
+        !submitted && !isActive && "border-[color:var(--border)] bg-[color:var(--surface)] hover:border-[color:var(--accent)]/50"
+      )}
+      onClick={() => !submitted && onTap()}
+      role="button"
+      aria-label={`Slot ${idx + 1}`}
+    >
+      <p className="text-xs text-[color:var(--muted)] leading-snug line-clamp-3">
+        {rule.condition[language]}
+      </p>
+      <div
+        className={classNames(
+          "rounded-xl px-3 py-2 text-sm font-bold text-center min-h-[36px] flex items-center justify-center gap-2 transition-all",
+          filledRule
+            ? "bg-[color:var(--surface-raised)] border border-[color:var(--border-strong)]"
+            : "border-2 border-dashed border-[color:var(--border-strong)]"
+        )}
+      >
+        {filledRule ? (
+          <>
+            <span className="w-2.5 h-2.5 rounded-full shrink-0" style={{ backgroundColor: filledRule.color }} aria-hidden />
+            {filledRule.name[language]}
+          </>
+        ) : (
+          <span className="text-[color:var(--muted)] text-xs">
+            {isActive
+              ? language === "ms" ? "↓ Pilih nama" : "↓ Pick a name"
+              : language === "ms" ? "Ketik untuk isi" : "Tap to fill"}
+          </span>
+        )}
+      </div>
+      {submitted && !isCorrect && (
+        <p className="text-xs text-[color:var(--accent-strong)] font-semibold">
+          → {rule.name[language]}
+        </p>
+      )}
     </div>
   );
 }
@@ -2479,8 +2515,9 @@ function CompleteStage({
   const pct = total > 0 ? Math.round((correct / total) * 100) : 0;
   const isPerfect = correct === total;
 
-  // Show badges earned in the last 30 seconds (just unlocked this quest)
-  const cutoff = Date.now() - 30_000;
+  // Show badges earned in the last 30 seconds (just unlocked this quest).
+  // Captured once at mount so render stays pure (react-hooks/purity).
+  const [cutoff] = useState(() => Date.now() - 30_000);
   const newBadges = BADGES.filter((b) => (badges[b.id] ?? 0) > cutoff);
   return (
     <div className="card-raised relative overflow-hidden p-8 sm:p-12 text-center animate-fade-up">

@@ -2,7 +2,7 @@
 
 import { create } from "zustand";
 import { persist, createJSONStorage } from "zustand/middleware";
-import { APP_VERSION, compareVersions } from "@/lib/changelog";
+import { APP_VERSION, compareVersions } from "@/lib/app-version";
 
 /**
  * Tracks the last app version whose changelog the user has seen, so we can

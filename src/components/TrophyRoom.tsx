@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo } from "react";
+import { useMemo, useState } from "react";
 import { useLearning, BADGES, type BadgeInfo } from "@/store/learning";
 
 function badgeDate(ts: number, language: "en" | "ms"): string {
@@ -21,6 +21,9 @@ function BadgeCard({ badge, earnedAt, language }: {
   language: "en" | "ms";
 }) {
   const earned = !!earnedAt;
+  // Captured once at mount so render stays pure (react-hooks/purity) — the
+  // "New" ribbon window doesn't need to tick live.
+  const [mountedAt] = useState(() => Date.now());
 
   return (
     <div
@@ -61,7 +64,7 @@ function BadgeCard({ badge, earnedAt, language }: {
       )}
 
       {/* New badge indicator */}
-      {earned && Date.now() - (earnedAt ?? 0) < 48 * 60 * 60 * 1000 && (
+      {earned && mountedAt - (earnedAt ?? 0) < 48 * 60 * 60 * 1000 && (
         <span className="absolute -top-1.5 -right-1.5 rounded-full bg-[color:var(--accent)] text-white text-[9px] font-black px-1.5 py-0.5 uppercase tracking-wide shadow">
           New
         </span>

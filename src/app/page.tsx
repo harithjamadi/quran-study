@@ -194,6 +194,8 @@ export default function HomePage() {
       <div className="divider" />
       <LastReadCard />
 
+      <WiridStrip language={language} />
+
       <section className="grid grid-cols-1 md:grid-cols-3 gap-4 sm:gap-5 stagger-children">
         <PillarCard
           ordinal="01"
@@ -265,6 +267,42 @@ export default function HomePage() {
         </div>
       </section>
     </div>
+  );
+}
+
+/* Time-aware daily-adhkar shortcut. Rendered only after hydration (the page
+ * returns null until then), so reading the local clock is SSR-safe. */
+function WiridStrip({ language }: { language: "en" | "ms" }) {
+  const evening = new Date().getHours() >= 14;
+  const title = evening
+    ? language === "ms" ? "Al-Ma'thurat Petang" : "Evening Al-Ma'thurat"
+    : language === "ms" ? "Al-Ma'thurat Pagi" : "Morning Al-Ma'thurat";
+  const desc = language === "ms"
+    ? "Zikir harian dengan terjemahan dan pembilang — juga Manzil untuk perlindungan."
+    : "Daily adhkar with translation and tap-to-count — plus the Manzil for protection.";
+  return (
+    <Link
+      href="/wirid/mathurat"
+      className="group flex items-center gap-4 rounded-[var(--radius-lg)] border border-[color:var(--border)] bg-[color:var(--surface)] p-5 sm:p-6 transition-all duration-300 hover:-translate-y-0.5 hover:border-[color:var(--accent)]/60 hover:shadow-[var(--shadow-glow)]"
+    >
+      <span className="grid h-11 w-11 shrink-0 place-items-center rounded-xl bg-[color:var(--accent-soft)] text-[color:var(--accent-strong)]" aria-hidden>
+        {evening ? (
+          <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round">
+            <path d="M20.5 14.5A8.5 8.5 0 0 1 9.5 3.5a8.5 8.5 0 1 0 11 11Z" />
+          </svg>
+        ) : (
+          <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round">
+            <circle cx="12" cy="12" r="4.2" />
+            <path d="M12 2.5v2.2M12 19.3v2.2M2.5 12h2.2M19.3 12h2.2M5.3 5.3l1.5 1.5M17.2 17.2l1.5 1.5M5.3 18.7l1.5-1.5M17.2 6.8l1.5-1.5" />
+          </svg>
+        )}
+      </span>
+      <span className="min-w-0 flex-1">
+        <span className="block font-semibold text-[15px]">{title}</span>
+        <span className="block text-sm text-[color:var(--muted-strong)] truncate">{desc}</span>
+      </span>
+      <span aria-hidden className="text-[color:var(--accent-strong)] transition-transform group-hover:translate-x-1">→</span>
+    </Link>
   );
 }
 

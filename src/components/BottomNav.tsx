@@ -50,7 +50,7 @@ export function BottomNav() {
     { href: "/", label: t.nav_home, icon: IconHome, match: (p) => p === "/" },
     { href: "/learn", label: t.nav_learn, icon: IconLearn, match: (p) => p.startsWith("/learn") },
     { href: "/surahs", label: t.nav_read, icon: IconBook, match: (p) => p.startsWith("/surah") || p.startsWith("/root") },
-    { href: "/search", label: t.nav_search, icon: IconSearch, match: (p) => p.startsWith("/search") },
+    { href: "/wirid", label: t.nav_wirid, icon: IconBeads, match: (p) => p.startsWith("/wirid") },
   ];
 
   const moreItems: {
@@ -59,7 +59,9 @@ export function BottomNav() {
     icon: (p: { active: boolean }) => React.ReactElement;
     dot?: boolean;
   }[] = [
+    { href: "/search", label: t.nav_search, icon: IconSearch },
     { href: "/mushaf", label: "Mushaf", icon: IconMushaf },
+    { href: "/recognize", label: language === "ms" ? "Kenal Pasti" : "Recognize", icon: IconScan },
     { href: "/analytics", label: t.nav_stats, icon: IconChart },
     { href: "/bookmarks", label: t.nav_bookmarks, icon: IconBookmark },
     { href: "/changelog", label: t.nav_changelog, icon: IconSparkle, dot: showUpdateDot },
@@ -241,6 +243,23 @@ function IconBook({ active }: { active: boolean }) {
   );
 }
 
+function IconBeads({ active }: { active: boolean }) {
+  // Tasbih: an arc of beads with a hanging tassel bead.
+  return (
+    <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" strokeWidth={active ? "2" : "1.6"} strokeLinecap="round" strokeLinejoin="round" aria-hidden>
+      <circle cx="12" cy="4.2" r="1.7" fill={active ? "currentColor" : "none"} fillOpacity={active ? 0.2 : 1} />
+      <circle cx="6.2" cy="7.4" r="1.7" />
+      <circle cx="17.8" cy="7.4" r="1.7" />
+      <circle cx="4.6" cy="13.6" r="1.7" />
+      <circle cx="19.4" cy="13.6" r="1.7" />
+      <circle cx="8" cy="18.4" r="1.7" />
+      <circle cx="16" cy="18.4" r="1.7" />
+      <path d="M12 16.6v2.2" />
+      <circle cx="12" cy="21" r="1.5" fill={active ? "currentColor" : "none"} fillOpacity={active ? 0.2 : 1} />
+    </svg>
+  );
+}
+
 function IconSearch({ active }: { active: boolean }) {
   return (
     <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" strokeWidth={active ? "2.2" : "1.7"} strokeLinecap="round" strokeLinejoin="round" aria-hidden>
@@ -265,6 +284,15 @@ function IconMushaf({ active }: { active: boolean }) {
     <svg viewBox="0 0 24 24" width="19" height="19" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
       <path d="M4 5.5A1.5 1.5 0 0 1 5.5 4H18a2 2 0 0 1 2 2v13a1 1 0 0 1-1 1H6a2 2 0 0 1-2-2V5.5Z" fill={active ? "currentColor" : "none"} fillOpacity={active ? 0.14 : 1} />
       <path d="M8 8h8M8 11h8M8 14h5" />
+    </svg>
+  );
+}
+
+function IconScan({ active }: { active: boolean }) {
+  return (
+    <svg viewBox="0 0 24 24" width="19" height="19" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
+      <path d="M4 8V6a2 2 0 0 1 2-2h2M16 4h2a2 2 0 0 1 2 2v2M20 16v2a2 2 0 0 1-2 2h-2M8 20H6a2 2 0 0 1-2-2v-2" />
+      <rect x="8" y="9" width="8" height="6" rx="1" fill={active ? "currentColor" : "none"} fillOpacity={active ? 0.14 : 1} />
     </svg>
   );
 }
