@@ -11,13 +11,6 @@ const nextConfig: NextConfig = {
         source: "/sw.js",
         headers: [{ key: "Cache-Control", value: "no-cache, no-store, must-revalidate" }],
       },
-      {
-        // OCR engine + traineddata live in version-stamped directories
-        // (/ocr/engine/v…, /ocr/tessdata/v1) — an upgrade changes the URL,
-        // never the bytes, so these ~4 MB assets can cache forever.
-        source: "/ocr/:path*",
-        headers: [{ key: "Cache-Control", value: "public, max-age=31536000, immutable" }],
-      },
     ];
   },
 };

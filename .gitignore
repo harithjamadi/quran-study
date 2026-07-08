@@ -39,9 +39,6 @@ yarn-error.log*
 # build-script cache (re-downloadable, do not commit)
 /.cache/
 
-# OCR engine assets — derived from node_modules by scripts/copy-ocr-engine.mjs
-/public/ocr/engine/
-
 # typescript
 *.tsbuildinfo
 next-env.d.ts

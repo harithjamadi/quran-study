@@ -7,7 +7,8 @@ import { parseAyahRef, classNames } from "@/lib/format";
 import { getSurah } from "@/data/surahs";
 import { TajweedText } from "@/components/TajweedText";
 import { CameraCapture } from "@/components/CameraCapture";
-import { tesseractOcrEngine } from "@/lib/ocr-tesseract";
+import { cloudVisionOcrEngine } from "@/lib/ocr-cloud";
+import { OcrError, type OcrErrorReason } from "@/lib/ocr";
 import { useLearning } from "@/store/learning";
 
 const T = {
@@ -31,21 +32,34 @@ const T = {
   capture: { en: "Capture", ms: "Tangkap" },
   upload: { en: "Upload image", ms: "Muat naik imej" },
   ocrHint: {
-    en: "Beta — reads clear, plain Arabic print best (books, screenshots). Ornate mushaf script often isn't recognized yet; typing is most reliable. Images never leave your device.",
-    ms: "Beta — paling tepat untuk cetakan Arab biasa yang jelas (buku, tangkapan skrin). Skrip mushaf berhias selalunya belum dapat dikenali; menaip paling tepat. Imej tidak pernah meninggalkan peranti anda.",
+    en: "Beta — point the camera at one or two lines of the mushaf and fill the guide. Best with steady light and no glare. The photo is sent to our server to be read, and isn't stored.",
+    ms: "Beta — halakan kamera pada satu atau dua baris mushaf dan penuhkan panduan. Paling baik dengan cahaya sekata tanpa silau. Foto dihantar ke pelayan kami untuk dibaca, dan tidak disimpan.",
   },
+  guideLabel: { en: "Align 1–2 lines here", ms: "Jajarkan 1–2 baris di sini" },
   ocrReading: { en: "Reading the image…", ms: "Membaca imej…" },
-  ocrFirstUse: {
-    en: "Preparing text recognition (first time only, ~5 MB)…",
-    ms: "Menyediakan pengecaman teks (kali pertama sahaja, ~5 MB)…",
-  },
   ocrEmpty: {
-    en: "Couldn't find readable Arabic text in that image. Get closer, fill the frame with one or two lines, and avoid glare.",
-    ms: "Tiada teks Arab yang boleh dibaca dalam imej itu. Dekatkan kamera, penuhkan bingkai dengan satu dua baris, dan elakkan silau.",
+    en: "Couldn't find readable Arabic text in that image. Get closer, fill the guide with one or two lines, and avoid glare.",
+    ms: "Tiada teks Arab yang boleh dibaca dalam imej itu. Dekatkan kamera, penuhkan panduan dengan satu dua baris, dan elakkan silau.",
   },
   ocrBadFile: {
     en: "Couldn't open that image file. Try a JPG or PNG photo instead.",
     ms: "Fail imej itu tidak dapat dibuka. Cuba foto JPG atau PNG.",
+  },
+  ocrOffline: {
+    en: "You appear to be offline. Recognition needs a connection — reconnect and try again.",
+    ms: "Anda kelihatan di luar talian. Pengecaman memerlukan sambungan — sambung semula dan cuba lagi.",
+  },
+  ocrRateLimited: {
+    en: "Too many tries in a short time. Wait a moment and try again.",
+    ms: "Terlalu banyak percubaan dalam masa singkat. Tunggu sebentar dan cuba lagi.",
+  },
+  ocrTooLarge: {
+    en: "That image is too large. Take a closer photo of just one or two lines.",
+    ms: "Imej itu terlalu besar. Ambil foto lebih dekat pada satu atau dua baris sahaja.",
+  },
+  ocrServerError: {
+    en: "Something went wrong reading that image. Please try again.",
+    ms: "Ada masalah semasa membaca imej itu. Sila cuba lagi.",
   },
   cameraInsecure: {
     en: "The camera needs a secure connection. Open this page on https:// or http://localhost.",
@@ -78,6 +92,31 @@ const T = {
  */
 const MIN_CONFIDENCE = 0.5;
 
+/** UI notices after a capture/upload attempt. "empty" = the model read the
+ *  image but found no Arabic; the rest are transport/guard failures. */
+type OcrNotice = "empty" | "bad-file" | "offline" | "rate-limited" | "too-large" | "server";
+
+/** Map a transport OcrError reason to the notice shown. "bad-image" from the
+ *  route (a rejected upload) reuses the same message as a client-side
+ *  undecodable file. */
+const REASON_NOTICE: Record<OcrErrorReason, OcrNotice> = {
+  offline: "offline",
+  "rate-limited": "rate-limited",
+  "too-large": "too-large",
+  "bad-image": "bad-file",
+  server: "server",
+};
+
+/** Bilingual message for each notice. */
+const NOTICE_COPY: Record<OcrNotice, { en: string; ms: string }> = {
+  empty: T.ocrEmpty,
+  "bad-file": T.ocrBadFile,
+  offline: T.ocrOffline,
+  "rate-limited": T.ocrRateLimited,
+  "too-large": T.ocrTooLarge,
+  server: T.ocrServerError,
+};
+
 export function RecognizeClient() {
   const language = useLearning((s) => s.language);
   const [input, setInput] = useState("");
@@ -85,10 +124,8 @@ export function RecognizeClient() {
   const [searched, setSearched] = useState(false);
   const [loading, setLoading] = useState(false);
   const [cameraMode, setCameraMode] = useState(false);
-  // "first-use" while the ~5 MB engine+model download, "reading" per image.
-  const [ocrPhase, setOcrPhase] = useState<"idle" | "first-use" | "reading">("idle");
-  const [ocrNotice, setOcrNotice] = useState<"empty" | "bad-file" | null>(null);
-  const ocrWarmRef = useRef(false);
+  const [ocrPhase, setOcrPhase] = useState<"idle" | "reading">("idle");
+  const [ocrNotice, setOcrNotice] = useState<OcrNotice | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   // Monotonic run id: a newer recognition supersedes any in-flight one so a
   // slow earlier run can't commit a stale result over a fresher one.
@@ -123,10 +160,9 @@ export function RecognizeClient() {
   async function handleCapture(image: ImageData) {
     if (ocrPhase !== "idle") return; // one image at a time
     setOcrNotice(null);
-    setOcrPhase(ocrWarmRef.current ? "reading" : "first-use");
+    setOcrPhase("reading");
     try {
-      const text = await tesseractOcrEngine.recognize(image);
-      ocrWarmRef.current = true;
+      const text = await cloudVisionOcrEngine.recognize(image);
       if (!text.trim()) {
         // Distinguish "no Arabic found in the image" from the retrieval
         // engine's "no matching verse" — different fixes for the user.
@@ -135,6 +171,10 @@ export function RecognizeClient() {
       }
       setInput(text);
       await runRecognition(text);
+    } catch (err) {
+      // Transport/guard failure (offline, rate limited, rejected, server) — tell
+      // the user the actual fix; anything unexpected reads as a server error.
+      setOcrNotice(err instanceof OcrError ? REASON_NOTICE[err.reason] : "server");
     } finally {
       setOcrPhase("idle");
     }
@@ -291,12 +331,12 @@ export function RecognizeClient() {
               aria-hidden
               className="h-3 w-3 rounded-full border-2 border-[color:var(--accent)]/30 border-t-[color:var(--accent)] animate-spin"
             />
-            {ocrPhase === "first-use" ? T.ocrFirstUse[language] : T.ocrReading[language]}
+            {T.ocrReading[language]}
           </p>
         )}
         {ocrNotice && ocrPhase === "idle" && (
           <p className="rounded-[var(--radius)] border border-[color:var(--border)] bg-[color:var(--surface-raised)] p-3 text-xs text-[color:var(--muted-strong)]">
-            {ocrNotice === "empty" ? T.ocrEmpty[language] : T.ocrBadFile[language]}
+            {NOTICE_COPY[ocrNotice][language]}
           </p>
         )}
 
@@ -306,6 +346,7 @@ export function RecognizeClient() {
               onCapture={handleCapture}
               labelStart={T.startCamera[language]}
               labelCapture={T.capture[language]}
+              guideLabel={T.guideLabel[language]}
               errors={{
                 insecure: T.cameraInsecure[language],
                 denied: T.cameraDenied[language],
